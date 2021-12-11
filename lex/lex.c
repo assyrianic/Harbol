@@ -1431,3 +1431,34 @@ HARBOL_EXPORT bool lex_until(const char str[static 1], const char **const end, s
 	*end = str;
 	return buf->len > 0;
 }
+
+HARBOL_EXPORT intmax_t lex_c_string_to_int(const struct HarbolString *const buf, char **const end) {
+	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	const size_t extra = (is_binary)? 2 : 0;
+	return strtoll(&buf->cstr[extra], end, is_binary ? 2 : 0);
+}
+
+HARBOL_EXPORT intmax_t lex_go_string_to_int(const struct HarbolString *const buf, char **const end) {
+	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
+	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	const size_t extra = (is_octal || is_binary)? 2 : 0;
+	return strtoll(&buf->cstr[extra], end, is_octal ? 8 : is_binary ? 2 : 0);
+}
+
+
+HARBOL_EXPORT uintmax_t lex_c_string_to_uint(const struct HarbolString *const buf, char **const end) {
+	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	const size_t extra = (is_binary)? 2 : 0;
+	return strtoull(&buf->cstr[extra], end, is_binary ? 2 : 0);
+}
+
+HARBOL_EXPORT uintmax_t lex_go_string_to_uint(const struct HarbolString *const buf, char **const end) {
+	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
+	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	const size_t extra = (is_octal || is_binary)? 2 : 0;
+	return strtoull(&buf->cstr[extra], end, is_octal ? 8 : is_binary ? 2 : 0);
+}
+
+HARBOL_EXPORT floatmax_t lex_string_to_float(const struct HarbolString *const buf, char **const end) {
+	return strtofmax(buf->cstr, end);
+}

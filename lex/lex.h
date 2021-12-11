@@ -123,6 +123,12 @@ HARBOL_EXPORT NO_NULL NONNULL_RET const char *lex_get_err(const int err_code);
 HARBOL_EXPORT NO_NULL bool lex_identifier(const char str[], const char **end, struct HarbolString *buf, bool checker(int32_t c));
 HARBOL_EXPORT NO_NULL bool lex_c_style_identifier(const char str[], const char **end, struct HarbolString *buf);
 HARBOL_EXPORT NO_NULL bool lex_until(const char str[], const char **end, struct HarbolString *buf, int32_t control);
+
+HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_c_string_to_int(const struct HarbolString *buf, char **end);
+HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_go_string_to_int(const struct HarbolString *buf, char **end);
+HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_c_string_to_uint(const struct HarbolString *buf, char **end);
+HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_go_string_to_uint(const struct HarbolString *buf, char **end);
+HARBOL_EXPORT NEVER_NULL(1) floatmax_t lex_string_to_float(const struct HarbolString *buf, char **end);
 /********************************************************************/
 
 #ifdef __cplusplus
