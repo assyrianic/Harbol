@@ -37,7 +37,19 @@
 
 /** types as defined by Harbol. */
 #ifndef __ssize_t_defined
-typedef long int    ssize_t;
+#	if SIZE_MAX==UINT_MAX
+		typedef int ssize_t;        /** common 32 bit case */
+#		define SSIZE_MIN  INT_MIN
+#		define SSIZE_MAX  INT_MAX
+#	elif SIZE_MAX==ULONG_MAX
+		typedef long ssize_t;       /** linux 64 bits */
+#		define SSIZE_MIN  LONG_MIN
+#		define SSIZE_MAX  LONG_MAX
+#	elif SIZE_MAX==ULLONG_MAX
+		typedef long long ssize_t;  /** windows 64 bits */
+#		define SSIZE_MIN  LLONG_MIN
+#		define SSIZE_MAX  LLONG_MAX
+#	endif
 #	define __ssize_t_defined
 #endif
 
@@ -475,5 +487,27 @@ static inline constexpr bool is_in_bounds(const T val, const T max, const T min)
 	}
 }
 #endif
+
+
+/// END the params with a NULL.
+/// Within a variable list of strings to compare to,
+/// returns an index or SIZE_MAX aka (size_t)(-1) if not found
+#ifdef __cplusplus
+static inline size_t cstr_switch(const char *cstr, ...) {
+#else
+static inline size_t cstr_switch(const char cstr[static 1], ...) {
+#endif
+	va_list ap; va_start(ap, cstr);
+	size_t index = 0;
+	const char *arg = NULL;
+	while( (arg = va_arg(ap, const char*)) != NULL ) {
+		if( !strcmp(cstr, arg) ) {
+			break;
+		}
+		index++;
+	}
+	va_end(ap);
+	return arg==NULL? SIZE_MAX : index;
+}
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */

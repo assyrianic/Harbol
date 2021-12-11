@@ -8,7 +8,7 @@
 /** CFG Parser in EBNF grammar:
  * keyval = <string> [':'] (<value>|<section>) [','] ;
  * section = '{' *<keyval> '}' ;
- * value = <string> | <number> | <vec> | "true" | "false" | "null" | "iota" ;
+ * value = <string> | <number> | <vec> | "true" | "false" | "null" | "iota" | "<FILE>" ;
  * matrix = '[' <number> [','] [<number>] [','] [<number>] [','] [<number>] ']' ;
  * vec = ('v' | 'c') <matrix> ;
  * string = '"' chars '"' | "'" chars "'" ;
@@ -96,6 +96,10 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, const
 		harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: invalid string key '%s' %s.\n", keystr.cstr, lex_get_err(str_res));
 		harbol_string_clear(&keystr);
 		return false;
+	} else if( harbol_string_empty(&keystr) ) {
+		harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: empty string key '%s'.\n", keystr.cstr);
+		harbol_string_clear(&keystr);
+		return false;
 	} else if( harbol_map_has_key(map, keystr.cstr, keystr.len+1) ) {
 		harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: duplicate string key '%s'.\n", keystr.cstr);
 		harbol_string_clear(&keystr);
@@ -109,6 +113,34 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, const
 	} else if( !harbol_string_cmpcstr(&keystr, "<ENUM>") ) {
 		harbol_string_format(&keystr, true, "%" PRIiMAX "", parse_state->global_enum);
 		++parse_state->global_enum;
+	} else if( !harbol_string_cmpcstr(&keystr, "<INCLUDE>") || !harbol_string_cmpcstr(&keystr, "<include>") ) {
+		if( **cfgcoderef != '"' && **cfgcoderef != '\'' ) {
+			harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: file for config inclusion is missing string quotes.\n");
+			harbol_string_clear(&keystr);
+			return false;
+		}
+		
+		struct HarbolString file_path = harbol_string_make(NULL, &( bool ){false});
+		const int str_res = lex_c_style_str(*cfgcoderef, cfgcoderef, &file_path);
+		if( str_res > HarbolLexNoErr ) {
+			harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: invalid string value '%s' for key '%s' %s.\n", file_path.cstr, keystr.cstr, lex_get_err(str_res));
+			harbol_string_clear(&keystr);
+			return false;
+		}
+		
+		harbol_string_clear(&keystr);
+		struct HarbolMap *included_cfg = harbol_cfg_parse_file(file_path.cstr);
+		if( included_cfg==NULL ) {
+			/// if we failed somehow, warn, and set the value as a null.
+			harbol_warn_msg(NULL, parse_state->cfg_filename, "parse warning", &parse_state->curr_line, NULL, "Harbol Config Parser :: failed to include cfg file '%s'\n", file_path.cstr);
+			harbol_string_clear(&file_path);
+			return true;
+		} else {
+			struct HarbolVariant var = harbol_variant_make(&included_cfg, sizeof included_cfg, HarbolCfgType_Map, &( bool ){0});
+			const bool inclusion_res = harbol_map_insert(map, file_path.cstr, file_path.len+1, &var, sizeof var);
+			harbol_string_clear(&file_path);
+			return inclusion_res;
+		}
 	}
 	
 	bool res = false;
@@ -187,25 +219,18 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, const
 					}
 					iterations++;
 				} else {
-					/// gotta use `harbol_string_scan` for possible hex floats.
-					float32_t f = 0.f;
-					const bool is_hex = !strncmp(numstr.cstr, "0x", 2) || !strncmp(numstr.cstr, "0X", 2);
 					switch( iterations ) {
 						case 0:
-							harbol_string_scan(&numstr, is_hex ? "%" SCNxf32 "" : "%" SCNf32 "", &f);
-							matrix_value.vec4d.x = f;
+							matrix_value.vec4d.x = lex_string_to_float(&numstr);
 							break;
 						case 1:
-							harbol_string_scan(&numstr, is_hex ? "%" SCNxf32 "" : "%" SCNf32 "", &f);
-							matrix_value.vec4d.y = f;
+							matrix_value.vec4d.y = lex_string_to_float(&numstr);
 							break;
 						case 2:
-							harbol_string_scan(&numstr, is_hex ? "%" SCNxf32 "" : "%" SCNf32 "", &f);
-							matrix_value.vec4d.z = f;
+							matrix_value.vec4d.z = lex_string_to_float(&numstr);
 							break;
 						case 3:
-							harbol_string_scan(&numstr, is_hex ? "%" SCNxf32 "" : "%" SCNf32 "", &f);
-							matrix_value.vec4d.w = f;
+							matrix_value.vec4d.w = lex_string_to_float(&numstr);
 							break;
 					}
 					iterations++;
@@ -289,6 +314,25 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, const
 		harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: array bracket missing 'c' or 'v' tag.\n");
 		harbol_string_clear(&keystr);
 		return false;
+	} else if( **cfgcoderef=='<' ) { /// control/special value.
+		/// <FILE> is the name of the config file we're parsing.
+		const size_t cstr_len = sizeof("<file>") - 1;
+		if( !strncmp("<file>", *cfgcoderef, cstr_len) || !strncmp("<FILE>", *cfgcoderef, cstr_len) ) {
+			struct HarbolString *str = harbol_string_new(NULL);
+			if( str==NULL ) {
+				harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "memory error", &parse_state->curr_line, NULL, "Harbol Config Parser :: unable to allocate string value for key '%s'.\n", keystr.cstr);
+				harbol_string_clear(&keystr);
+				return false;
+			}
+			
+			harbol_string_copy_cstr(str, ( parse_state->cfg_filename==NULL )? "C-string-cfg" : parse_state->cfg_filename);
+			struct HarbolVariant var = harbol_variant_make(&str, sizeof str, HarbolCfgType_String, &( bool ){0});
+			res = harbol_map_insert(map, keystr.cstr, keystr.len+1, &var, sizeof var);
+			*cfgcoderef += cstr_len;
+		} else {
+			harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: unknown control/command '%c'.\n", (*cfgcoderef)[1]);
+			res = false;
+		}
 	} else {
 		harbol_err_msg(&parse_state->errc, parse_state->cfg_filename, "syntax error", &parse_state->curr_line, NULL, "Harbol Config Parser :: unknown character detected '%c'.\n", **cfgcoderef);
 		res = false;
@@ -308,13 +352,13 @@ static bool harbol_cfg_parse_number(struct HarbolMap *const restrict map, const 
 		return false;
 	}
 	
-	struct HarbolVariant var = { 0 };
+	struct HarbolVariant var = {0};
 	if( type==HarbolCfgType_Float ) {
-		floatmax_t f = 0;
-		harbol_string_scan(&numstr, "%" SCNxfMAX "", &f);
+		floatmax_t f = lex_string_to_float(&numstr);
 		var = harbol_variant_make(&f, sizeof f, type, &( bool ){0});
 	} else {
-		var = harbol_variant_make(&( intmax_t ){strtoll(numstr.cstr, NULL, 0)}, sizeof(intmax_t), HarbolCfgType_Int, &( bool ){0});
+		intmax_t i = strtoll(numstr.cstr, NULL, 0);
+		var = harbol_variant_make(&i, sizeof i, HarbolCfgType_Int, &( bool ){0});
 	}
 	harbol_string_clear(&numstr);
 	return harbol_map_insert(map, key->cstr, key->len+1, &var, sizeof var);
@@ -332,8 +376,9 @@ static bool harbol_cfg_parse_section(struct HarbolMap *const restrict map, const
 	
 	while( **cfgcoderef != 0 && **cfgcoderef != '}' ) {
 		const bool res = harbol_cfg_parse_key_val(map, cfgcoderef, parse_state);
-		if( !res )
+		if( !res ) {
 			return false;
+		}
 	}
 	
 	if( **cfgcoderef==0 ) {
@@ -348,9 +393,9 @@ static struct HarbolMap *_harbol_cfg_parse(const char cfgcode[static 1], HarbolC
 	parse_state->curr_line = 1;
 	const char *iter = cfgcode;
 	struct HarbolMap *objs = harbol_map_new(8);
-	if( objs==NULL )
+	if( objs==NULL ) {
 		return NULL;
-	
+	}
 	parse_state->local_iota = &( intmax_t ){0};
 	parse_state->local_enum = &( intmax_t ){0};
 	while( harbol_cfg_parse_key_val(objs, &iter, parse_state) );
@@ -544,14 +589,15 @@ static NO_NULL struct HarbolVariant *_get_var(const struct HarbolMap *const cfgm
 				harbol_string_add_char(&sectionstr, *iter++);
 			}
 		}
-		if( harbol_string_empty(&sectionstr) )
+		if( harbol_string_empty(&sectionstr) ) {
 			break;
-		
+		}
 		var = harbol_map_key_get(itermap, sectionstr.cstr, sectionstr.len+1);
-		if( var==NULL || !harbol_string_cmpstr(&sectionstr, &targetstr) )
+		if( var==NULL || !harbol_string_cmpstr(&sectionstr, &targetstr) ) {
 			break;
-		else if( var->tag==HarbolCfgType_Map )
-			itermap = *( const struct HarbolMap** )var->data;
+		} else if( var->tag==HarbolCfgType_Map ) {
+			itermap = *( const struct HarbolMap** )(var->data);
+		}
 	}
 	harbol_string_clear(&sectionstr);
 	harbol_string_clear(&targetstr);
@@ -773,7 +819,7 @@ static NO_NULL bool _harbol_cfg_build_file(const struct HarbolMap *const map, FI
 			case HarbolCfgType_Int:
 				fprintf(file, "%" PRIiMAX "\n", *cv.i); break;
 			case HarbolCfgType_Bool:
-				fprintf(file, "%s\n", (*cv.b) ? "true" : "false"); break;
+				fprintf(file, "%s\n", (*cv.b)? "true" : "false"); break;
 			case HarbolCfgType_Color:
 				fprintf(file, "c[ %u, %u, %u, %u ]\n", cv.c->bytes.r, cv.c->bytes.g, cv.c->bytes.b, cv.c->bytes.a); break;
 			case HarbolCfgType_Vec4D:

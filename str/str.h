@@ -83,9 +83,6 @@ HARBOL_EXPORT NO_NULL bool harbol_string_lower(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_reverse(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL size_t harbol_string_rm_char(struct HarbolString *str, char c);
 
-/// END the params with a NULL.
-HARBOL_EXPORT NEVER_NULL(1) size_t harbol_string_cstr_switch(const struct HarbolString *str, ...);
-
 
 #ifdef __cplusplus
 }

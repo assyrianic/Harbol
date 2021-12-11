@@ -303,16 +303,3 @@ HARBOL_EXPORT size_t harbol_string_rm_char(struct HarbolString *const str, const
 	str->cstr[j] = 0;
 	return counts;
 }
-
-HARBOL_EXPORT size_t harbol_string_cstr_switch(const struct HarbolString *const str, ...) {
-	va_list ap; va_start(ap, str);
-	size_t index = SIZE_MAX;
-	for( const char *cstr = va_arg(ap, const char*); cstr != NULL; cstr = va_arg(ap, const char*) ) {
-		if( !harbol_string_cmpcstr(str, cstr) ) {
-			break;
-		}
-		index++;
-	}
-	va_end(ap);
-	return index;
-}

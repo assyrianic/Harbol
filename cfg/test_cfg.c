@@ -54,6 +54,7 @@ void test_harbol_cfg(FILE *const debug_stream)
 		'isAlive': true, \
 		'age': 0x18 , \
 		'money': 35.42e4 \
+		'myself': <FILE> \
 		'address': { \
 			'streetAddress': '21 2nd Street', \
 			'city': 'New York', \
@@ -75,7 +76,7 @@ void test_harbol_cfg(FILE *const debug_stream)
 			} \
 		}, \
 		'colors': c[ 0xff, 0xff, 0xff, 0xaa ], \
-		'origin': v[10.0f, 24.43, 25.0, 0xA.p+2], \
+		'origin': v[10.0f, 24.43, 25.0, 0xB.p+2], \
 		'children': {}, \
 		'spouse': null \
 		'test_iota': { \

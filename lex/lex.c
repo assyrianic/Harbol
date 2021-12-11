@@ -231,17 +231,20 @@ HARBOL_EXPORT bool write_utf8_str(struct HarbolString *const str, const int32_t 
 }
 
 HARBOL_EXPORT size_t read_utf8(const char cstr[static 1], const size_t cstrlen, int32_t *const restrict rune) {
+	*rune = -1;
+	if( cstr[0]==0 ) {
+		return 0;
+	}
+	
 	const size_t utf8len = get_utf8_len(cstr[0]);
 	if( utf8len==0 ) {
 		*rune = cstr[0];
 		return 1;
 	} else if( utf8len > cstrlen ) {
-		*rune = -1;
 		return 0;
 	} else {
 		for( size_t i=1; i<utf8len; i++ ) {
 			if( (cstr[i] & 0xc0) != 0x80 ) {
-				*rune = -1;
 				return 0;
 			}
 		}
@@ -250,7 +253,6 @@ HARBOL_EXPORT size_t read_utf8(const char cstr[static 1], const size_t cstrlen, 
 			case 3: *rune = ((cstr[0] & 0xF) << 12) | ((cstr[1] & 0x3F) << 6) | (cstr[2] & 0x3F); break;
 			case 4: *rune = ((cstr[0] & 0x7) << 18) | ((cstr[1] & 0x3F) << 12) | ((cstr[2] & 0x3F) << 6) | (cstr[3] & 0x3F); break;
 			default:
-				*rune = -1;
 				return 0;
 		}
 		return utf8len;
@@ -1413,6 +1415,24 @@ HARBOL_EXPORT bool lex_identifier(const char str[static 1], const char **const e
 	return buf->len > 0;
 }
 
+HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+	bool res = false;
+	while( *str != 0 ) {
+		int32_t rune = 0;
+		const size_t bytes = read_utf8(str, sizeof rune, &rune);
+		if( bytes==0 ) {
+			goto lex_id_u8_err;
+		} else if( checker(rune) ) {
+			write_utf8_str(buf, rune);
+		}
+		str += bytes;
+	}
+	res = buf->len > 0;
+lex_id_u8_err:
+	*end = str;
+	return res;
+}
+
 HARBOL_EXPORT bool lex_c_style_identifier(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
 	if( !is_alphabetic(*str) ) {
 		return false;
@@ -1435,30 +1455,33 @@ HARBOL_EXPORT bool lex_until(const char str[static 1], const char **const end, s
 HARBOL_EXPORT intmax_t lex_c_string_to_int(const struct HarbolString *const buf, char **const end) {
 	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
 	const size_t extra = (is_binary)? 2 : 0;
-	return strtoll(&buf->cstr[extra], end, is_binary ? 2 : 0);
+	return strtoll(&buf->cstr[extra], end, is_binary? 2 : 0);
 }
 
 HARBOL_EXPORT intmax_t lex_go_string_to_int(const struct HarbolString *const buf, char **const end) {
 	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
 	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
 	const size_t extra = (is_octal || is_binary)? 2 : 0;
-	return strtoll(&buf->cstr[extra], end, is_octal ? 8 : is_binary ? 2 : 0);
+	return strtoll(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
 
 HARBOL_EXPORT uintmax_t lex_c_string_to_uint(const struct HarbolString *const buf, char **const end) {
 	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
 	const size_t extra = (is_binary)? 2 : 0;
-	return strtoull(&buf->cstr[extra], end, is_binary ? 2 : 0);
+	return strtoull(&buf->cstr[extra], end, is_binary? 2 : 0);
 }
 
 HARBOL_EXPORT uintmax_t lex_go_string_to_uint(const struct HarbolString *const buf, char **const end) {
 	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
 	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
 	const size_t extra = (is_octal || is_binary)? 2 : 0;
-	return strtoull(&buf->cstr[extra], end, is_octal ? 8 : is_binary ? 2 : 0);
+	return strtoull(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT floatmax_t lex_string_to_float(const struct HarbolString *const buf, char **const end) {
-	return strtofmax(buf->cstr, end);
+HARBOL_EXPORT floatmax_t lex_string_to_float(const struct HarbolString *const buf) {
+	const bool is_hex = !strncmp(buf->cstr, "0x", 2) || !strncmp(buf->cstr, "0X", 2);
+	floatmax_t f = 0;
+	harbol_string_scan(buf, is_hex? "%" SCNxfMAX "" : "%" SCNfMAX "", &f);
+	return f;
 }

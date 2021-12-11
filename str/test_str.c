@@ -142,12 +142,6 @@ void test_harbol_string(FILE *const debug_stream)
 	fputs("\n", debug_stream);
 	
 	/// test string switch
-	fputs("\nstring :: test string switch.\n", debug_stream);
-	const char *comparisons[] = { "tset", "dcba", "!dlrow olleh" };
-	const size_t res = harbol_string_cstr_switch(&i, comparisons[0], comparisons[1], comparisons[2], NULL);
-	fprintf(debug_stream, "i's string: '%s' | index result: '%zu' | '%s'\n", i.cstr, res, (res==SIZE_MAX)? NULL : comparisons[res]);
-	
-	/// test string switch
 	fputs("\nstring :: test removing chars.\n", debug_stream);
 	
 	const size_t removed = harbol_string_rm_char(&i, 'l');
