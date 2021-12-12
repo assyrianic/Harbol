@@ -28,7 +28,7 @@ HARBOL_EXPORT bool is_whitespace(const int32_t c) {
 }
 
 HARBOL_EXPORT bool is_valid_unicode(const int32_t u) {
-	const uint32_t c = ( const uint32_t )u;
+	const uint32_t c = ( uint32_t )(u);
 	/// C11 6.4.3p2: U+D800 to U+DFFF are reserved for surrogate pairs.
 	/// A codepoint within the range cannot be a valid character.
 	if( 0xD800u <= c && c <= 0xDFFFu )
