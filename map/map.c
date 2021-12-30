@@ -196,6 +196,30 @@ HARBOL_EXPORT size_t harbol_map_get_entry_index(const struct HarbolMap *const ma
 	return SIZE_MAX;
 }
 
+
+HARBOL_EXPORT void *harbol_map_key_val(const struct HarbolMap *const map, const void *const val, const size_t datasize, size_t *const restrict keylen) {
+	const size_t i = harbol_map_idx_val(map, val, datasize);
+	if( i==SIZE_MAX ) {
+		return NULL;
+	} else {
+		*keylen = map->keylens[i];
+		return map->keys[i];
+	}
+}
+
+HARBOL_EXPORT size_t harbol_map_idx_val(const struct HarbolMap *const map, const void *const val, const size_t datasize) {
+	if( map->len==0 ) {
+		return SIZE_MAX;
+	}
+	
+	for( size_t i=0; i < map->len; i++ ) {
+		if( !memcmp(map->datum[i], val, datasize) ) {
+			return i;
+		}
+	}
+	return SIZE_MAX;
+}
+
 HARBOL_EXPORT void *harbol_map_key_get(const struct HarbolMap *const map, const void *const key, const size_t keylen) {
 	const size_t entry = harbol_map_get_entry_index(map, key, keylen);
 	return harbol_map_idx_get(map, entry);
@@ -257,7 +281,7 @@ HARBOL_EXPORT bool harbol_map_idx_rm(struct HarbolMap *const map, const size_t n
 	if( entry_idx==SIZE_MAX || !harbol_array_del_by_index(bucket, entry_idx, sizeof p) )
 		return false;
 	
-	free(map->keys[n]); map->keys[n] = NULL;
+	free(map->keys[n]);  map->keys[n]  = NULL;
 	free(map->datum[n]); map->datum[n] = NULL;
 	map->hashes[n] = map->keylens[n] = 0;
 	

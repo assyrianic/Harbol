@@ -8,14 +8,11 @@ extern "C" {
 #include "../harbol_common_defines.h"
 #include "../harbol_common_includes.h"
 
-struct HarbolQNode {
-	uint8_t *data;
-	size_t   next, prev;
-};
 
 struct HarbolDeque {
-	struct HarbolQNode *nodes;
-	size_t              cap, len, head, tail, freed;
+	uint8_t **datum;
+	size_t   *nexts, *prevs;
+	size_t    cap, len, head, tail, freed;
 };
 
 HARBOL_EXPORT struct HarbolDeque *harbol_deque_new(size_t init_size);

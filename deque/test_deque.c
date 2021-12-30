@@ -103,10 +103,10 @@ void test_harbol_deque(FILE *const debug_stream)
 	
 	/// free deque
 	harbol_deque_clear(&i);
-	fprintf(debug_stream, "i's item is null? '%s'\n", i.nodes != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's item is null? '%s'\n", i.datum != NULL ? "no" : "yes");
 	
 	harbol_deque_clear(p);
-	fprintf(debug_stream, "p's item is null? '%s'\n", p->nodes != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL ? "no" : "yes");
 	harbol_deque_free(&p);
 	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL ? "no" : "yes");
 }
