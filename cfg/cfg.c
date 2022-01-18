@@ -32,15 +32,15 @@ static NO_NULL bool skip_ws_and_comments(const char **strref, HarbolCfgState *co
 				**strref==':' || **strref==',') ) /// delimiters.
 		{
 			if( is_whitespace(**strref) ) {
-				if( **strref=='\n' ) {
+				/*if( **strref=='\n' ) {
 					parse_state->curr_line++;
-				}
-				*strref = skip_chars(*strref, is_whitespace);
+				}*/
+				*strref = skip_chars(*strref, is_whitespace, &parse_state->curr_line);
 			} else if( **strref=='#' || (**strref=='/' && (*strref)[1]=='/') ) {
-				*strref = skip_single_line_comment(*strref);
+				*strref = skip_single_line_comment(*strref, &parse_state->curr_line);
 				parse_state->curr_line++;
 			} else if( **strref=='/' && (*strref)[1]=='*' ) {
-				*strref = skip_multi_line_comment(*strref, "*/", sizeof "*/"-1);
+				*strref = skip_multi_line_comment(*strref, "*/", sizeof "*/"-1, &parse_state->curr_line);
 			} else if( **strref==':' || **strref==',' ) {
 				(*strref)++;
 			}

@@ -28,15 +28,15 @@ HARBOL_EXPORT bool check_is_char(const char str[], size_t len, size_t idx, int32
 
 HARBOL_EXPORT size_t get_utf8_len(char c);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_chars(const char str[], bool checker(int32_t c));
+HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_chars(const char str[], bool checker(int32_t c), size_t *lines);
 
 HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_chars_until_newline(const char str[], bool checker(int32_t c));
 
 HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_string_literal(const char str[], char esc);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_single_line_comment(const char str[]);
+HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_single_line_comment(const char str[], size_t *lines);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_multi_line_comment(const char str[], const char end_token[], size_t end_len);
+HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_multi_line_comment(const char str[], const char end_token[], size_t end_len, size_t *lines);
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char *clear_single_line_comment(char str[]);
 
@@ -44,8 +44,8 @@ HARBOL_EXPORT NO_NULL NONNULL_RET char *clear_multi_line_comment(char str[], con
 
 HARBOL_EXPORT NO_NULL NONNULL_RET const char *skip_multiquote_string(const char str[], const char quote[], size_t quote_len, char esc);
 
-HARBOL_EXPORT NO_NULL bool lex_single_line_comment(const char str[], const char **end, struct HarbolString *buf);
-HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(const char str[], const char **end, const char end_token[], size_t end_len, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL bool lex_single_line_comment(const char str[], const char **end, struct HarbolString *buf, size_t *lines);
+HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(const char str[], const char **end, const char end_token[], size_t end_len, struct HarbolString *buf, size_t *lines);
 
 HARBOL_EXPORT NO_NULL size_t write_utf8_cstr(char buf[], size_t buflen, int32_t rune);
 HARBOL_EXPORT NO_NULL bool write_utf8_str(struct HarbolString *str, int32_t rune);

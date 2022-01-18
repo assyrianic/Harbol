@@ -39,7 +39,7 @@ HARBOL_EXPORT struct HarbolDeque harbol_deque_make(const size_t init_size, bool 
 }
 
 HARBOL_EXPORT void harbol_deque_reset(struct HarbolDeque *const deque) {
-	for( size_t i=0; i<deque->cap; i++ ) {
+	for( size_t i=0; i < deque->cap; i++ ) {
 		free(deque->datum[i]); deque->datum[i] = NULL;
 		deque->prevs[i] = i - 1;
 		deque->nexts[i] = i + 1;
@@ -49,7 +49,7 @@ HARBOL_EXPORT void harbol_deque_reset(struct HarbolDeque *const deque) {
 }
 
 HARBOL_EXPORT void harbol_deque_clear(struct HarbolDeque *const deque) {
-	for( size_t i=0; i<deque->cap; i++ ) {
+	for( size_t i=0; i < deque->cap; i++ ) {
 		free(deque->datum[i]); deque->datum[i] = NULL;
 	}
 	free(deque->datum); deque->datum = NULL;

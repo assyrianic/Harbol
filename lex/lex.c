@@ -52,8 +52,11 @@ HARBOL_EXPORT size_t get_utf8_len(const char c) {
 	return 8;
 }
 
-HARBOL_EXPORT const char *skip_chars(const char str[static 1], bool checker(int32_t c)) {
+HARBOL_EXPORT const char *skip_chars(const char str[static 1], bool checker(int32_t c), size_t *const restrict lines) {
 	while( *str != 0 && checker(*str) ) {
+		if( *str=='\n' ) {
+			++*lines;
+		}
 		str++;
 	}
 	return str;
@@ -75,19 +78,25 @@ HARBOL_EXPORT const char *skip_string_literal(const char str[static 1], const ch
 	return str;
 }
 
-HARBOL_EXPORT const char *skip_single_line_comment(const char str[static 1]) {
+HARBOL_EXPORT const char *skip_single_line_comment(const char str[static 1], size_t *const restrict lines) {
 	const char *begin = str;
 	while( *begin != 0 && *begin != '\n' ) {
 		if( *begin=='\\' ) {
 			while( *++begin != '\n' );
+			if( *begin=='\n' ) {
+				++*lines;
+			}
 		}
 		begin++;
 	}
 	return begin;
 }
-HARBOL_EXPORT const char *skip_multi_line_comment(const char str[static 1], const char end_token[static 1], const size_t end_len) {
+HARBOL_EXPORT const char *skip_multi_line_comment(const char str[static 1], const char end_token[static 1], const size_t end_len, size_t *const restrict lines) {
 	const char *begin = str + 1;
 	while( *begin != 0 && strncmp(end_token, begin, end_len) != 0 ) {
+		if( *begin=='\n' ) {
+			++*lines;
+		}
 		begin++;
 	}
 	if( *begin != 0 ) {
@@ -139,12 +148,15 @@ HARBOL_EXPORT const char *skip_multiquote_string(const char str[static 1], const
 	return str;
 }
 
-HARBOL_EXPORT bool lex_single_line_comment(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT bool lex_single_line_comment(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, size_t *const restrict lines) {
 	while( *str != 0 && *str != '\n' ) {
 		if( *str=='\\' ) {
 			harbol_string_add_char(buf, *str);
 			while( *++str != '\n' ) {
 				harbol_string_add_char(buf, *str);
+			}
+			if( *str=='\n' ) {
+				++*lines;
 			}
 		}
 		harbol_string_add_char(buf, *str++);
@@ -153,9 +165,12 @@ HARBOL_EXPORT bool lex_single_line_comment(const char str[static 1], const char 
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT bool lex_multi_line_comment(const char str[static 1], const char **const end, const char end_token[static 1], const size_t end_len, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT bool lex_multi_line_comment(const char str[static 1], const char **const end, const char end_token[static 1], const size_t end_len, struct HarbolString *const restrict buf, size_t *const restrict lines) {
 	harbol_string_add_char(buf, *str++);
 	while( *str != 0 && strncmp(end_token, str, end_len) != 0 ) {
+		if( *str=='\n' ) {
+			++*lines;
+		}
 		harbol_string_add_char(buf, *str++);
 	}
 	harbol_string_add_cstr(buf, end_token);
