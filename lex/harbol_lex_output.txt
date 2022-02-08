@@ -1,0 +1,168 @@
+
+lex tools :: test C hex.
+result: yes :: lexeme: '0X55' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0X5fl' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x5'5LLU' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0X5full' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x0.3p10' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1.2p3' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1p+1' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1.b7p-1' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x3.3333333333334p-5' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '0x' | is float? no | err: Hex literal missing digits.
+result: no :: lexeme: '0x.' | is float? yes | err: Missing hex digit before dot.
+result: no :: lexeme: '0x1.f' | is float? yes | err: Hex float with no exponent.
+
+lex tools :: test Go hex.
+result: yes :: lexeme: '0xBadFace' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0xBad_Face' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x_67_7a_2f_cc_40_c6' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x1p-2' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x2.p10' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1.Fp+0' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0X.8p-0' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0X_1FFFP-16' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x15e' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x3.3333333333334p-5' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '0x.p' | is float? yes | err: Missing at least one hex digit before exponent.
+result: no :: lexeme: '0x1.5e-2' | is float? yes | err: Hex float with no exponent.
+result: no :: lexeme: '0x_67_7a_2f_cc_40_c6_' | is float? no | err: Digit Separator not separating digits.
+result: no :: lexeme: '0_' | is float? no | err: Missing hex notation 'x'.
+
+lex tools :: test C decimal.
+result: yes :: lexeme: '344ULL' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '33' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '33' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '.0' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '.344' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '.34e4' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '.34e4f' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0.f' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0.34e4f' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '3.-3' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '3.' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '3.e-3' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '3.e-' | is float? yes | err: Missing digits after exponent.
+result: no :: lexeme: '0f' | is float? no | err: Missing dot/exponent mark.
+result: no :: lexeme: '.34ef' | is float? yes | err: No digits between exponent mark and float suffix.
+result: no :: lexeme: '0.34ef' | is float? yes | err: No digits between exponent mark and float suffix.
+result: no :: lexeme: '0.34e1U' | is float? yes | err: Integer suffix on a float literal.
+result: no :: lexeme: '34e1U' | is float? yes | err: Integer suffix on a float literal.
+
+lex tools :: test Go decimal.
+result: yes :: lexeme: '0.' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '72.40' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '072.40' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '2.71828' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '1.e+0' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '6.67428e-11' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '1E6' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '.25' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '.12345E+5' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '1_5.' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0.15e+0_2' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '1_.' | is float? yes | err: Digit Separator near dot.
+result: no :: lexeme: '1.' | is float? yes | err: Digit Separator near dot.
+result: no :: lexeme: '1.5_e' | is float? yes | err: Digit Separator not separating digits.
+result: no :: lexeme: '1.5e' | is float? yes | err: Digit Separator not separating digits.
+result: no :: lexeme: '1.5e1_' | is float? yes | err: Digit Separator not separating digits.
+
+lex tools :: test Go String.
+result: yes :: lexeme: 'raw\nstring' | err: No Lexing Error.
+result: yes :: lexeme: 'fooa bar' | err: No Lexing Error.
+result: yes :: lexeme: 'fooabar' | err: No Lexing Error.
+result: yes :: lexeme: 'fooܐ bar' | err: No Lexing Error.
+result: yes :: lexeme: '日本語' | err: No Lexing Error.
+result: yes :: lexeme: '日本語' | err: No Lexing Error.
+
+lex tools :: test C octal.
+result: yes :: lexeme: '0553' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0553ULL' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0553u' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0553llu' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0777' | is float? no | err: No Lexing Error.
+result: no :: lexeme: '0553LU' | is float? no | err: 'U' suffix between 'L' suffixes.
+result: no :: lexeme: '5' | is float? no | err: Missing initial '0'.
+result: no :: lexeme: '078' | is float? no | err: Bad digit/gylph.
+
+lex tools :: test Go octal.
+result: yes :: lexeme: '0o553' | err: No Lexing Error.
+result: yes :: lexeme: '0o777' | err: No Lexing Error.
+result: no :: lexeme: '0o78' | err: Bad digit/gylph.
+result: no :: lexeme: '0o553U' | err: Bad digit/gylph.
+result: no :: lexeme: '0o553L' | err: Bad digit/gylph.
+result: no :: lexeme: '0o553u' | err: Bad digit/gylph.
+result: no :: lexeme: '5' | err: Missing initial '0'.
+result: no :: lexeme: '05' | err: Missing octal notation 'o'.
+
+lex tools :: test C binary.
+result: yes :: lexeme: '0b11101' | err: No Lexing Error.
+result: yes :: lexeme: '0b101ULL' | err: No Lexing Error.
+result: yes :: lexeme: '0b1u' | err: No Lexing Error.
+result: yes :: lexeme: '0b101llu' | err: No Lexing Error.
+result: no :: lexeme: 'b' | err: Missing initial '0'.
+result: no :: lexeme: '0b10002' | err: Bad digit/gylph.
+result: no :: lexeme: '01' | err: Missing binary notation 'b'.
+
+lex tools :: test Go binary.
+result: yes :: lexeme: '0b11101' | err: No Lexing Error.
+result: yes :: lexeme: '0b110_101' | err: No Lexing Error.
+result: no :: lexeme: 'b' | err: Missing initial '0'.
+result: no :: lexeme: '0b10002' | err: Bad digit/gylph.
+result: no :: lexeme: '01' | err: Missing binary notation 'b'.
+
+lex tools :: test C various numbers.
+result: yes :: lexeme: '0X5'5' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0X5fl' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0x55LLU' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0X5full' | is float? no | err: No Lexing Error.
+result: no :: lexeme: '0X'CAFE'' | is float? no | err: Too many digit separators.
+result: yes :: lexeme: '0x0.3p10' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1.2p3' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1p+1' | is float? yes | err: No Lexing Error.
+result: yes :: lexeme: '0x1.b7p-1' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '0x0.3' | is float? yes | err: Hex float with no exponent.
+result: yes :: lexeme: '0x3.3333333333334p-5' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '0x1.f' | is float? yes | err: Hex float with no exponent.
+result: yes :: lexeme: '0553' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '05'53ULL' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0553u' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '0553llu' | is float? no | err: No Lexing Error.
+result: yes :: lexeme: '07'77' | is float? no | err: No Lexing Error.
+result: no :: lexeme: '0553LU' | is float? no | err: 'U' suffix between 'L' suffixes.
+result: yes :: lexeme: '55'3' | is float? no | err: No Lexing Error.
+result: no :: lexeme: '078' | is float? no | err: Bad digit/gylph.
+result: no :: lexeme: '.llu' | is float? yes | err: Integer suffix on a float literal.
+result: yes :: lexeme: '1.0e+001L' | is float? yes | err: No Lexing Error.
+result: no :: lexeme: '0ulll' | is float? no | err: Too many 'L' suffixes.
+
+lex tools :: test single-line comment lexing.
+result: no :: comment: '/// kektus \      
+ foobar  \ 
+ bazbard' - lines: '2'
+
+lex tools :: test multi-line comment lexing.
+result: no :: comment: '/** kektus 
+ foobar  
+ bazbard */' - lines: '2'
+
+lex tools :: test converting utf8 to runes.
+lex tools :: utf8 -> 'ܩܙܛas日本語dsads' | '22'
+lex tools :: iterating runes (count: 13).
+runes[0]:: 'U+00000729'
+runes[1]:: 'U+00000719'
+runes[2]:: 'U+0000071B'
+runes[3]:: 'U+00000061'
+runes[4]:: 'U+00000073'
+runes[5]:: 'U+000065E5'
+runes[6]:: 'U+0000672C'
+runes[7]:: 'U+00008A9E'
+runes[8]:: 'U+00000064'
+runes[9]:: 'U+00000073'
+runes[10]:: 'U+00000061'
+runes[11]:: 'U+00000064'
+runes[12]:: 'U+00000073'
+runes[13]:: 'U+00000000'
+
+lex tools :: test converting runes to utf8.
+lex tools :: utf8 -> 'ܩܙܛas日本語dsads' | '22'

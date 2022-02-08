@@ -257,6 +257,8 @@ void test_harbol_lex(FILE *const debug_stream)
 		"55'3", /// bad
 		"078", /// bad
 		".llu", /// bad
+		"1.0e+001L", /// good.
+		"0ullll", /// bad.
 	};
 	for( const char **i=&c_nums[0]; i<1[&c_nums]; i++ ) {
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
@@ -271,8 +273,9 @@ void test_harbol_lex(FILE *const debug_stream)
 	{
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
 		const char *end = NULL;
-		const bool res = lex_single_line_comment("/// kektus \\      \n foobar  \\ \n bazbard", &end, &lexeme);
-		fprintf(debug_stream, "result: %s :: comment: '%s'\n", res==0 ? "yes" : "no", lexeme.cstr);
+		size_t lines = 0;
+		const bool res = lex_single_line_comment("/// kektus \\      \n foobar  \\ \n bazbard", &end, &lexeme, &lines);
+		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%zu'\n", res==0 ? "yes" : "no", lexeme.cstr, lines);
 		harbol_string_clear(&lexeme);
 	}
 	
@@ -280,8 +283,9 @@ void test_harbol_lex(FILE *const debug_stream)
 	{
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
 		const char *end = NULL;
-		const bool res = lex_multi_line_comment("/** kektus \n foobar  \n bazbard */", &end, "*/", sizeof "*/"-1, &lexeme);
-		fprintf(debug_stream, "result: %s :: comment: '%s'\n", res==0 ? "yes" : "no", lexeme.cstr);
+		size_t lines = 0;
+		const bool res = lex_multi_line_comment("/** kektus \n foobar  \n bazbard */", &end, "*/", sizeof "*/"-1, &lexeme, &lines);
+		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%zu'\n", res==0 ? "yes" : "no", lexeme.cstr, lines);
 		harbol_string_clear(&lexeme);
 	}
 	fputs("\nlex tools :: test converting utf8 to runes.\n", debug_stream);

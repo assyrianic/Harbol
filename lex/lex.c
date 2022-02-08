@@ -658,7 +658,7 @@ HARBOL_EXPORT int lex_go_style_hex(const char str[static 1], const char **const 
 						harbol_string_add_char(buf, chr);
 					}
 				} else {
-					return result;
+					goto lex_go_style_hex_err;
 				}
 				break;
 			case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
@@ -1044,7 +1044,7 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 						harbol_string_add_char(buf, chr);
 					}
 				} else {
-					return result;
+					goto lex_c_style_decimal_err;
 				}
 				break;
 			case 'F': case 'f':
@@ -1107,7 +1107,7 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 					harbol_string_add_char(buf, chr);
 					result = HarbolLexTooManyLs;
 					goto lex_c_style_decimal_err;
-				} else if( lit_flags & (flt_dot|flt_f_flag|flt_e_flag) ) { /// int suffix on float literal.
+				} else if( (lit_flags & (flt_dot|flt_f_flag|flt_e_flag)) && (lit_flags & (long2|uflag)) ) { /// int suffix on float literal.
 					harbol_string_add_char(buf, chr);
 					result = HarbolLexIntSuffixOnFlt;
 					goto lex_c_style_decimal_err;
@@ -1207,7 +1207,7 @@ HARBOL_EXPORT int lex_go_style_decimal(const char str[static 1], const char **co
 						harbol_string_add_char(buf, chr);
 					}
 				} else {
-					return result;
+					goto lex_go_style_decimal_err;
 				}
 				break;
 			case 'E': case 'e':
