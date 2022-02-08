@@ -657,7 +657,9 @@ HARBOL_EXPORT int lex_go_style_hex(const char str[static 1], const char **const 
 						lit_flags |= math_op;
 						harbol_string_add_char(buf, chr);
 					}
-				} else return true;
+				} else {
+					return result;
+				}
 				break;
 			case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 			case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
@@ -1041,7 +1043,9 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 						lit_flags |= math_op;
 						harbol_string_add_char(buf, chr);
 					}
-				} else return true;
+				} else {
+					return result;
+				}
 				break;
 			case 'F': case 'f':
 				if( !(lit_flags & (flt_dot|flt_e_flag)) ) { /// missing dot or exponent.
@@ -1203,7 +1207,7 @@ HARBOL_EXPORT int lex_go_style_decimal(const char str[static 1], const char **co
 						harbol_string_add_char(buf, chr);
 					}
 				} else {
-					return true;
+					return result;
 				}
 				break;
 			case 'E': case 'e':
