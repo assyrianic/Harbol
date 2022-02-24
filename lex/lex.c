@@ -1039,7 +1039,7 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 				}
 				break;
 			case '-': case '+':
-				if( lit_flags & (math_op|got_exp_num) ) {
+				if( (lit_flags & (math_op|got_exp_num)) || lit_flags==0 ) {
 					goto lex_c_style_decimal_err;
 				} else if( lit_flags & (flt_e_flag|flt_dot) ) {
 					if( !is_decimal(str[1]) ) { /// no number after exponent?
@@ -1202,7 +1202,7 @@ HARBOL_EXPORT int lex_go_style_decimal(const char str[static 1], const char **co
 				}
 				break;
 			case '-': case '+':
-				if( lit_flags & math_op ) {
+				if( (lit_flags & math_op) || lit_flags==0 ) {
 					goto lex_go_style_decimal_err;
 				} else if( lit_flags & (flt_e_flag|flt_dot) ) {
 					if( !is_decimal(str[1]) ) { /// no number after exponent?
