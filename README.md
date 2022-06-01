@@ -57,7 +57,7 @@ int main(const int argc, char *argv[])
 	harbol_array_insert(&vec, &( float32_t ){2.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){3.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){4.f}, sizeof(float32_t));
-	const float32_t f = *( const float32_t* )harbol_vector_get(&vec, 1);
+	const float32_t f = *( const float32_t* )(harbol_vector_get(&vec, 1));
 	harbol_array_clear(&vec);
 	
 	struct HarbolMap *ptrmap = harbol_map_new(8);
