@@ -456,7 +456,6 @@ static inline char *sprintf_alloc(const char fmt[static 1], ...)
 	return text;
 }
 
-
 static inline bool is_uint_in_bounds(const size_t val, const size_t max, const size_t min) {
 	return (val - min) <= (max - min);
 }
@@ -468,26 +467,6 @@ static inline bool is_int_in_bounds(const ssize_t val, const ssize_t max, const 
 static inline NO_NULL bool is_uintptr_in_bounds(const uintptr_t val, const uintptr_t max, const uintptr_t min) {
 	return (val - min) <= (max - min);
 }
-
-static inline NO_NULL bool is_ptr_in_bounds(const void *const val, const void *const max, const void *const min) {
-	const uint8_t
-		*const v = val,
-		*const a = max,
-		*const b = min
-	;
-	return ( uintptr_t )(v - b) <= ( uintptr_t )(a - b);
-}
-
-#ifdef __cplusplus
-template< typename T >
-static inline constexpr bool is_in_bounds(const T val, const T max, const T min) {
-	if( std::is_signed< T > ) {
-		return ((val - min) * (max - val)) >= 0;
-	} else {
-		return (val - min) <= (max - min);
-	}
-}
-#endif
 
 
 /// END the params with a NULL.
