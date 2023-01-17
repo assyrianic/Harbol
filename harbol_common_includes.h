@@ -474,7 +474,7 @@ static inline NO_NULL bool is_ptr_in_bounds(const void *const val, const void *c
 		*const a = max,
 		*const b = min
 	;
-	return (v - b) <= (a - b);
+	return ( uintptr_t )(v - b) <= ( uintptr_t )(a - b);
 }
 
 #ifdef __cplusplus
