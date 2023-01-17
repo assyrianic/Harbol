@@ -456,12 +456,13 @@ static inline char *sprintf_alloc(const char fmt[static 1], ...)
 	return text;
 }
 
-static inline bool is_int_in_bounds(const ssize_t val, const ssize_t max, const ssize_t min) {
-	return ((val - min) * (max - val)) >= 0;
-}
 
 static inline bool is_uint_in_bounds(const size_t val, const size_t max, const size_t min) {
 	return (val - min) <= (max - min);
+}
+
+static inline bool is_int_in_bounds(const ssize_t val, const ssize_t max, const ssize_t min) {
+	return is_uint_in_bounds(( size_t )(val), ( size_t )(max), ( size_t )(min));
 }
 
 static inline NO_NULL bool is_uintptr_in_bounds(const uintptr_t val, const uintptr_t max, const uintptr_t min) {
