@@ -205,6 +205,67 @@ static inline T *harbol_tg_recalloc(T *const arr, size_t const new_size, size_t 
 }
 #endif
 
+
+/// This is for allocating multiple buffers that all have to be the same size.
+/// use like: 'harbol_multi_calloc(size, num_bufs, &buf1, sizeof *buf1, ...);'
+/// If allocation fails, all buffers are freed.
+static inline bool harbol_multi_calloc(size_t const size, size_t const n_buffers, ...) {
+	va_list ap; va_start(ap, n_buffers);
+	va_list cp; va_copy(cp, ap);
+	bool res = true;
+	for( size_t i=0; i < n_buffers; i++ ) {
+		void       **buf       = va_arg(ap, void**);
+		size_t const elem_size = va_arg(ap, size_t);
+		*buf = calloc(size, elem_size);
+		res &= *buf != NULL;
+	}
+	va_end(ap);
+	
+	if( !res ) {
+		for( size_t i=0; i < n_buffers; i++ ) {
+			void **buf = va_arg(cp, void**);
+			va_arg(cp, size_t);
+			free(*buf); *buf = NULL;
+		}
+	}
+	va_end(cp);
+	return res;
+}
+
+
+/// Works similar to `harbol_multi_calloc` but for `recalloc`ing instead.
+/// use like: 'harbol_multi_calloc(newsize, oldsize, num_bufs, &buf1, sizeof *buf1, ...);'
+/// If allocation fails, all buffers given buffers are unchanged.
+static inline bool harbol_multi_recalloc(size_t const new_size, size_t const old_size, size_t const n_buffers, ...) {
+	va_list ap; va_start(ap, n_buffers);
+	va_list cp; va_copy(cp, ap);
+	bool res = true;
+	void **bufs = calloc(n_buffers, sizeof *bufs);
+	for( size_t i=0; i < n_buffers; i++ ) {
+		void **buf = va_arg(ap, void**);
+		size_t const elem_size = va_arg(ap, size_t);
+		bufs[i] = harbol_recalloc(*buf, new_size, elem_size, old_size);
+		res &= bufs[i] != NULL;
+	}
+	va_end(ap);
+	
+	if( !res ) {
+		for( size_t i=0; i < n_buffers; i++ ) {
+			free(bufs[i]); bufs[i] = NULL;
+		}
+	} else {
+		for( size_t i=0; i < n_buffers; i++ ) {
+			void **buf = va_arg(cp, void**);
+			va_arg(cp, size_t);
+			*buf = bufs[i];
+		}
+	}
+	free(bufs); bufs = NULL;
+	va_end(cp);
+	return res;
+}
+
+
 static inline void harbol_cleanup(void *const ptr_ref) {
 #ifdef __cplusplus
 	void **const p = reinterpret_cast< decltype(p) >(ptr_ref);
@@ -213,6 +274,21 @@ static inline void harbol_cleanup(void *const ptr_ref) {
 #endif
 	free(*p); *p = NULL;
 }
+
+/// Works like to `harbol_cleanup`.
+/// use like: 'harbol_multi_cleanup(num_bufs, &buf1, &buf2, &buf3, ...);'
+static inline void harbol_multi_cleanup(size_t const n_buffers, ...) {
+	va_list ap; va_start(ap, n_buffers);
+	for( size_t i=0; i < n_buffers; i++ ) {
+		void **buf = va_arg(ap, void**);
+		if( buf==NULL ) {
+			break;
+		}
+		free(*buf); *buf = NULL;
+	}
+	va_end(ap);
+}
+
 
 static inline NO_NULL void *harbol_mempcpy(void *const dest, void const *const src, size_t const bytes) {
 #ifdef __cplusplus

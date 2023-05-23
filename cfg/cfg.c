@@ -445,7 +445,7 @@ static void _harbol_cfgkey_clear(struct HarbolVariant *const var) {
 	union ConfigVal cv = {var->data};
 	switch( var->tag ) {
 		case HarbolCfgType_Map:       harbol_cfg_free(cv.section); break;
-		case HarbolCfgType_String:    harbol_string_free(cv.str); break;
+		case HarbolCfgType_String:    harbol_string_free(cv.str);  break;
 		default:                      break;
 	}
 	harbol_variant_clear(var);
