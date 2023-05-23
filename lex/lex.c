@@ -5,46 +5,47 @@
 #endif
 
 
-HARBOL_EXPORT bool is_alphabetic(const int32_t c) {
+HARBOL_EXPORT bool is_alphabetic(int32_t const c) {
 	return( (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_' || c < -1 );
 }
-HARBOL_EXPORT bool is_possible_id(const int32_t c) {
+HARBOL_EXPORT bool is_possible_id(int32_t const c) {
 	return( is_alphabetic(c) || (c>='0' && c<='9') );
 }
-HARBOL_EXPORT bool is_decimal(const int32_t c) {
+HARBOL_EXPORT bool is_decimal(int32_t const c) {
 	return( c>='0' && c<='9' );
 }
-HARBOL_EXPORT bool is_octal(const int32_t c) {
+HARBOL_EXPORT bool is_octal(int32_t const c) {
 	return( c>='0' && c<='7' );
 }
-HARBOL_EXPORT bool is_hex(const int32_t c) {
+HARBOL_EXPORT bool is_hex(int32_t const c) {
 	return( (c>='a' && c<='f') || (c>='A' && c<='F') || is_decimal(c) );
 }
-HARBOL_EXPORT bool is_binary(const int32_t c) {
+HARBOL_EXPORT bool is_binary(int32_t const c) {
 	return( c=='0' || c=='1' );
 }
-HARBOL_EXPORT bool is_whitespace(const int32_t c) {
+HARBOL_EXPORT bool is_whitespace(int32_t const c) {
 	return( c==' ' || c=='\t' || c=='\r' || c=='\v' || c=='\f' || c=='\n' );
 }
 
-HARBOL_EXPORT bool is_valid_unicode(const int32_t u) {
-	const uint32_t c = ( uint32_t )(u);
+HARBOL_EXPORT bool is_valid_unicode(int32_t const u) {
+	uint32_t const c = ( uint32_t )(u);
 	/// C11 6.4.3p2: U+D800 to U+DFFF are reserved for surrogate pairs.
 	/// A codepoint within the range cannot be a valid character.
-	if( 0xD800u <= c && c <= 0xDFFFu )
+	if( 0xD800u <= c && c <= 0xDFFFu ) {
 		return false;
+	}
 	/// It's not allowed to encode ASCII characters using \U or \u.
 	/// Some characters not in the basic character set (C11 5.2.1p3)
 	/// are allowed as exceptions.
 	return 0xA0u <= c || c=='$' || c=='@' || c=='`';
 }
 
-HARBOL_EXPORT bool check_is_char(const char str[static 1], const size_t len, const size_t idx, const int32_t c) {
+HARBOL_EXPORT bool check_is_char(char const str[static 1], size_t const len, size_t const idx, int32_t const c) {
 	return ( idx >= len )? false : str[idx] != 0 && str[idx]==c;
 }
 
-HARBOL_EXPORT size_t get_utf8_len(const char c) {
-	for( size_t i=7; i<8; i-- ) {
+HARBOL_EXPORT size_t get_utf8_len(char const c) {
+	for( size_t i=7; i < 8; i-- ) {
 		if( !(c & (1 << i)) ) {
 			return 7 - i;
 		}
@@ -52,7 +53,7 @@ HARBOL_EXPORT size_t get_utf8_len(const char c) {
 	return 8;
 }
 
-HARBOL_EXPORT const char *skip_chars(const char str[static 1], bool checker(int32_t c), size_t *const restrict lines) {
+HARBOL_EXPORT char const *skip_chars(char const str[static 1], bool checker(int32_t c), size_t *const restrict lines) {
 	while( *str != 0 && checker(*str) ) {
 		if( *str=='\n' ) {
 			++*lines;
@@ -62,24 +63,24 @@ HARBOL_EXPORT const char *skip_chars(const char str[static 1], bool checker(int3
 	return str;
 }
 
-HARBOL_EXPORT const char *skip_chars_until_newline(const char str[static 1], bool checker(int32_t c)) {
+HARBOL_EXPORT char const *skip_chars_until_newline(char const str[static 1], bool checker(int32_t c)) {
 	while( *str != 0 && *str != '\n' && checker(*str) ) {
 		str++;
 	}
 	return str;
 }
 
-HARBOL_EXPORT const char *skip_string_literal(const char str[static 1], const char esc) {
-	const int_fast8_t quote = *str++;
+HARBOL_EXPORT char const *skip_string_literal(char const str[static 1], char const esc) {
+	int_fast8_t const quote = *str++;
 	while( *str != 0 && *str != quote ) {
-		const int_fast8_t c = *str;
-		str += ( c==esc ) ? 2 : 1;
+		int_fast8_t const c = *str;
+		str += ( c==esc )? 2 : 1;
 	}
 	return str;
 }
 
-HARBOL_EXPORT const char *skip_single_line_comment(const char str[static 1], size_t *const restrict lines) {
-	const char *begin = str;
+HARBOL_EXPORT char const *skip_single_line_comment(char const str[static 1], size_t *const restrict lines) {
+	char const *begin = str;
 	while( *begin != 0 && *begin != '\n' ) {
 		if( *begin=='\\' ) {
 			while( *++begin != '\n' );
@@ -91,8 +92,8 @@ HARBOL_EXPORT const char *skip_single_line_comment(const char str[static 1], siz
 	}
 	return begin;
 }
-HARBOL_EXPORT const char *skip_multi_line_comment(const char str[static 1], const char end_token[static 1], const size_t end_len, size_t *const restrict lines) {
-	const char *begin = str + 1;
+HARBOL_EXPORT char const *skip_multi_line_comment(char const str[static 1], char const end_token[static 1], size_t const end_len, size_t *const restrict lines) {
+	char const *begin = str + 1;
 	while( *begin != 0 && strncmp(end_token, begin, end_len) != 0 ) {
 		if( *begin=='\n' ) {
 			++*lines;
@@ -120,7 +121,7 @@ HARBOL_EXPORT char *clear_single_line_comment(char str[static 1]) {
 	return begin;
 }
 
-HARBOL_EXPORT char *clear_multi_line_comment(char str[static 1], const char end_token[static 1], const size_t end_len) {
+HARBOL_EXPORT char *clear_multi_line_comment(char str[static 1], char const end_token[static 1], size_t const end_len) {
 	char *begin = str + 1;
 	while( *begin != 0 && strncmp(end_token, begin, end_len) != 0 ) {
 		if( *begin=='\n' ) {
@@ -137,10 +138,10 @@ HARBOL_EXPORT char *clear_multi_line_comment(char str[static 1], const char end_
 	return begin;
 }
 
-HARBOL_EXPORT const char *skip_multiquote_string(const char str[static 1], const char quote[static 1], const size_t quote_len, const char esc) {
+HARBOL_EXPORT char const *skip_multiquote_string(char const str[static 1], char const quote[static 1], size_t const quote_len, char const esc) {
 	while( *str != 0 && strncmp(quote, str, quote_len) != 0 ) {
-		const int_fast8_t c = *str;
-		str += ( c==esc ) ? 2 : 1;
+		int_fast8_t const c = *str;
+		str += ( c==esc )? 2 : 1;
 	}
 	if( *str != 0 ) {
 		str += quote_len;
@@ -148,7 +149,7 @@ HARBOL_EXPORT const char *skip_multiquote_string(const char str[static 1], const
 	return str;
 }
 
-HARBOL_EXPORT bool lex_single_line_comment(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, size_t *const restrict lines) {
+HARBOL_EXPORT bool lex_single_line_comment(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, size_t *const restrict lines) {
 	while( *str != 0 && *str != '\n' ) {
 		if( *str=='\\' ) {
 			harbol_string_add_char(buf, *str);
@@ -165,7 +166,7 @@ HARBOL_EXPORT bool lex_single_line_comment(const char str[static 1], const char 
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT bool lex_multi_line_comment(const char str[static 1], const char **const end, const char end_token[static 1], const size_t end_len, struct HarbolString *const restrict buf, size_t *const restrict lines) {
+HARBOL_EXPORT bool lex_multi_line_comment(char const str[static 1], char const **const end, char const end_token[static 1], size_t const end_len, struct HarbolString *const restrict buf, size_t *const restrict lines) {
 	harbol_string_add_char(buf, *str++);
 	while( *str != 0 && strncmp(end_token, str, end_len) != 0 ) {
 		if( *str=='\n' ) {
@@ -181,7 +182,7 @@ HARBOL_EXPORT bool lex_multi_line_comment(const char str[static 1], const char *
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT size_t write_utf8_cstr(char buf[static 1], const size_t buflen, const int32_t rune) {
+HARBOL_EXPORT size_t write_utf8_cstr(char buf[static 1], size_t const buflen, int32_t const rune) {
 	if( rune < 0x80 ) {
 		buf[0] = rune;
 		return 1;
@@ -219,7 +220,7 @@ HARBOL_EXPORT size_t write_utf8_cstr(char buf[static 1], const size_t buflen, co
 	}
 }
 
-HARBOL_EXPORT bool write_utf8_str(struct HarbolString *const str, const int32_t rune) {
+HARBOL_EXPORT bool write_utf8_str(struct HarbolString *const str, int32_t const rune) {
 	if( rune < 0x80 ) {
 		harbol_string_add_char(str, rune);
 		return true;
@@ -245,13 +246,13 @@ HARBOL_EXPORT bool write_utf8_str(struct HarbolString *const str, const int32_t 
 	}
 }
 
-HARBOL_EXPORT size_t read_utf8(const char cstr[static 1], const size_t cstrlen, int32_t *const restrict rune) {
+HARBOL_EXPORT size_t read_utf8(char const cstr[static 1], size_t const cstrlen, int32_t *const restrict rune) {
 	*rune = -1;
 	if( cstr[0]==0 ) {
 		return 0;
 	}
 	
-	const size_t utf8len = get_utf8_len(cstr[0]);
+	size_t const utf8len = get_utf8_len(cstr[0]);
 	if( utf8len==0 ) {
 		*rune = cstr[0];
 		return 1;
@@ -274,7 +275,7 @@ HARBOL_EXPORT size_t read_utf8(const char cstr[static 1], const size_t cstrlen, 
 	}
 }
 
-HARBOL_EXPORT int32_t *utf8_to_rune(const struct HarbolString *const str, size_t *const restrict rune_len) {
+HARBOL_EXPORT int32_t *utf8_to_rune(struct HarbolString const *const str, size_t *const restrict rune_len) {
 	size_t rune_count = 0;
 	int32_t *restrict runes = calloc(rune_count + 1, sizeof *runes);
 	if( runes==NULL ) {
@@ -283,8 +284,10 @@ HARBOL_EXPORT int32_t *utf8_to_rune(const struct HarbolString *const str, size_t
 	}
 	
 	size_t iter_len = 0;
+	/// TODO: split this into two loops, one for getting the total size.
+	/// other for encoding from utf8 to rune array.
 	while( str->cstr[iter_len] != 0 ) {
-		const size_t bytes_read = read_utf8(&str->cstr[iter_len], str->len - iter_len, &runes[rune_count]);
+		size_t const bytes_read = read_utf8(&str->cstr[iter_len], str->len - iter_len, &runes[rune_count]);
 		if( runes[rune_count] <= 0 ) {
 			break;
 		}
@@ -301,7 +304,7 @@ HARBOL_EXPORT int32_t *utf8_to_rune(const struct HarbolString *const str, size_t
 	return runes;
 }
 
-HARBOL_EXPORT struct HarbolString rune_to_utf8_str(const int32_t runes[static 1], const size_t rune_len) {
+HARBOL_EXPORT struct HarbolString rune_to_utf8_str(int32_t const runes[static 1], size_t const rune_len) {
 	struct HarbolString str = {0};
 	for( size_t i=0; i<rune_len; i++ ) {
 		if( !write_utf8_str(&str, runes[i]) ) {
@@ -311,21 +314,21 @@ HARBOL_EXPORT struct HarbolString rune_to_utf8_str(const int32_t runes[static 1]
 	return str;
 }
 
-HARBOL_EXPORT char *rune_to_utf8_cstr(const int32_t runes[static 1], const size_t rune_len, size_t *const cstr_len) {
-	const struct HarbolString str = rune_to_utf8_str(runes, rune_len);
+HARBOL_EXPORT char *rune_to_utf8_cstr(int32_t const runes[static 1], size_t const rune_len, size_t *const cstr_len) {
+	struct HarbolString const str = rune_to_utf8_str(runes, rune_len);
 	*cstr_len = str.len;
 	return str.cstr;
 }
 
 
-HARBOL_EXPORT int32_t lex_hex_escape_char(const char str[static 1], const char **const end) {
+HARBOL_EXPORT int32_t lex_hex_escape_char(char const str[static 1], char const **const end) {
 	int32_t r = 0;
 	size_t count = 0;
 	if( !is_hex(*str) ) {
 		r = -1;
 	} else {
 		for( ; *str != 0; count++ ) {
-			const int_fast8_t c = *str;
+			int_fast8_t const c = *str;
 			switch( c ) {
 				case '0': case '1': case '2': case '3': case '4':
 				case '5': case '6': case '7': case '8': case '9':
@@ -345,15 +348,15 @@ exit:;
 	return r;
 }
 
-HARBOL_EXPORT int32_t lex_octal_escape_char(const char str[static 1], const char **const end) {
+HARBOL_EXPORT int32_t lex_octal_escape_char(char const str[static 1], char const **const end) {
 	int32_t r = 0;
 	size_t count = 0;
 	if( !is_octal(*str) ) {
 		r = -1;
 	} else {
 		for( ; *str != 0; count++ ) {
-			const int_fast8_t c = *str;
-			if( count>3 ) {
+			int_fast8_t const c = *str;
+			if( count > 3 ) {
 				return -1; /// out of range.
 			} else {
 				switch( c ) {
@@ -372,10 +375,10 @@ exit:;
 	return r;
 }
 
-HARBOL_EXPORT int32_t lex_unicode_char(const char str[static 1], const char **const end, const size_t encoding) {
+HARBOL_EXPORT int32_t lex_unicode_char(char const str[static 1], char const **const end, size_t const encoding) {
 	int32_t r = 0;
 	for( size_t i=0; i < encoding * 2; i++ ) {
-		const int_fast8_t c = *str;
+		int_fast8_t const c = *str;
 		switch( c ) {
 			case '0': case '1': case '2': case '3': case '4':
 			case '5': case '6': case '7': case '8': case '9':
@@ -391,10 +394,10 @@ HARBOL_EXPORT int32_t lex_unicode_char(const char str[static 1], const char **co
 	}
 exit:;
 	*end = str;
-	return !is_valid_unicode(r) ? -1 : r;
+	return !is_valid_unicode(r)? -1 : r;
 }
 
-HARBOL_EXPORT int lex_c_style_hex(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_c_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -417,7 +420,7 @@ HARBOL_EXPORT int lex_c_style_hex(const char str[static 1], const char **const e
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		uflag      = 1u << 0u,
 		long1      = 1u << 1u,
 		long2      = 1u << 2u,
@@ -429,7 +432,7 @@ HARBOL_EXPORT int lex_c_style_hex(const char str[static 1], const char **const e
 		digit_sep  = 1u << 8u
 	;
 	while( *str != 0 && (isalnum(*str) || *str=='.' || *str=='+' || *str=='-' || *str==DigitSep_C) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case '.':
 				*is_float = true;
@@ -499,7 +502,7 @@ HARBOL_EXPORT int lex_c_style_hex(const char str[static 1], const char **const e
 					result = HarbolLexTooManyLs;
 					goto lex_c_style_hex_err;
 				} else {
-					lit_flags |= ( (lit_flags & long1) ? long2 : long1 );
+					lit_flags |= ( (lit_flags & long1)? long2 : long1 );
 					harbol_string_add_char(buf, chr);
 				}
 				break;
@@ -593,7 +596,7 @@ lex_c_style_hex_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_hex(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_go_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -614,7 +617,7 @@ HARBOL_EXPORT int lex_go_style_hex(const char str[static 1], const char **const 
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		flt_dot    = 1u << 0u,
 		exponent_p = 1u << 1u, /** xxx.xpxxx */
 		digit_sep  = 1u << 2u,
@@ -622,7 +625,7 @@ HARBOL_EXPORT int lex_go_style_hex(const char str[static 1], const char **const 
 		one_hex    = 1u << 4u
 	;
 	while( *str != 0 && (isalnum(*str) || *str=='.' || *str=='+' || *str=='-' || *str==DigitSep_Go) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case '.':
 				*is_float = true;
@@ -705,7 +708,7 @@ lex_go_style_hex_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_octal(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_c_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -718,14 +721,14 @@ HARBOL_EXPORT int lex_c_style_octal(const char str[static 1], const char **const
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		uflag     = 1u,
 		long1     = 1u << 1u,
 		long2     = 1u << 2u,
 		digit_sep = 1u << 3u
 	;
 	while( *str != 0 && (isalnum(*str) || *str=='.' || *str==DigitSep_C) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case DigitSep_C:
 				if( lit_flags & digit_sep ) { /// too many digit seps.
@@ -759,7 +762,7 @@ HARBOL_EXPORT int lex_c_style_octal(const char str[static 1], const char **const
 					result = HarbolLexTooManyLs;
 					goto lex_c_style_octal_err;
 				} else {
-					lit_flags |= ( (lit_flags & long1) ? long2 : long1 );
+					lit_flags |= ( (lit_flags & long1)? long2 : long1 );
 					harbol_string_add_char(buf, chr);
 				}
 				break;
@@ -792,7 +795,7 @@ lex_c_style_octal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_octal(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT int lex_go_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -813,11 +816,11 @@ HARBOL_EXPORT int lex_go_style_octal(const char str[static 1], const char **cons
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		digit_sep = 1u
 	;
 	while( *str != 0 && (isalnum(*str) || *str==DigitSep_Go) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case DigitSep_Go:
 				if( lit_flags & digit_sep ) { /// too many digit seps.
@@ -852,7 +855,7 @@ lex_go_style_octal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_binary(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT int lex_c_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -873,14 +876,14 @@ HARBOL_EXPORT int lex_c_style_binary(const char str[static 1], const char **cons
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		uflag     = 1u << 0u,
 		long1     = 1u << 1u,
 		long2     = 1u << 2u,
 		digit_sep = 1u << 3u
 	;
 	while( *str != 0 && (isalnum(*str) || *str==DigitSep_C) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case DigitSep_C:
 				if( lit_flags & digit_sep ) { /// too many digit seps.
@@ -912,7 +915,7 @@ HARBOL_EXPORT int lex_c_style_binary(const char str[static 1], const char **cons
 					result = HarbolLexTooManyLs;
 					goto lex_c_style_binary_err;
 				} else {
-					lit_flags |= ( (lit_flags & long1) ? long2 : long1 );
+					lit_flags |= ( (lit_flags & long1)? long2 : long1 );
 					harbol_string_add_char(buf, chr);
 				}
 				break;
@@ -944,7 +947,7 @@ lex_c_style_binary_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_binary(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT int lex_go_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -965,11 +968,11 @@ HARBOL_EXPORT int lex_go_style_binary(const char str[static 1], const char **con
 	}
 	
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		digit_sep = 1u
 	;
 	while( *str != 0 && (isalnum(*str) || *str==DigitSep_Go) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case DigitSep_Go:
 				if( lit_flags & digit_sep ) { /// too many digit seps.
@@ -1003,13 +1006,13 @@ lex_go_style_binary_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_c_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
 	}
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		uflag       = 1u << 0u,
 		long1       = 1u << 1u,
 		long2       = 1u << 2u,
@@ -1021,7 +1024,7 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 		digit_sep   = 1u << 8u
 	;
 	while( *str != 0 && (isalnum(*str) || *str=='.' || *str=='+' || *str=='-' || *str==DigitSep_C) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case '.':
 				if( lit_flags & flt_dot ) { /// too many float dots.
@@ -1117,7 +1120,7 @@ HARBOL_EXPORT int lex_c_style_decimal(const char str[static 1], const char **con
 					result = HarbolLexIntSuffixOnFlt;
 					goto lex_c_style_decimal_err;
 				} else {
-					lit_flags |= ( (lit_flags & long1) ? long2 : long1 );
+					lit_flags |= ( (lit_flags & long1)? long2 : long1 );
 					harbol_string_add_char(buf, chr);
 				}
 				break;
@@ -1170,13 +1173,13 @@ lex_c_style_decimal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_decimal(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_go_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
 	}
 	size_t lit_flags = 0;
-	const size_t
+	size_t const
 		flt_dot = 1u << 0u,
 		flt_e_flag = 1u << 1u,
 		got_exp_num = 1u << 2u,
@@ -1184,7 +1187,7 @@ HARBOL_EXPORT int lex_go_style_decimal(const char str[static 1], const char **co
 		digit_sep = 1u << 4u
 	;
 	while( *str != 0 && (isalnum(*str) || *str=='.' || *str=='+' || *str=='-' || *str==DigitSep_Go) ) {
-		const int_fast8_t chr = *str;
+		int_fast8_t const chr = *str;
 		switch( chr ) {
 			case '.':
 				*is_float = true;
@@ -1269,7 +1272,7 @@ lex_go_style_decimal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_number(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_c_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	switch( *str ) {
 		case '0': {
 			switch( str[1] ) {
@@ -1290,7 +1293,7 @@ HARBOL_EXPORT int lex_c_style_number(const char str[static 1], const char **cons
 	return HarbolLexNoErr;
 }
 
-HARBOL_EXPORT int lex_go_style_number(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT int lex_go_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	switch( *str ) {
 		case '0': {
 			switch( str[1] ) {
@@ -1308,15 +1311,15 @@ HARBOL_EXPORT int lex_go_style_number(const char str[static 1], const char **con
 	return HarbolLexNoErr;
 }
 
-static NO_NULL int _lex_str(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, const bool raw) {
+static NO_NULL int _lex_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool const raw) {
 	int result = HarbolLexNoErr;
-	for( const int_fast8_t quote = *str++; *str != quote; str++ ) {
-		const int_fast8_t c = *str;
+	for( int_fast8_t const quote = *str++; *str != quote; str++ ) {
+		int_fast8_t const c = *str;
 		if( c==0 ) {
 			result = HarbolLexSuddenEoFStr;
 			goto lex_str_err;
 		} else if( c=='\\' ) {
-			const char esc = *++str;
+			char const esc = *++str;
 			if( raw ) {
 				harbol_string_add_char(buf, c);
 				harbol_string_add_char(buf, esc);
@@ -1333,7 +1336,7 @@ static NO_NULL int _lex_str(const char str[static 1], const char **const end, st
 					case 'e': harbol_string_add_char(buf, 0x1B); break;  /// '\e' is GNU extension
 					case 'x': case 'X': {
 						str++;
-						const int32_t h = lex_hex_escape_char(str, &str);
+						int32_t const h = lex_hex_escape_char(str, &str);
 						if( h == -1 ) {
 							result = HarbolLexBadHexChar;
 							goto lex_str_err;
@@ -1345,7 +1348,7 @@ static NO_NULL int _lex_str(const char str[static 1], const char **const end, st
 					}
 					case '0': case '1': case '2': case '3': case '4':
 					case '5': case '6': case '7': case '8': case '9': {
-						const int32_t h = lex_octal_escape_char(str, &str);
+						int32_t const h = lex_octal_escape_char(str, &str);
 						if( h == -1 ) {
 							result = HarbolLexBadOctalChar;
 							goto lex_str_err;
@@ -1357,7 +1360,7 @@ static NO_NULL int _lex_str(const char str[static 1], const char **const end, st
 					}
 					case 'u': case 'U': {
 						str++;
-						const int32_t h = lex_unicode_char(str, &str, esc=='u' ? sizeof(int16_t) : sizeof(int32_t));
+						int32_t const h = lex_unicode_char(str, &str, esc=='u'? sizeof(int16_t) : sizeof(int32_t));
 						if( h == -1 ) {
 							result = HarbolLexBadUnicodeChar;
 							goto lex_str_err;
@@ -1380,15 +1383,15 @@ lex_str_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_str(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT int lex_c_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	return _lex_str(str, end, buf, false);
 }
 
-HARBOL_EXPORT int lex_go_style_str(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT int lex_go_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	return _lex_str(str, end, buf, *str=='`');
 }
 
-HARBOL_EXPORT const char *lex_get_err(const int err_code) {
+HARBOL_EXPORT char const *lex_get_err(int const err_code) {
 	switch( err_code ) {
 		case HarbolLexNoErr:                     return "No Lexing Error.";
 		case HarbolLexEoF:                       return "Sudden End of File/Str.";
@@ -1431,7 +1434,7 @@ HARBOL_EXPORT const char *lex_get_err(const int err_code) {
 	}
 }
 
-HARBOL_EXPORT bool lex_identifier(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT bool lex_identifier(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
 	while( *str != 0 && checker(*str) ) {
 		harbol_string_add_char(buf, *str++);
 	}
@@ -1439,11 +1442,11 @@ HARBOL_EXPORT bool lex_identifier(const char str[static 1], const char **const e
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
 	bool res = false;
 	while( *str != 0 ) {
 		int32_t rune = 0;
-		const size_t bytes = read_utf8(str, sizeof rune, &rune);
+		size_t const bytes = read_utf8(str, sizeof rune, &rune);
 		if( bytes==0 ) {
 			goto lex_id_u8_err;
 		} else if( checker(rune) ) {
@@ -1457,7 +1460,7 @@ lex_id_u8_err:
 	return res;
 }
 
-HARBOL_EXPORT bool lex_c_style_identifier(const char str[static 1], const char **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT bool lex_c_style_identifier(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	if( !is_alphabetic(*str) ) {
 		return false;
 	}
@@ -1468,7 +1471,7 @@ HARBOL_EXPORT bool lex_c_style_identifier(const char str[static 1], const char *
 	return true;
 }
 
-HARBOL_EXPORT bool lex_until(const char str[static 1], const char **const end, struct HarbolString *const restrict buf, const int32_t control) {
+HARBOL_EXPORT bool lex_until(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, int32_t const control) {
 	while( *str != 0 && *str != control ) {
 		harbol_string_add_char(buf, *str++);
 	}
@@ -1476,35 +1479,35 @@ HARBOL_EXPORT bool lex_until(const char str[static 1], const char **const end, s
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT intmax_t lex_c_string_to_int(const struct HarbolString *const buf, char **const end) {
-	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
-	const size_t extra = (is_binary)? 2 : 0;
+HARBOL_EXPORT intmax_t lex_c_string_to_int(struct HarbolString const *const buf, char **const end) {
+	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	size_t const extra = (is_binary)? 2 : 0;
 	return strtoll(&buf->cstr[extra], end, is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT intmax_t lex_go_string_to_int(const struct HarbolString *const buf, char **const end) {
-	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
-	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
-	const size_t extra = (is_octal || is_binary)? 2 : 0;
+HARBOL_EXPORT intmax_t lex_go_string_to_int(struct HarbolString const *const buf, char **const end) {
+	bool const is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
+	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	size_t const extra = (is_octal || is_binary)? 2 : 0;
 	return strtoll(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
 
-HARBOL_EXPORT uintmax_t lex_c_string_to_uint(const struct HarbolString *const buf, char **const end) {
-	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
-	const size_t extra = (is_binary)? 2 : 0;
+HARBOL_EXPORT uintmax_t lex_c_string_to_uint(struct HarbolString const *const buf, char **const end) {
+	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	size_t const extra = (is_binary)? 2 : 0;
 	return strtoull(&buf->cstr[extra], end, is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT uintmax_t lex_go_string_to_uint(const struct HarbolString *const buf, char **const end) {
-	const bool is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
-	const bool is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
-	const size_t extra = (is_octal || is_binary)? 2 : 0;
+HARBOL_EXPORT uintmax_t lex_go_string_to_uint(struct HarbolString const *const buf, char **const end) {
+	bool const is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
+	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+	size_t const extra = (is_octal || is_binary)? 2 : 0;
 	return strtoull(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT floatmax_t lex_string_to_float(const struct HarbolString *const buf) {
-	const bool is_hex = !strncmp(buf->cstr, "0x", 2) || !strncmp(buf->cstr, "0X", 2);
+HARBOL_EXPORT floatmax_t lex_string_to_float(struct HarbolString const *const buf) {
+	bool const is_hex = !strncmp(buf->cstr, "0x", 2) || !strncmp(buf->cstr, "0X", 2);
 	floatmax_t f = 0;
 	harbol_string_scan(buf, is_hex? "%" SCNxfMAX "" : "%" SCNfMAX "", &f);
 	return f;

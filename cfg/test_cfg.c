@@ -32,8 +32,7 @@ int main(void)
 }
 
 
-void test_harbol_cfg(FILE *const debug_stream)
-{
+void test_harbol_cfg(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("cfg :: test allocation/initialization.\n", debug_stream);
 	struct HarbolMap *cfg = harbol_cfg_parse_cstr("'section': { 'lel': null }");
@@ -88,11 +87,11 @@ void test_harbol_cfg(FILE *const debug_stream)
 		        'd': iota \
 		        'e': iota \
 		    } \
+		    '2': iota \
 		    '3': iota \
 		    '4': iota \
 		    '5': iota \
 		    '6': iota \
-		    '7': iota \
 		} \
 		'test_IOTA': { \
 		    '1': IOTA \
@@ -183,7 +182,7 @@ void test_harbol_cfg(FILE *const debug_stream)
 			struct HarbolVariant var = harbol_variant_make(&cfg, sizeof cfg, HarbolCfgType_Map, &( bool ){0});
 			harbol_map_insert(larger_cfg, "former lovers", sizeof "former lovers", &var, sizeof var);
 			struct HarbolString stringcfg = harbol_cfg_to_str(larger_cfg);
-			fprintf(debug_stream, "\nremoved spouse!: \n%s\n", stringcfg.cstr);
+			fprintf(debug_stream, "\nadded 'former lovers'!: \n%s\n", stringcfg.cstr);
 			harbol_string_clear(&stringcfg);
 		}
 		fputs("\ncfg :: test building newer cfg file!\n", debug_stream);

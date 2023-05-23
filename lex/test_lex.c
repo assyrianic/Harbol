@@ -48,6 +48,7 @@ void test_harbol_lex(FILE *const debug_stream)
 		"0x", /// bad
 		"0x.f", /// bad
 		"0x1.f", /// bad
+		"0x1.f", /// bad
 	};
 	for( const char **i=&c_hexs[0]; i<1[&c_hexs]; i++ ) {
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});

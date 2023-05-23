@@ -1,6 +1,6 @@
 #ifndef HARBOL_INCLUDED
 #	define HARBOL_INCLUDED
-#	define HARBOL_VERSION_MAJOR    3
+#	define HARBOL_VERSION_MAJOR    1
 #	define HARBOL_VERSION_MINOR    0
 #	define HARBOL_VERSION_PATCH    0
 #	define HARBOL_VERSION_PHASE    "beta"

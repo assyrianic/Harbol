@@ -22,8 +22,8 @@ HARBOL_EXPORT NO_NULL struct HarbolArray harbol_array_make(size_t datasize, size
 HARBOL_EXPORT NO_NULL struct HarbolArray harbol_array_make_from_array(void *buf, size_t cap, size_t len);
 
 /// creator funcs.
-HARBOL_EXPORT struct HarbolArray *harbol_array_new(const size_t datasize, const size_t init_size);
-HARBOL_EXPORT NO_NULL struct HarbolArray *harbol_array_new_from_array(void *const buf, const size_t cap, const size_t len);
+HARBOL_EXPORT struct HarbolArray *harbol_array_new(size_t const datasize, size_t const init_size);
+HARBOL_EXPORT NO_NULL struct HarbolArray *harbol_array_new_from_array(void *const buf, size_t const cap, size_t const len);
 
 
 /// clean up funcs.
@@ -33,59 +33,57 @@ HARBOL_EXPORT NO_NULL void harbol_array_cleanup(struct HarbolArray **const vecre
 
 
 /// array info getters.
-HARBOL_EXPORT NO_NULL void *const *harbol_array_data(const struct HarbolArray *const vec);
-HARBOL_EXPORT NO_NULL size_t harbol_array_cap(const struct HarbolArray *const vec);
-HARBOL_EXPORT NO_NULL size_t harbol_array_len(const struct HarbolArray *const vec);
+HARBOL_EXPORT NO_NULL void *const *harbol_array_data(struct HarbolArray const *const vec);
+HARBOL_EXPORT NO_NULL size_t harbol_array_cap(struct HarbolArray const *const vec);
+HARBOL_EXPORT NO_NULL size_t harbol_array_len(struct HarbolArray const *const vec);
 
 
 /// array table ops.
-HARBOL_EXPORT NO_NULL bool harbol_array_grow(struct HarbolArray *const vec, const size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_array_resize(struct HarbolArray *const vec, const size_t datasize, const size_t new_cap);
-HARBOL_EXPORT NO_NULL bool harbol_array_shrink(struct HarbolArray *const vec, const size_t datasize, const bool exact_fit);
-HARBOL_EXPORT NO_NULL void harbol_array_wipe(struct HarbolArray *const vec, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_grow(struct HarbolArray *const vec, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_resize(struct HarbolArray *const vec, size_t const datasize, size_t const new_cap);
+HARBOL_EXPORT NO_NULL bool harbol_array_shrink(struct HarbolArray *const vec, size_t const datasize, bool const exact_fit);
+HARBOL_EXPORT NO_NULL void harbol_array_wipe(struct HarbolArray *const vec, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_array_empty(const struct HarbolArray *const vec);
-HARBOL_EXPORT NO_NULL bool harbol_array_full(const struct HarbolArray *const vec);
+HARBOL_EXPORT NO_NULL bool harbol_array_empty(struct HarbolArray const *const vec);
+HARBOL_EXPORT NO_NULL bool harbol_array_full(struct HarbolArray const *const vec);
 
 
 /// array to array ops.
-HARBOL_EXPORT NO_NULL bool harbol_array_add(struct HarbolArray *const vecA, const struct HarbolArray *const vecB, const size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_array_copy(struct HarbolArray *const vecA, const struct HarbolArray *const vecB, const size_t datasize);
-HARBOL_EXPORT NO_NULL size_t harbol_array_len_diff(const struct HarbolArray *const vecA, const struct HarbolArray *const vecB);
-HARBOL_EXPORT NO_NULL size_t harbol_array_cap_diff(const struct HarbolArray *const vecA, const struct HarbolArray *const vecB);
+HARBOL_EXPORT NO_NULL bool harbol_array_add(struct HarbolArray *const vecA, struct HarbolArray const *const vecB, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_copy(struct HarbolArray *const vecA, struct HarbolArray const *const vecB, size_t const datasize);
+HARBOL_EXPORT NO_NULL size_t harbol_array_len_diff(struct HarbolArray const *const vecA, struct HarbolArray const *const vecB);
+HARBOL_EXPORT NO_NULL size_t harbol_array_cap_diff(struct HarbolArray const *const vecA, struct HarbolArray const *const vecB);
 
 
 /// array data ops.
-HARBOL_EXPORT NO_NULL bool harbol_array_insert(struct HarbolArray *const vec, const void *const val, const size_t datasize);
-HARBOL_EXPORT NO_NULL size_t harbol_array_append(struct HarbolArray *const vec, const void *const val, const size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_array_fill(struct HarbolArray *const vec, const void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_insert(struct HarbolArray *const vec, void const *const val, size_t const datasize);
+HARBOL_EXPORT NO_NULL size_t harbol_array_append(struct HarbolArray *const vec, void const *const val, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_fill(struct HarbolArray *const vec, void const *const val, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL void *harbol_array_pop(struct HarbolArray *const vec, const size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_array_pop_ex(struct HarbolArray *const vec, void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL void *harbol_array_pop(struct HarbolArray *const vec, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_pop_ex(struct HarbolArray *const vec, void *const val, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL void *harbol_array_peek(const struct HarbolArray *const vec, const size_t datasize);
+HARBOL_EXPORT NO_NULL void *harbol_array_peek(struct HarbolArray const *const vec, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_array_peek_ex(const struct HarbolArray *const vec, void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_peek_ex(struct HarbolArray const *const vec, void *const val, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL void *harbol_array_get(const struct HarbolArray *const vec, const size_t index, const size_t datasize);
+HARBOL_EXPORT NO_NULL void *harbol_array_get(struct HarbolArray const *const vec, size_t const index, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_array_get_ex(const struct HarbolArray *const vec, const size_t index, void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_get_ex(struct HarbolArray const *const vec, size_t const index, void *const val, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_array_set(struct HarbolArray *const vec, const size_t index, const void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_set(struct HarbolArray *const vec, size_t const index, void const *const val, size_t const datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_array_swap(struct HarbolArray *const vec, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_swap(struct HarbolArray *const vec, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_shift_up(struct HarbolArray *const vec, size_t const index, size_t const datasize, size_t const amount);
 
-HARBOL_EXPORT bool harbol_gen_array_shift_up(uint8_t *buf, size_t *len, size_t index, size_t datasize, size_t amount);
-HARBOL_EXPORT NO_NULL bool harbol_array_shift_up(struct HarbolArray *const vec, const size_t index, const size_t datasize, const size_t amount);
-
-HARBOL_EXPORT NO_NULL size_t harbol_array_item_count(const struct HarbolArray *const vec, const void *const val, const size_t datasize);
-HARBOL_EXPORT NO_NULL size_t harbol_array_index_of(const struct HarbolArray *const vec, const void *const val, const size_t datasize, const size_t starting_index);
+HARBOL_EXPORT NO_NULL size_t harbol_array_item_count(struct HarbolArray const *const vec, void const *const val, size_t const datasize);
+HARBOL_EXPORT NO_NULL size_t harbol_array_index_of(struct HarbolArray const *const vec, void const *const val, size_t const datasize, size_t const starting_index);
 
 
 /// deletion funcs.
-HARBOL_EXPORT NO_NULL bool harbol_array_del_by_index(struct HarbolArray *const vec, const size_t index, const size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_array_del_by_range(struct HarbolArray *const vec, const size_t index, const size_t datasize, const size_t range);
-HARBOL_EXPORT NO_NULL bool harbol_array_del_by_val(struct HarbolArray *const vec, const void *const val, const size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_del_by_index(struct HarbolArray *const vec, size_t const index, size_t const datasize);
+HARBOL_EXPORT NO_NULL bool harbol_array_del_by_range(struct HarbolArray *const vec, size_t const index, size_t const datasize, size_t const range);
+HARBOL_EXPORT NO_NULL bool harbol_array_del_by_val(struct HarbolArray *const vec, void const *const val, size_t const datasize);
 /********************************************************************/
 
 

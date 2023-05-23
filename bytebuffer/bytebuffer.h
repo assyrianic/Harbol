@@ -21,9 +21,9 @@ HARBOL_EXPORT struct HarbolByteBuf harbol_bytebuffer_make(void);
 HARBOL_EXPORT NO_NULL void harbol_bytebuffer_clear(struct HarbolByteBuf *buf);
 HARBOL_EXPORT NO_NULL void harbol_bytebuffer_free(struct HarbolByteBuf **bufref);
 
-HARBOL_EXPORT NO_NULL size_t harbol_bytebuffer_cap(const struct HarbolByteBuf *buf);
-HARBOL_EXPORT NO_NULL size_t harbol_bytebuffer_len(const struct HarbolByteBuf *buf);
-HARBOL_EXPORT NO_NULL uint8_t *harbol_bytebuffer_get_buffer(const struct HarbolByteBuf *buf);
+HARBOL_EXPORT NO_NULL size_t harbol_bytebuffer_cap(struct HarbolByteBuf const *buf);
+HARBOL_EXPORT NO_NULL size_t harbol_bytebuffer_len(struct HarbolByteBuf const *buf);
+HARBOL_EXPORT NO_NULL uint8_t *harbol_bytebuffer_get_buffer(struct HarbolByteBuf const *buf);
 
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_byte(struct HarbolByteBuf *buf, uint8_t byte);
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_int16(struct HarbolByteBuf *buf, uint16_t integer);
@@ -35,37 +35,37 @@ HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_float32(struct HarbolByteBuf
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_float64(struct HarbolByteBuf *buf, float64_t f64);
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_floatmax(struct HarbolByteBuf *buf, floatmax_t fmax);
 
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_cstr(struct HarbolByteBuf *buf, const char cstr[]);
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_obj(struct HarbolByteBuf *buf, const void *obj, size_t len);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_cstr(struct HarbolByteBuf *buf, char const cstr[]);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_obj(struct HarbolByteBuf *buf, void const *obj, size_t len);
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_zeros(struct HarbolByteBuf *buf, size_t amount);
 
 #ifdef C11
-#	define harbol_bytebuffer_insert(buf, val)   _Generic((val)+0, \
-													uint8_t : harbol_bytebuffer_insert_byte, \
-													int8_t : harbol_bytebuffer_insert_byte, \
-													char : harbol_bytebuffer_insert_byte, \
-													int16_t : harbol_bytebuffer_insert_int16, \
-													uint16_t : harbol_bytebuffer_insert_int16, \
-													int32_t : harbol_bytebuffer_insert_int32, \
-													uint32_t : harbol_bytebuffer_insert_int32, \
-													int64_t : harbol_bytebuffer_insert_int64, \
-													uint64_t : harbol_bytebuffer_insert_int64, \
-													float32_t : harbol_bytebuffer_insert_float32, \
-													float64_t : harbol_bytebuffer_insert_float64, \
-													floatmax_t : harbol_bytebuffer_insert_floatmax, \
-													char* : harbol_bytebuffer_insert_cstr, \
-													const char* : harbol_bytebuffer_insert_cstr) \
-												(str, val)
+#	define harbol_bytebuffer_insert(buf, val)    _Generic((val)+0, \
+													uint8_t     : harbol_bytebuffer_insert_byte,     \
+													int8_t      : harbol_bytebuffer_insert_byte,     \
+													char        : harbol_bytebuffer_insert_byte,     \
+													int16_t     : harbol_bytebuffer_insert_int16,    \
+													uint16_t    : harbol_bytebuffer_insert_int16,    \
+													int32_t     : harbol_bytebuffer_insert_int32,    \
+													uint32_t    : harbol_bytebuffer_insert_int32,    \
+													int64_t     : harbol_bytebuffer_insert_int64,    \
+													uint64_t    : harbol_bytebuffer_insert_int64,    \
+													float32_t   : harbol_bytebuffer_insert_float32,  \
+													float64_t   : harbol_bytebuffer_insert_float64,  \
+													floatmax_t  : harbol_bytebuffer_insert_floatmax, \
+													char*       : harbol_bytebuffer_insert_cstr,     \
+													char const* : harbol_bytebuffer_insert_cstr)     \
+												 (buf, val)
 #endif
 
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_del(struct HarbolByteBuf *buf, size_t index, size_t range);
 
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_to_file(const struct HarbolByteBuf *buf, FILE *file);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_to_file(struct HarbolByteBuf const *buf, FILE *file);
 HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_from_file(struct HarbolByteBuf *buf, FILE *file);
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_from_filename(struct HarbolByteBuf *buf, const char filename[]);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_insert_from_filename(struct HarbolByteBuf *buf, char const filename[]);
 
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_append(struct HarbolByteBuf *bufA, const struct HarbolByteBuf *bufB);
-HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_copy(struct HarbolByteBuf *bufA, const struct HarbolByteBuf *bufB);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_append(struct HarbolByteBuf *bufA, struct HarbolByteBuf const *bufB);
+HARBOL_EXPORT NO_NULL bool harbol_bytebuffer_copy(struct HarbolByteBuf *bufA, struct HarbolByteBuf const *bufB);
 /********************************************************************/
 
 

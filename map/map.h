@@ -5,14 +5,14 @@
 extern "C" {
 #endif
 
-#include "../array/array.h"
+#include "../harbol_common_defines.h"
+#include "../harbol_common_includes.h"
 
 
 /// ordered hash table.
 struct HarbolMap {
-	struct HarbolArray *buckets;
-	uint8_t           **datum, **keys;
-	size_t             *hashes, *keylens, cap, len, seed;
+	uint8_t **datum, **keys;
+	size_t   *buckets, *hashes, *keylens, cap, len, seed;
 };
 
 
@@ -23,24 +23,24 @@ HARBOL_EXPORT NO_NULL bool harbol_map_init(struct HarbolMap *map, size_t init_si
 HARBOL_EXPORT NO_NULL void harbol_map_clear(struct HarbolMap *map);
 HARBOL_EXPORT NO_NULL void harbol_map_free(struct HarbolMap **map_ref);
 
-HARBOL_EXPORT NO_NULL bool harbol_map_has_key(const struct HarbolMap *map, const void *key, size_t keylen);
+HARBOL_EXPORT NO_NULL bool harbol_map_has_key(struct HarbolMap const *map, void const *key, size_t keylen);
 
 HARBOL_EXPORT NO_NULL bool harbol_map_rehash(struct HarbolMap *map, size_t new_size);
 
-HARBOL_EXPORT NO_NULL bool harbol_map_insert(struct HarbolMap *map, const void *key, size_t keylen, const void *val, size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_map_insert(struct HarbolMap *map, void const *key, size_t keylen, void const *val, size_t datasize);
 
-HARBOL_EXPORT NO_NULL size_t harbol_map_get_entry_index(const struct HarbolMap *map, const void *key, size_t keylen);
+HARBOL_EXPORT NO_NULL size_t harbol_map_get_entry_index(struct HarbolMap const *map, void const *key, size_t keylen);
 
-HARBOL_EXPORT NO_NULL void *harbol_map_key_val(const struct HarbolMap *map, const void *val, size_t datasize, size_t *keylen);
-HARBOL_EXPORT NO_NULL size_t harbol_map_idx_val(const struct HarbolMap *map, const void *val, size_t datasize);
+HARBOL_EXPORT NO_NULL void *harbol_map_key_val(struct HarbolMap const *map, void const *val, size_t datasize, size_t *keylen);
+HARBOL_EXPORT NO_NULL size_t harbol_map_idx_val(struct HarbolMap const *map, void const *val, size_t datasize);
 
-HARBOL_EXPORT NO_NULL void *harbol_map_key_get(const struct HarbolMap *map, const void *key, size_t keylen);
-HARBOL_EXPORT NO_NULL void *harbol_map_idx_get(const struct HarbolMap *map, size_t index);
+HARBOL_EXPORT NO_NULL void *harbol_map_key_get(struct HarbolMap const *map, void const *key, size_t keylen);
+HARBOL_EXPORT NO_NULL void *harbol_map_idx_get(struct HarbolMap const *map, size_t index);
 
-HARBOL_EXPORT NO_NULL bool harbol_map_key_set(struct HarbolMap *map, const void *key, size_t keylen, const void *val, size_t datasize);
-HARBOL_EXPORT NO_NULL bool harbol_map_idx_set(struct HarbolMap *map, size_t index, const void *val, size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_map_key_set(struct HarbolMap *map, void const *key, size_t keylen, void const *val, size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_map_idx_set(struct HarbolMap *map, size_t index, void const *val, size_t datasize);
 
-HARBOL_EXPORT NO_NULL bool harbol_map_key_rm(struct HarbolMap *map, const void *key, size_t keylen);
+HARBOL_EXPORT NO_NULL bool harbol_map_key_rm(struct HarbolMap *map, void const *key, size_t keylen);
 HARBOL_EXPORT NO_NULL bool harbol_map_idx_rm(struct HarbolMap *map, size_t index);
 /********************************************************************/
 

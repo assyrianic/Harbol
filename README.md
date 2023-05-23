@@ -38,7 +38,7 @@ You have to store instructions from all basic blocks in one continuous array
 ```c
 #include "harbol.h"
 
-int main(const int argc, char *argv[])
+int main(int const argc, char *argv[])
 {
 	bool result = false;
 	struct HarbolString str = harbol_string_make("my initial string!", &result);
@@ -57,7 +57,7 @@ int main(const int argc, char *argv[])
 	harbol_array_insert(&vec, &( float32_t ){2.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){3.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){4.f}, sizeof(float32_t));
-	const float32_t f = *( const float32_t* )(harbol_vector_get(&vec, 1));
+	float32_t const f = *( float32_t const* )harbol_vector_get(&vec, 1);
 	harbol_array_clear(&vec);
 	
 	struct HarbolMap *ptrmap = harbol_map_new(8);

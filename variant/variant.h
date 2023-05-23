@@ -16,18 +16,18 @@ struct HarbolVariant {
 };
 
 
-HARBOL_EXPORT NO_NULL struct HarbolVariant harbol_variant_make(const void *val, size_t datasize, int32_t type_flags, bool *res);
-HARBOL_EXPORT NO_NULL bool harbol_variant_init(struct HarbolVariant *variant, const void *val, size_t datasize, int32_t type_flags);
-HARBOL_EXPORT NO_NULL struct HarbolVariant *harbol_variant_new(const void *val, size_t datasize, int32_t type_flags);
+HARBOL_EXPORT NO_NULL struct HarbolVariant harbol_variant_make(void const *val, size_t datasize, int32_t type_flags, bool *res);
+HARBOL_EXPORT NO_NULL bool harbol_variant_init(struct HarbolVariant *variant, void const *val, size_t datasize, int32_t type_flags);
+HARBOL_EXPORT NO_NULL struct HarbolVariant *harbol_variant_new(void const *val, size_t datasize, int32_t type_flags);
 
 HARBOL_EXPORT NO_NULL void harbol_variant_clear(struct HarbolVariant *variant);
 HARBOL_EXPORT NO_NULL void harbol_variant_free(struct HarbolVariant **variantref);
 
-HARBOL_EXPORT NO_NULL void *harbol_variant_data(const struct HarbolVariant *variant);
-HARBOL_EXPORT NO_NULL size_t harbol_variant_size(const struct HarbolVariant *variant);
-HARBOL_EXPORT NO_NULL int32_t harbol_variant_tag(const struct HarbolVariant *variant);
+HARBOL_EXPORT NO_NULL void *harbol_variant_data(struct HarbolVariant const *variant);
+HARBOL_EXPORT NO_NULL size_t harbol_variant_size(struct HarbolVariant const *variant);
+HARBOL_EXPORT NO_NULL int32_t harbol_variant_tag(struct HarbolVariant const *variant);
 
-HARBOL_EXPORT NO_NULL bool harbol_variant_set(struct HarbolVariant *variant, const void *val, size_t datasize);
+HARBOL_EXPORT NO_NULL bool harbol_variant_set(struct HarbolVariant *variant, void const *val, size_t datasize);
 /********************************************************************/
 
 

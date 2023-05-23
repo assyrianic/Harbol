@@ -10,8 +10,8 @@ extern "C" {
 
 
 struct HarbolRegion {
-	uintptr_t mem, offs;
-	size_t    size;
+	uint8_t *mem;
+	size_t   offs, size;
 };
 
 HARBOL_EXPORT struct HarbolRegion harbol_region_make(size_t bytes);
@@ -19,7 +19,7 @@ HARBOL_EXPORT NO_NULL struct HarbolRegion harbol_region_make_from_buffer(void *b
 HARBOL_EXPORT NO_NULL void harbol_region_clear(struct HarbolRegion *cache);
 
 HARBOL_EXPORT NO_NULL void *harbol_region_alloc(struct HarbolRegion *cache, size_t bytes);
-HARBOL_EXPORT NO_NULL size_t harbol_region_remaining(const struct HarbolRegion *cache);
+HARBOL_EXPORT NO_NULL size_t harbol_region_remaining(struct HarbolRegion const *cache);
 /********************************************************************/
 
 

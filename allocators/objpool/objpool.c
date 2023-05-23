@@ -5,12 +5,12 @@
 #endif
 
 
-HARBOL_EXPORT NO_NULL bool harbol_objpool_init(struct HarbolObjPool *const objpool, const size_t objsize, const size_t len) {
+HARBOL_EXPORT NO_NULL bool harbol_objpool_init(struct HarbolObjPool *const objpool, size_t const objsize, size_t const len) {
 	if( len==0 || objsize==0 ) {
 		return false;
 	}
 	
-	const size_t aligned_objsize = harbol_align_size(objsize, sizeof(size_t));
+	size_t const aligned_objsize = harbol_align_size(objsize, sizeof(size_t));
 	objpool->mem = ( uintptr_t )(calloc(len, aligned_objsize));
 	if( objpool->mem==NIL ) {
 		return false;
@@ -18,7 +18,7 @@ HARBOL_EXPORT NO_NULL bool harbol_objpool_init(struct HarbolObjPool *const objpo
 	
 	objpool->size = objpool->free_blocks = len;
 	objpool->objsize = aligned_objsize;
-	for( size_t i=0; i<objpool->free_blocks; i++ ) {
+	for( size_t i=0; i < objpool->free_blocks; i++ ) {
 		size_t *const restrict index = ( size_t* )(objpool->mem + (i * objpool->objsize));
 		*index = i + 1;
 	}
@@ -26,14 +26,13 @@ HARBOL_EXPORT NO_NULL bool harbol_objpool_init(struct HarbolObjPool *const objpo
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolObjPool harbol_objpool_make(const size_t objsize, const size_t len, bool *const res)
-{
+HARBOL_EXPORT struct HarbolObjPool harbol_objpool_make(size_t const objsize, size_t const len, bool *const res) {
 	struct HarbolObjPool objpool = {0};
 	*res = harbol_objpool_init(&objpool, objsize, len);
 	return objpool;
 }
 
-HARBOL_EXPORT NO_NULL bool harbol_objpool_init_from_buffer(struct HarbolObjPool *const restrict objpool, void *const restrict buf, const size_t objsize, const size_t len) {
+HARBOL_EXPORT NO_NULL bool harbol_objpool_init_from_buffer(struct HarbolObjPool *const restrict objpool, void *const restrict buf, size_t const objsize, size_t const len) {
 	/// If the object index isn't large enough to align to a size_t, then we can't use it.
 	if( objsize < sizeof(size_t) || (objsize * len) < (harbol_align_size(objsize, sizeof(size_t)) * len) ) {
 		return false;
@@ -50,27 +49,24 @@ HARBOL_EXPORT NO_NULL bool harbol_objpool_init_from_buffer(struct HarbolObjPool 
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolObjPool harbol_objpool_from_buffer(void *const restrict buf, const size_t objsize, const size_t len, bool *const restrict res)
-{
+HARBOL_EXPORT struct HarbolObjPool harbol_objpool_from_buffer(void *const restrict buf, size_t const objsize, size_t const len, bool *const restrict res) {
 	struct HarbolObjPool objpool = {0};
 	*res = harbol_objpool_init_from_buffer(&objpool, buf, objsize, len);
 	return objpool;
 }
 
-HARBOL_EXPORT void harbol_objpool_clear(struct HarbolObjPool *const objpool)
-{
-	if( objpool->mem==NIL )
+HARBOL_EXPORT void harbol_objpool_clear(struct HarbolObjPool *const objpool) {
+	if( objpool->mem==NIL ) {
 		return;
-	
+	}
 	free(( void* )(objpool->mem));
 	*objpool = ( struct HarbolObjPool ){0};
 }
 
-HARBOL_EXPORT void *harbol_objpool_alloc(struct HarbolObjPool *const objpool)
-{
-	if( objpool->free_blocks==0 )
+HARBOL_EXPORT void *harbol_objpool_alloc(struct HarbolObjPool *const objpool) {
+	if( objpool->free_blocks==0 ) {
 		return NULL;
-	
+	}
 	/// for first allocation, head points to the very first index.
 	/// next = &pool[0];
 	/// ret = next == ret = &pool[0];
@@ -83,9 +79,8 @@ HARBOL_EXPORT void *harbol_objpool_alloc(struct HarbolObjPool *const objpool)
 	return memset(index, 0, objpool->objsize);
 }
 
-HARBOL_EXPORT void harbol_objpool_free(struct HarbolObjPool *const restrict objpool, void *const restrict ptr)
-{
-	const uintptr_t p = ( uintptr_t )(ptr);
+HARBOL_EXPORT void harbol_objpool_free(struct HarbolObjPool *const restrict objpool, void *const restrict ptr) {
+	uintptr_t const p = ( uintptr_t )(ptr);
 	if( ptr==NULL || p < objpool->mem || p > objpool->mem + (objpool->size * objpool->objsize) ) {
 		return;
 	}
@@ -102,10 +97,9 @@ HARBOL_EXPORT void harbol_objpool_free(struct HarbolObjPool *const restrict objp
 	++objpool->free_blocks;
 }
 
-HARBOL_EXPORT void harbol_objpool_cleanup(struct HarbolObjPool *const restrict objpool, void **const restrict ptrref)
-{
-	if( *ptrref==NULL )
+HARBOL_EXPORT void harbol_objpool_cleanup(struct HarbolObjPool *const restrict objpool, void **const restrict ptrref) {
+	if( *ptrref==NULL ) {
 		return;
-	
+	}
 	harbol_objpool_free(objpool, *ptrref); *ptrref = NULL;
 }

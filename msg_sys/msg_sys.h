@@ -11,17 +11,16 @@ extern "C" {
 
 
 #define COLOR_RED       "\x1B[31m"    /// used for errors.
+#define COLOR_GREEN     "\x1B[32m"    /// used for successes.
+#define COLOR_YELLOW    "\x1B[33m"
+#define COLOR_BLUE      "\x1B[34m"
 #define COLOR_MAGENTA   "\x1B[35m"    /// used for warnings.
+#define COLOR_CYAN      "\x1B[36m"
+#define COLOR_WHITE     "\x1B[37m"
 #define COLOR_RESET     "\033[0m"     /// used to reset the color.
 
-
-HARBOL_EXPORT NEVER_NULL(6) void harbol_err_msg(size_t *err_count, const char filename[], const char errtype[], const size_t *line, const size_t *col, const char err[], ...);
-
-HARBOL_EXPORT NEVER_NULL(6) void harbol_warn_msg(size_t *warn_count, const char filename[], const char warntype[], const size_t *line, const size_t *col, const char warn[], ...);
-
-HARBOL_EXPORT NEVER_NULL(7) void harbol_log_err(FILE *file, size_t *err_count, const char filename[], const char errtype[], const size_t *line, const size_t *col, const char err[], ...);
-
-HARBOL_EXPORT NEVER_NULL(7) void harbol_log_warn(FILE *file, size_t *warn_count, const char filename[], const char warntype[], const size_t *line, const size_t *col, const char warn[], ...);
+/// 'stream', 'color', and 'msg_fmt' shouldn't be NULL.
+HARBOL_EXPORT NEVER_NULL(2,5,8) void harbol_write_msg(size_t *msg_cnt, FILE *stream, char const filename[], char const msgtype[], char const color[], size_t const *line, size_t const *col, char const msg_fmt[], ...);
 
 #ifdef __cplusplus
 }

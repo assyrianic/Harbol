@@ -24,24 +24,24 @@ HARBOL_EXPORT NO_NULL void harbol_deque_free(struct HarbolDeque **dequeref);
 
 HARBOL_EXPORT NO_NULL void harbol_deque_reset(struct HarbolDeque *deque);
 
-HARBOL_EXPORT NO_NULL size_t harbol_deque_count(const struct HarbolDeque *deque);
-HARBOL_EXPORT NO_NULL bool harbol_deque_empty(const struct HarbolDeque *deque);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_count(struct HarbolDeque const *deque);
+HARBOL_EXPORT NO_NULL bool harbol_deque_empty(struct HarbolDeque const *deque);
 
-HARBOL_EXPORT NO_NULL size_t harbol_deque_head(const struct HarbolDeque *deque);
-HARBOL_EXPORT NO_NULL size_t harbol_deque_tail(const struct HarbolDeque *deque);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_head(struct HarbolDeque const *deque);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_tail(struct HarbolDeque const *deque);
 
-HARBOL_EXPORT NO_NULL size_t harbol_deque_next(const struct HarbolDeque *deque, size_t node);
-HARBOL_EXPORT NO_NULL size_t harbol_deque_prev(const struct HarbolDeque *deque, size_t node);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_next(struct HarbolDeque const *deque, size_t node);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_prev(struct HarbolDeque const *deque, size_t node);
 
-HARBOL_EXPORT NO_NULL size_t harbol_deque_prepend(struct HarbolDeque *deque, const void *val, size_t datasize);
-HARBOL_EXPORT NO_NULL size_t harbol_deque_append(struct HarbolDeque *deque, const void *val, size_t datasize);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_prepend(struct HarbolDeque *deque, void const *val, size_t datasize);
+HARBOL_EXPORT NO_NULL size_t harbol_deque_append(struct HarbolDeque *deque, void const *val, size_t datasize);
 
 HARBOL_EXPORT NO_NULL bool harbol_deque_pop_front(struct HarbolDeque *deque, void *val, size_t datasize);
 HARBOL_EXPORT NO_NULL bool harbol_deque_pop_back(struct HarbolDeque *deque, void *val, size_t datasize);
 
-HARBOL_EXPORT NO_NULL void *harbol_deque_get_front(const struct HarbolDeque *deque);
-HARBOL_EXPORT NO_NULL void *harbol_deque_get_back(const struct HarbolDeque *deque);
-HARBOL_EXPORT NO_NULL void *harbol_deque_get_data(const struct HarbolDeque *deque, size_t node);
+HARBOL_EXPORT NO_NULL void *harbol_deque_get_front(struct HarbolDeque const *deque);
+HARBOL_EXPORT NO_NULL void *harbol_deque_get_back(struct HarbolDeque const *deque);
+HARBOL_EXPORT NO_NULL void *harbol_deque_get_data(struct HarbolDeque const *deque, size_t node);
 /********************************************************************/
 
 

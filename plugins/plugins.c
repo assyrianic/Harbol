@@ -5,7 +5,7 @@
 #endif
 
 
-HARBOL_EXPORT bool harbol_plugin_load(struct HarbolPlugin *const restrict pl, const char path[static 1], HarbolPluginEvent load_fn, void *const restrict userdata) {
+HARBOL_EXPORT bool harbol_plugin_load(struct HarbolPlugin *const restrict pl, char const path[static 1], HarbolPluginEvent load_fn, void *const restrict userdata) {
 	pl->dll = MODULE_LOAD(path);
 	if( pl->dll==NULL ) {
 		pl->err = HarbolPluginErrLibLoadFail;
@@ -49,7 +49,7 @@ HARBOL_EXPORT bool harbol_plugin_changed(struct HarbolPlugin *const pl) {
 	
 	struct stat result;
 	if( !stat(pl->path, &result) ) {
-		const bool change = pl->last_write != result.st_mtime;
+		bool const change = pl->last_write != result.st_mtime;
 		if( change ) {
 			pl->last_write = result.st_mtime;
 		}
@@ -82,7 +82,7 @@ HARBOL_EXPORT bool harbol_plugin_reload(struct HarbolPlugin *const restrict pl, 
 	return true;
 }
 
-HARBOL_EXPORT const char *harbol_plugin_get_err(const struct HarbolPlugin *const pl) {
+HARBOL_EXPORT char const *harbol_plugin_get_err(struct HarbolPlugin const *const pl) {
 	switch( pl->err ) {
 		case HarbolPluginErrNone:        return "Harbol Plugins :: No Error";
 		case HarbolPluginErrNoPath:      return "Harbol Plugins :: Err **** No file path recorded for the plugin. ****";
@@ -95,7 +95,7 @@ HARBOL_EXPORT const char *harbol_plugin_get_err(const struct HarbolPlugin *const
 }
 
 /*
-HARBOL_EXPORT NO_NULL void harbol_plugin_info(const struct HarbolPlugin *const pl) {
+HARBOL_EXPORT NO_NULL void harbol_plugin_info(struct HarbolPlugin const *const pl) {
 	printf("Plugin:: DLL - '%p'\n", pl->dll);
 	if( pl->path != NULL ) {
 		printf("Plugin:: Path - '%s'\n", pl->path);
@@ -104,7 +104,7 @@ HARBOL_EXPORT NO_NULL void harbol_plugin_info(const struct HarbolPlugin *const p
 }
 */
 
-HARBOL_EXPORT void *harbol_plugin_get_obj(struct HarbolPlugin *const restrict pl, const char name[static 1]) {
+HARBOL_EXPORT void *harbol_plugin_get_obj(struct HarbolPlugin *const restrict pl, char const name[static 1]) {
 	if( pl->dll==NULL ) {
 		pl->err = HarbolPluginErrNoLibLoaded;
 		return NULL;
@@ -114,7 +114,7 @@ HARBOL_EXPORT void *harbol_plugin_get_obj(struct HarbolPlugin *const restrict pl
 }
 
 
-static NEVER_NULL(1) void _dir_open(tinydir_dir *const restrict dir, HarbolPluginDirEvent dir_fn, void *const restrict userdata, const char ext[static 1]) {
+static NEVER_NULL(1) void _dir_open(tinydir_dir *const restrict dir, HarbolPluginDirEvent dir_fn, void *const restrict userdata, char const ext[static 1]) {
 	while( dir->has_next ) {
 		tinydir_file *file = &( tinydir_file ){0};
 		if( tinydir_readfile(dir, file) < 0 ) {
@@ -142,7 +142,7 @@ static NEVER_NULL(1) void _dir_open(tinydir_dir *const restrict dir, HarbolPlugi
 	tinydir_close(dir);
 }
 
-HARBOL_EXPORT bool harbol_plugin_dir_open(const char dir[static 1], HarbolPluginDirEvent dir_fn, void *const restrict userdata, const char custom_ext[static 1]) {
+HARBOL_EXPORT bool harbol_plugin_dir_open(char const dir[static 1], HarbolPluginDirEvent dir_fn, void *const restrict userdata, char const custom_ext[static 1]) {
 	/// 'FILENAME_MAX' is defined in stdio.h
 	char currdir[FILENAME_MAX] = {0};
 #ifdef OS_WINDOWS

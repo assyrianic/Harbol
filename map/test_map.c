@@ -127,22 +127,22 @@ void test_harbol_map(FILE *const debug_stream)
 	
 	/// test deletion
 	fputs("\nmap :: test item deletion.\n", debug_stream);
-	harbol_map_key_rm(p, "2", 1);
-	fprintf(debug_stream, "ptr[\"2\"] == %p\n", harbol_map_key_get(p, "2", 2));
+	harbol_map_key_rm(p, "2", sizeof "2");
+	fprintf(debug_stream, "ptr[\"2\"] == %p\n", harbol_map_key_get(p, "2", sizeof "2"));
 	fputs("\nmap :: looping through all data.\n", debug_stream);
 	for( size_t n=0; n<p->len; n++ ) {
-		fprintf(debug_stream, "key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
+		fprintf(debug_stream, "p: key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
 	}
 	fputs("\nmap :: test item deletion by index.\n", debug_stream);
 	harbol_map_idx_rm(p, 2);
 	for( size_t n=0; n<p->len; n++ ) {
-		fprintf(debug_stream, "key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
+		fprintf(debug_stream, "p: key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
 	}
 	/// test setting by index
 	fputs("\nmap :: test item setting by index.\n", debug_stream);
 	harbol_map_idx_set(p, 2, &( union Value ){.int64=500}, sizeof(union Value));
 	for( size_t n=0; n<p->len; n++ ) {
-		fprintf(debug_stream, "key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
+		fprintf(debug_stream, "p: key '%s' - value == %" PRIi64 "\n", p->keys[n], (( const union Value* )p->datum[n])->int64);
 	}
 	/// free data
 	fputs("\nmap :: test destruction.\n", debug_stream);

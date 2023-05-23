@@ -351,18 +351,51 @@
 #	ifndef IS_VAR_OF_TYPE
 #		define IS_VAR_OF_TYPE(n, T)    _Generic((n), T:true, default:false)
 #	endif
+
+#	ifndef IS_SIGNED_INT_TYPE
+#		define IS_SIGNED_INT_TYPE(n)    _Generic((n), _Bool: true, char: true, short: true, int:true, long: true, long long: true, default:false)
+#	endif
+
+#	ifndef IS_UNSIGNED_INT_TYPE
+#		define IS_UNSIGNED_INT_TYPE(n)    _Generic((n), _Bool: true, unsigned char: true, unsigned short: true, unsigned int:true, unsigned long: true, unsigned long long: true, default:false)
+#	endif
+
+#	ifndef IS_FLOAT_TYPE
+#		define IS_FLOAT_TYPE(n)    _Generic((n), float: true, double: true, long double: true, default:false)
+#	endif
+
+#	ifndef IS_NUMERIC_TYPE
+#		define IS_NUMERIC_TYPE(n)   IS_FLOAT_TYPE(n) || IS_UNSIGNED_INT_TYPE(n) || IS_SIGNED_INT_TYPE(n)
+#	endif
 #endif
 
 
 #ifndef SIGN_EXTEND
 #	ifdef __cplusplus
 		template< typename T > static inline T _sign_extend(T val) {
-			const size_t sign_bit = 1 << ((sizeof val * CHAR_BIT) - 1);
+			size_t const sign_bit = 1 << ((sizeof val * CHAR_BIT) - 1);
 			return (val ^ sign_bit) - sign_bit;
 		}
 #		define SIGN_EXTEND    _sign_extend
 #	else
 #		define SIGN_EXTEND(val) (( (val) ^ (1u << ((sizeof val * CHAR_BIT) - 1u)) ) - (1u << ((sizeof val * CHAR_BIT) - 1u)))
+#	endif
+#endif
+
+
+#ifndef TAIL_CALL
+#	if defined(COMPILER_GCC) || defined(COMPILER_CLANG)
+#		define TAIL_CALL    __attribute__ ((musttail))
+#	else
+#		define TAIL_CALL
+#	endif
+#endif
+
+#ifndef REG_CALL
+#	if defined(PLATFORM_AMD64) && (defined(COMPILER_CLANG) || defined(COMPILER_INTEL))
+#		define REG_CALL    __attribute__ ((regcall))
+#	else
+#		define REG_CALL
 #	endif
 #endif
 

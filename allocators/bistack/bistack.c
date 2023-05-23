@@ -5,113 +5,103 @@
 #endif
 
 
-HARBOL_EXPORT bool harbol_bistack_init(struct HarbolBiStack *const bistack, const size_t len) {
-	if( len==0 )
+HARBOL_EXPORT bool harbol_bistack_init(struct HarbolBiStack *const bistk, size_t const len) {
+	if( len==0 ) {
 		return false;
-	
-	bistack->mem = ( uintptr_t )(calloc(len, sizeof(uint8_t)));
-	if( bistack->mem==NIL )
+	}
+	bistk->mem = calloc(len, sizeof *bistk->mem);
+	if( bistk->mem==NULL ) {
 		return false;
-	
-	bistack->size = len;
-	bistack->front = bistack->mem;
-	bistack->back = bistack->mem + len;
+	}
+	bistk->size = bistk->back = len;
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolBiStack harbol_bistack_make(const size_t len, bool *const res)
-{
-	struct HarbolBiStack bistack = {0};
-	*res = harbol_bistack_init(&bistack, len);
-	return bistack;
+HARBOL_EXPORT struct HarbolBiStack harbol_bistack_make(size_t const len, bool *const res) {
+	struct HarbolBiStack bistk = {0};
+	*res = harbol_bistack_init(&bistk, len);
+	return bistk;
 }
 
-HARBOL_EXPORT struct HarbolBiStack harbol_bistack_make_from_buffer(void *const restrict buf, const size_t len)
-{
-	struct HarbolBiStack bistack = {0};
-	bistack.size = len;
-	bistack.mem = bistack.front = ( uintptr_t )(buf);
-	bistack.back = bistack.mem + len;
-	return bistack;
+HARBOL_EXPORT struct HarbolBiStack harbol_bistack_make_from_buffer(void *const buf, size_t const len) {
+	struct HarbolBiStack bistk = {0};
+	bistk.size  = len;
+	bistk.mem   = buf;
+	bistk.back  = len;
+	return bistk;
 }
 
-HARBOL_EXPORT void harbol_bistack_clear(struct HarbolBiStack *const bistack)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void harbol_bistack_clear(struct HarbolBiStack *const bistk) {
+	if( bistk->mem==NULL ) {
 		return;
-	
-	free(( void* )(bistack->mem));
-	bistack->mem = bistack->front = bistack->back = NIL;
-	bistack->size = 0;
+	}
+	free(bistk->mem); bistk->mem = NULL;
+	bistk->front = bistk->back = bistk->size = 0;
 }
 
-HARBOL_EXPORT void *harbol_bistack_alloc_front(struct HarbolBiStack *const bistack, const size_t size)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void *harbol_bistack_alloc_front(struct HarbolBiStack *const bistk, size_t const size) {
+	if( bistk->mem==NULL ) {
 		return NULL;
+	}
 	
-	const size_t aligned_size = harbol_align_size(size, sizeof(uintptr_t));
+	size_t const aligned_size = harbol_align_size(size, sizeof aligned_size);
 	/// front end arena is too high!
-	if( bistack->front + aligned_size >= bistack->back )
+	if( bistk->front + aligned_size >= bistk->back ) {
 		return NULL;
-	
-	const uintptr_t p = bistack->front;
-	bistack->front += aligned_size;
-	return ( void* )(p);
+	}
+	size_t const f = bistk->front;
+	bistk->front += aligned_size;
+	return bistk->mem + f;
 }
 
-HARBOL_EXPORT void *harbol_bistack_alloc_back(struct HarbolBiStack *const restrict bistack, const size_t size)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void *harbol_bistack_alloc_back(struct HarbolBiStack *const restrict bistk, size_t const size) {
+	if( bistk->mem==NULL ) {
 		return NULL;
+	}
 	
-	const size_t aligned_size = harbol_align_size(size, sizeof(uintptr_t));
+	size_t const aligned_size = harbol_align_size(size, sizeof aligned_size);
 	/// back end arena is too low
-	if( bistack->back - aligned_size <= bistack->front )
+	if( bistk->back - aligned_size <= bistk->front ) {
 		return NULL;
-	
-	bistack->back -= aligned_size;
-	return ( void* )(bistack->back);
+	}
+	bistk->back -= aligned_size;
+	return bistk->mem + bistk->back;
 }
 
-HARBOL_EXPORT void harbol_bistack_reset_front(struct HarbolBiStack *const bistack)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void harbol_bistack_reset_front(struct HarbolBiStack *const bistk) {
+	if( bistk->mem==NULL ) {
 		return;
-	
-	bistack->front = bistack->mem;
+	}
+	bistk->front = 0;
 }
 
-HARBOL_EXPORT void harbol_bistack_reset_back(struct HarbolBiStack *const bistack)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void harbol_bistack_reset_back(struct HarbolBiStack *const bistk) {
+	if( bistk->mem==NULL ) {
 		return;
-	
-	bistack->back = bistack->mem + bistack->size;
+	}
+	bistk->back = bistk->size;
 }
 
-HARBOL_EXPORT void harbol_bistack_reset_all(struct HarbolBiStack *const bistack)
-{
-	if( bistack->mem==NIL )
+HARBOL_EXPORT void harbol_bistack_reset_all(struct HarbolBiStack *const bistk) {
+	if( bistk->mem==NULL ) {
 		return;
-	
-	bistack->front = bistack->mem;
-	bistack->back = bistack->mem + bistack->size;
+	}
+	bistk->front = 0;
+	bistk->back  = bistk->size;
 }
 
-HARBOL_EXPORT intptr_t harbol_bistack_get_margins(const struct HarbolBiStack bistack)
-{
-	return ( intptr_t )(bistack.back) - ( intptr_t )(bistack.front);
+HARBOL_EXPORT size_t harbol_bistack_get_margins(struct HarbolBiStack const bistk) {
+	return bistk.back - bistk.front;
 }
 
 
-HARBOL_EXPORT bool harbol_bistack_resize(struct HarbolBiStack *const restrict bistack, const size_t new_size) {
-	uint8_t *const new_buf = harbol_recalloc(( void* )(bistack->mem), new_size, sizeof *new_buf, bistack->size);
-	if( new_buf==NULL )
+HARBOL_EXPORT bool harbol_bistack_resize(struct HarbolBiStack *const restrict bistk, size_t const new_size) {
+	uint8_t *const new_buf = harbol_recalloc(( void* )(bistk->mem), new_size, sizeof *new_buf, bistk->size);
+	if( new_buf==NULL ) {
 		return false;
-	
-	bistack->mem  = bistack->front = ( uintptr_t )(new_buf);
-	bistack->size = new_size;
-	bistack->back = bistack->mem + new_size;
+	}
+	bistk->mem   = new_buf;
+	bistk->size  = bistk->back = new_size;
+	bistk->front = 0;
 	return true;
 }

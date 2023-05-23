@@ -171,37 +171,36 @@
 #endif
 
 
-static inline void *harbol_recalloc(void *const arr, const size_t new_size, const size_t element_size, const size_t old_size) {
-	if( arr==NULL || old_size==0 )
+static inline void *harbol_recalloc(void *const arr, size_t const new_size, size_t const element_size, size_t const old_size) {
+	if( arr==NULL || old_size==0 ) {
 		return calloc(new_size, element_size);
-	
+	}
 #ifdef __cplusplus
 	uint8_t *const restrict new_block = reinterpret_cast< decltype(new_block) >(realloc(arr, new_size * element_size));
 #else
 	uint8_t *const restrict new_block = realloc(arr, new_size * element_size);
 #endif
-	if( new_block==NULL )
+	if( new_block==NULL ) {
 		return NULL;
-	
-	if( old_size < new_size )
+	} else if( old_size < new_size ) {
 		memset(&new_block[old_size * element_size], 0, (new_size - old_size) * element_size);
-	
+	}
 	return new_block;
 }
 
 #ifdef __cplusplus
 template< typename T >
-static inline T *harbol_tg_recalloc(T *const arr, const size_t new_size, const size_t old_size) {
-	if( arr==nullptr || old_size==0 )
+static inline T *harbol_tg_recalloc(T *const arr, size_t const new_size, size_t const old_size) {
+	if( arr==nullptr || old_size==0 ) {
 		return ( T* )(calloc(new_size, sizeof *arr));
+	}
 	
 	T *const restrict new_block = reinterpret_cast< T* >(realloc(arr, new_size * sizeof *arr));
-	if( new_block==nullptr )
+	if( new_block==nullptr ) {
 		return nullptr;
-	
-	if( old_size < new_size )
+	} else if( old_size < new_size ) {
 		memset(&new_block[old_size], 0, (new_size - old_size) * sizeof *new_block);
-	
+	}
 	return new_block;
 }
 #endif
@@ -215,7 +214,7 @@ static inline void harbol_cleanup(void *const ptr_ref) {
 	free(*p); *p = NULL;
 }
 
-static inline NO_NULL void *harbol_mempcpy(void *const dest, const void *const src, const size_t bytes) {
+static inline NO_NULL void *harbol_mempcpy(void *const dest, void const *const src, size_t const bytes) {
 #ifdef __cplusplus
 	uint8_t *const r = reinterpret_cast< decltype(r) >(memcpy(dest, src, bytes));
 	return r + bytes;
@@ -224,19 +223,19 @@ static inline NO_NULL void *harbol_mempcpy(void *const dest, const void *const s
 #endif
 }
 
-static inline NO_NULL void *harbol_memccpy(void *const restrict dest, const void *const src, const int c, const size_t bytes) {
+static inline NO_NULL void *harbol_memccpy(void *const restrict dest, void const *const src, int const c, size_t const bytes) {
 #ifdef __cplusplus
-	const uint8_t *const p = reinterpret_cast< decltype(p) >(memchr(src, c, bytes));
+	uint8_t const *const p = reinterpret_cast< decltype(p) >(memchr(src, c, bytes));
 	if( p != nullptr ) {
-		const uint8_t *const s = reinterpret_cast< decltype(s) >(src);
+		uint8_t const *const s = reinterpret_cast< decltype(s) >(src);
 		return harbol_mempcpy(dest, src, (p - s + 1));
 	}
 	memcpy(dest, src, bytes);
 	return nullptr;
 #else
-	const uint8_t *const p = memchr(src, c, bytes);
+	uint8_t const *const p = memchr(src, c, bytes);
 	if( p != NULL ) {
-		return harbol_mempcpy(dest, src, (p - ( const uint8_t* )(src) + 1));
+		return harbol_mempcpy(dest, src, (p - ( uint8_t const* )(src) + 1));
 	}
 	memcpy(dest, src, bytes);
 	return NULL;
@@ -244,21 +243,22 @@ static inline NO_NULL void *harbol_memccpy(void *const restrict dest, const void
 }
 
 
-static inline size_t harbol_align_size(const size_t size, const size_t align) {
+static inline size_t harbol_align_size(size_t const size, size_t const align) {
 	return (size + (align - 1)) & ~(align - 1);
 }
 
-static inline size_t harbol_pad_size(const size_t size, const size_t align) {
+static inline size_t harbol_pad_size(size_t const size, size_t const align) {
 	return (align - (size & (align - 1))) & (align - 1);
 }
 
 
 /// these are NOT cryptographic hashes.
 /// use ONLY FOR HASH TABLE IMPLEMENTATIONS.
+/// The implementation is a [largely unmodified] SDBM algorithm
 #ifdef __cplusplus
-static inline NO_NULL size_t string_hash(const char *const key, const size_t seed=0)
+static inline NO_NULL size_t string_hash(char const *const key, size_t const seed=0)
 #else
-static inline size_t string_hash(const char key[static 1], const size_t seed)
+static inline size_t string_hash(char const key[const static 1], size_t const seed)
 #endif
 {
 	size_t h = seed;
@@ -270,38 +270,38 @@ static inline size_t string_hash(const char key[static 1], const size_t seed)
 
 
 #ifdef __cplusplus
-static inline NO_NULL size_t array_hash(const uint8_t *const key, const size_t len, const size_t seed=0)
+static inline NO_NULL size_t array_hash(uint8_t const *const key, size_t const len, size_t const seed=0)
 #else
-static inline size_t array_hash(const uint8_t key[static 1], const size_t len, const size_t seed)
+static inline size_t array_hash(uint8_t const key[const static 1], size_t const len, size_t const seed)
 #endif
 {
 	size_t h = seed;
-	for( size_t i=0; i<len; i++ ) {
+	for( size_t i=0; i < len; i++ ) {
 		h = ( size_t )(key[i]) + (h << 6) + (h << 16) - h;
 	}
 	return h;
 }
 
-static inline size_t int_hash(const size_t i, const size_t seed) {
+static inline size_t int_hash(size_t const i, size_t const seed) {
 	size_t h = seed;
-	for( size_t n=0; n<sizeof(size_t) * CHAR_BIT; n += 8 ) {
+	for( size_t n=0; n < (sizeof(size_t) * CHAR_BIT); n += 8 ) {
 		h = ((i >> n) & 0xFF) + (h << 6) + (h << 16) - h;
 	}
 	return h;
 }
 
-static inline size_t float_hash(const floatptr_t a, const size_t seed) {
+static inline size_t float_hash(floatptr_t const a, size_t const seed) {
 	union {
-		const floatptr_t f;
-		const size_t     s;
+		floatptr_t const f;
+		size_t     const s;
 	} c = {a};
 	return int_hash(c.s, seed);
 }
 
-static inline NO_NULL size_t ptr_hash(const void *const p, const size_t seed) {
+static inline NO_NULL size_t ptr_hash(void const *const p, size_t const seed) {
 	union {
-		const void *const p;
-		const size_t      y;
+		void const *const p;
+		size_t const      y;
 	} c = {p};
 	return (c.y >> 4u) | ((c.y << (8u * sizeof(void*) - 4u)) + seed);
 }
@@ -316,7 +316,7 @@ static inline NO_NULL size_t ptr_hash(const void *const p, const size_t seed) {
 				float64_t   : float_hash,   \
 				floatptr_t  : float_hash,   \
 				char*       : string_hash,  \
-				const char* : string_hash,  \
+				char const* : string_hash,  \
 				default     : ptr_hash)     \
 							((h))
 #endif
@@ -324,7 +324,7 @@ static inline NO_NULL size_t ptr_hash(const void *const p, const size_t seed) {
 
 static inline NO_NULL ssize_t get_file_size(FILE *const file) {
 	fseek(file, 0, SEEK_END);
-	const ssize_t filesize = ftell(file);
+	ssize_t const filesize = ftell(file);
 	rewind(file);
 	return filesize;
 }
@@ -332,36 +332,37 @@ static inline NO_NULL ssize_t get_file_size(FILE *const file) {
 /// Harbol Iterator.
 /// for "struct/union" types, cast from the 'ptr' alias.
 union HarbolIter {
-	const bool       *b00l;
-	const uint8_t    *uint8;   const int8_t   *int8;
-	const uint16_t   *uint16;  const int16_t  *int16;
-	const uint32_t   *uint32;  const int32_t  *int32;
-	const uint64_t   *uint64;  const int64_t  *int64;
-	const size_t     *size;    const ssize_t  *ssize;
-	const uintptr_t  *uintptr; const intptr_t *intptr;
+	bool      const *b00l;
+	uint8_t   const *uint8;   int8_t   const *int8;
+	uint16_t  const *uint16;  int16_t  const *int16;
+	uint32_t  const *uint32;  int32_t  const *int32;
+	uint64_t  const *uint64;  int64_t  const *int64;
+	size_t    const *size;    ssize_t  const *ssize;
+	uintptr_t const *uintptr; intptr_t const *intptr;
 	
-	const float32_t           *float32;
-	const float64_t           *float64;
-	const floatptr_t          *floatptr;
-	const floatmax_t          *floatmax;
+	float32_t  const         *float32;
+	float64_t  const         *float64;
+	floatptr_t const         *floatptr;
+	floatmax_t const         *floatmax;
 	
-	const char                *string;
-	const void                *ptr;
-	const union HarbolIter    *self;
+	char             const   *string;
+	void             const   *ptr;
+	union HarbolIter const   *self;
 };
 
 #ifdef __cplusplus
-static inline NO_NULL uint8_t *make_buffer_from_binary(const char *const file_name, size_t *const restrict bytes)
+static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const file_name, size_t *const restrict bytes)
 #else
-static inline NO_NULL uint8_t *make_buffer_from_binary(const char file_name[static 1], size_t *const restrict bytes)
+static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[static 1], size_t *const restrict bytes)
 #endif
 {
 	FILE *restrict file = fopen(file_name, "rb");
-	if( file==NULL )
+	if( file==NULL ) {
 		return NULL;
+	}
 	
-	const ssize_t filesize = get_file_size(file);
-	if( filesize<=0 ) {
+	ssize_t const filesize = get_file_size(file);
+	if( filesize <= 0 ) {
 		fclose(file);
 		return NULL;
 	}
@@ -376,17 +377,18 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(const char file_name[stat
 }
 
 #ifdef __cplusplus
-static inline NO_NULL char *make_buffer_from_text(const char *const file_name, size_t *const restrict len)
+static inline NO_NULL char *make_buffer_from_text(char const *const file_name, size_t *const restrict len)
 #else
-static inline NO_NULL char *make_buffer_from_text(const char file_name[static 1], size_t *const restrict len)
+static inline NO_NULL char *make_buffer_from_text(char const file_name[static 1], size_t *const restrict len)
 #endif
 {
 	FILE *restrict file = fopen(file_name, "r");
-	if( file==NULL )
+	if( file==NULL ) {
 		return NULL;
+	}
 	
-	const ssize_t filesize = get_file_size(file);
-	if( filesize<=0 ) {
+	ssize_t const filesize = get_file_size(file);
+	if( filesize <= 0 ) {
 		fclose(file);
 		return NULL;
 	}
@@ -401,12 +403,11 @@ static inline NO_NULL char *make_buffer_from_text(const char file_name[static 1]
 	return stream;
 }
 
-static inline bool is_ptr_aligned(const void *const ptr, const size_t bytes) {
+static inline bool is_ptr_aligned(void const *const ptr, size_t const bytes) {
 	return (( uintptr_t )(ptr) & (bytes-1))==0;
 }
 
-static inline NO_NULL void *dup_data(const void *const data, const size_t bytes)
-{
+static inline NO_NULL void *dup_data(void const *const data, size_t const bytes) {
 #ifdef __cplusplus
 	uint8_t *restrict cpy = reinterpret_cast< decltype(cpy) >(calloc(bytes, sizeof *cpy));
 #else
@@ -416,12 +417,11 @@ static inline NO_NULL void *dup_data(const void *const data, const size_t bytes)
 }
 
 #ifdef __cplusplus
-static inline NO_NULL char *dup_str(const char *cstr)
+static inline NO_NULL char *dup_cstr(size_t const len, char const *cstr)
 #else
-static inline char *dup_str(const char cstr[static 1])
+static inline char *dup_cstr(size_t const len, char const cstr[static len])
 #endif
 {
-	const size_t len = strlen(cstr);
 #ifdef __cplusplus
 	char *restrict cpy = reinterpret_cast< decltype(cpy) >(calloc(len + 1, sizeof *cpy));
 #else
@@ -432,16 +432,16 @@ static inline char *dup_str(const char cstr[static 1])
 
 
 #ifdef __cplusplus
-static inline NO_NULL char *sprintf_alloc(const char *fmt, ...)
+static inline NO_NULL char *sprintf_alloc(char const *fmt, ...)
 #else
-static inline char *sprintf_alloc(const char fmt[static 1], ...)
+static inline char *sprintf_alloc(char const fmt[static 1], ...)
 #endif
 {
 	va_list ap; va_start(ap, fmt);
 	va_list st; va_copy(st, ap);
 	
 	char c = 0;
-	const int32_t size = vsnprintf(&c, 1, fmt, ap);
+	int32_t const size = vsnprintf(&c, 1, fmt, ap);
 	va_end(ap);
 	
 #ifdef __cplusplus
@@ -456,15 +456,15 @@ static inline char *sprintf_alloc(const char fmt[static 1], ...)
 	return text;
 }
 
-static inline bool is_uint_in_bounds(const size_t val, const size_t max, const size_t min) {
+static inline bool is_uint_in_bounds(size_t const val, size_t const max, size_t const min) {
 	return (val - min) <= (max - min);
 }
 
-static inline bool is_int_in_bounds(const ssize_t val, const ssize_t max, const ssize_t min) {
+static inline bool is_int_in_bounds(ssize_t const val, ssize_t const max, ssize_t const min) {
 	return is_uint_in_bounds(( size_t )(val), ( size_t )(max), ( size_t )(min));
 }
 
-static inline NO_NULL bool is_uintptr_in_bounds(const uintptr_t val, const uintptr_t max, const uintptr_t min) {
+static inline NO_NULL bool is_uintptr_in_bounds(uintptr_t const val, uintptr_t const max, uintptr_t const min) {
 	return (val - min) <= (max - min);
 }
 
@@ -473,21 +473,56 @@ static inline NO_NULL bool is_uintptr_in_bounds(const uintptr_t val, const uintp
 /// Within a variable list of strings to compare to,
 /// returns an index or SIZE_MAX aka (size_t)(-1) if not found
 #ifdef __cplusplus
-static inline size_t cstr_switch(const char *cstr, ...) {
+static inline size_t cstr_switch(char const *cstr, ...) {
 #else
-static inline size_t cstr_switch(const char cstr[static 1], ...) {
+static inline size_t cstr_switch(char const cstr[static 1], ...) {
 #endif
 	va_list ap; va_start(ap, cstr);
 	size_t index = 0;
-	const char *arg = NULL;
-	while( (arg = va_arg(ap, const char*)) != NULL ) {
+	char const *arg = va_arg(ap, char const *);
+	while( arg != NULL ) {
 		if( !strcmp(cstr, arg) ) {
 			break;
 		}
 		index++;
+		arg = va_arg(ap, char const *);
 	}
 	va_end(ap);
 	return arg==NULL? SIZE_MAX : index;
+}
+
+static inline bool array_shift_up(uint8_t *const buf, size_t *const restrict len, size_t const index, size_t const datasize, size_t amount) {
+	if( index >= *len ) {
+		return false;
+	}
+	
+	amount += amount==0;
+	size_t const
+		i = index + amount,
+		j = index
+	;
+	if( i < *len ) {
+		*len -= amount;
+		memmove(&buf[j * datasize], &buf[i * datasize], (*len - j) * datasize);
+		memset(&buf[*len * datasize], 0, amount * datasize);
+	} else {
+		/// if i goes out of range, zero everything after and lower the count.
+		memset(&buf[j * datasize], 0, (*len - j) * datasize);
+		*len = j;
+	}
+	return true;
+}
+
+static inline size_t next_pow_of_2(size_t x) {
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+#if SIZE_MAX==UINT64_MAX
+	x |= x >> 32;
+#endif
+	return x + 1;
 }
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */
