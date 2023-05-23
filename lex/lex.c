@@ -1417,7 +1417,7 @@ HARBOL_EXPORT char const *lex_get_err(int const err_code) {
 		case HarbolLexDigitSepNearExp:           return "Digit Separator near exponent mark.";
 		case HarbolLexExtraDigitSeps:            return "Too many digit separators.";
 		case HarbolLexHexFltNoExp:               return "Hex float with no exponent.";
-		case HarbolLexDigitSepMIADigits:         return "Digit Saperator without digits.";
+		case HarbolLexDigitSepMIADigits:         return "Digit Separator without digits.";
 		case HarbolLexExtraFltDot:               return "Too many float dots.";
 		case HarbolLexExtraFltSuffix:            return "Extra float suffix.";
 		case HarbolLexExtraExp:                  return "Extra exponent mark.";
@@ -1511,4 +1511,9 @@ HARBOL_EXPORT floatmax_t lex_string_to_float(struct HarbolString const *const bu
 	floatmax_t f = 0;
 	harbol_string_scan(buf, is_hex? "%" SCNxfMAX "" : "%" SCNfMAX "", &f);
 	return f;
+}
+
+
+HARBOL_EXPORT NO_NULL void lex_custom_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+	/// TODO: ...
 }

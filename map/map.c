@@ -242,16 +242,10 @@ HARBOL_EXPORT bool harbol_map_idx_rm(struct HarbolMap *const map, size_t const n
 	map->hashes[n] = map->keylens[n] = 0;
 	map->buckets[bkt_idx] = SIZE_MAX;
 	
-	size_t
-		len1 = map->len,
-		len2 = map->len,
-		len3 = map->len,
-		len4 = map->len
-	;
-	array_shift_up(( uint8_t* )(map->keys),    &len1, n, sizeof *map->keys,    1);
-	array_shift_up(( uint8_t* )(map->datum),   &len2, n, sizeof *map->datum,   1);
-	array_shift_up(( uint8_t* )(map->hashes),  &len3, n, sizeof *map->hashes,  1);
-	array_shift_up(( uint8_t* )(map->keylens), &len4, n, sizeof *map->keylens, 1);
-	map->len--;
-	return true;
+	return multi_array_shift_up(&map->len, n, 1, 4,
+			map->keys,    sizeof *map->keys,
+			map->datum,   sizeof *map->datum,
+			map->hashes,  sizeof *map->hashes,
+			map->keylens, sizeof *map->keylens
+	);
 }

@@ -15,7 +15,7 @@ struct HarbolMemNode {
 	struct HarbolMemNode *next, *prev;
 };
 
-HARBOL_EXPORT NO_NULL NONNULL_RET struct HarbolMemNode *harbol_memnode_split(struct HarbolMemNode *const node, const size_t bytes);
+HARBOL_EXPORT NO_NULL NONNULL_RET struct HarbolMemNode *harbol_memnode_split(struct HarbolMemNode *const node, size_t const bytes);
 HARBOL_EXPORT NO_NULL void harbol_memnode_replace(struct HarbolMemNode *old, struct HarbolMemNode *replace);
 
 
@@ -60,7 +60,7 @@ HARBOL_EXPORT NEVER_NULL(1) void *harbol_mempool_realloc(struct HarbolMemPool *m
 HARBOL_EXPORT NEVER_NULL(1) bool harbol_mempool_free(struct HarbolMemPool *mempool, void *ptr);
 HARBOL_EXPORT NO_NULL bool harbol_mempool_cleanup(struct HarbolMemPool *mempool, void **ptrref);
 
-HARBOL_EXPORT NO_NULL size_t harbol_mempool_mem_remaining(const struct HarbolMemPool *mempool);
+HARBOL_EXPORT NO_NULL size_t harbol_mempool_mem_remaining(struct HarbolMemPool const *mempool);
 /********************************************************************/
 
 #ifdef __cplusplus

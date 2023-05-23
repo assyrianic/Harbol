@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_region_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,8 +31,7 @@ int main(void)
 }
 
 
-void test_harbol_region(FILE *const debug_stream)
-{
+void test_harbol_region(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("region :: test allocation/initialization.\n", debug_stream);
 	
@@ -70,5 +68,5 @@ void test_harbol_region(FILE *const debug_stream)
 	/// free data
 	fputs("\nregion :: test destruction.\n", debug_stream);
 	harbol_region_clear(&i);
-	fprintf(debug_stream, "i's base is null? '%s'\n", i.mem != NIL ? "no" : "yes");
+	fprintf(debug_stream, "i's base is null? '%s'\n", i.mem != NIL? "no" : "yes");
 }

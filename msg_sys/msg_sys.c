@@ -18,8 +18,7 @@ static NEVER_NULL(1) void _print_file_margins(FILE *const restrict file, char co
 	}
 }
 
-HARBOL_EXPORT void harbol_write_msg(size_t *const restrict msg_cnt, FILE *const restrict stream, char const filename[], char const msgtype[], char const color[], size_t const *const line, size_t const *const col, char const msg_fmt[static 1], ...)
-{
+HARBOL_EXPORT void harbol_write_msg(size_t *const restrict msg_cnt, FILE *const restrict stream, char const filename[], char const msgtype[], char const color[], size_t const *const line, size_t const *const col, char const msg_fmt[static 1], ...) {
 	va_list args; va_start(args, msg_fmt);
 	_print_file_margins(stream, filename, line, col);
 	fprintf(stream, "%s%s%s: **** ", color, msgtype, COLOR_RESET);

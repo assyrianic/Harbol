@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_variant_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,8 +31,7 @@ int main(void)
 }
 
 
-void test_harbol_variant(FILE *const debug_stream)
-{
+void test_harbol_variant(FILE *const debug_stream) {
 	enum {
 		TYPE_INT = 4,
 		TYPE_FLOAT32,
@@ -68,10 +66,10 @@ void test_harbol_variant(FILE *const debug_stream)
 	/// free data
 	fputs("\nvariant :: test destruction.\n", debug_stream);
 	harbol_variant_clear(&i);
-	fprintf(debug_stream, "i's data are null? '%s'\n", i.data != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's data are null? '%s'\n", i.data != NULL? "no" : "yes");
 	
 	harbol_variant_clear(p);
-	fprintf(debug_stream, "p's data are null? '%s'\n", p->data != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's data are null? '%s'\n", p->data != NULL? "no" : "yes");
 	harbol_variant_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
 }

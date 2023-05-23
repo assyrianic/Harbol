@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_deque_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,8 +31,7 @@ int main(void)
 }
 
 
-void test_harbol_deque(FILE *const debug_stream)
-{
+void test_harbol_deque(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("deque :: test allocation/initialization.\n\n", debug_stream);
 	struct HarbolDeque
@@ -54,11 +52,11 @@ void test_harbol_deque(FILE *const debug_stream)
 	
 	fputs("\ndeque :: iterating.\n", debug_stream);
 	for( size_t n=harbol_deque_head(&i); n != SIZE_MAX; n = harbol_deque_next(&i, n) ) {
-		const union Value *const val = harbol_deque_get_data(&i, n);
+		union Value const *const val = harbol_deque_get_data(&i, n);
 		fprintf(debug_stream, "index: %zu - value: %" PRIi64 "\n", n, val->int64);
 	}
 	
-	fputs("deque :: test prepending.\n\n", debug_stream);
+	fputs("\ndeque :: test prepending.\n\n", debug_stream);
 	harbol_deque_prepend(&i, &( union Value ){1}, sizeof(union Value));
 	harbol_deque_prepend(&i, &( union Value ){2}, sizeof(union Value));
 	harbol_deque_prepend(&i, &( union Value ){3}, sizeof(union Value));
@@ -71,7 +69,7 @@ void test_harbol_deque(FILE *const debug_stream)
 	
 	fputs("\ndeque :: iterating.\n", debug_stream);
 	for( size_t n=harbol_deque_head(&i); n != SIZE_MAX; n = harbol_deque_next(&i, n) ) {
-		const union Value *const val = harbol_deque_get_data(&i, n);
+		union Value const *const val = harbol_deque_get_data(&i, n);
 		fprintf(debug_stream, "index: %zu - value: %" PRIi64 "\n", n, val->int64);
 	}
 	
@@ -88,7 +86,7 @@ void test_harbol_deque(FILE *const debug_stream)
 	}
 	fputs("\ndeque :: iterating.\n", debug_stream);
 	for( size_t n=harbol_deque_head(&i); n != SIZE_MAX; n = harbol_deque_next(&i, n) ) {
-		const union Value *const val = harbol_deque_get_data(&i, n);
+		union Value const *const val = harbol_deque_get_data(&i, n);
 		fprintf(debug_stream, "index: %zu - value: %" PRIi64 "\n", n, val->int64);
 	}
 	
@@ -97,16 +95,16 @@ void test_harbol_deque(FILE *const debug_stream)
 	
 	fputs("\ndeque :: iterating.\n", debug_stream);
 	for( size_t n=harbol_deque_head(&i); n != SIZE_MAX; n = harbol_deque_next(&i, n) ) {
-		const union Value *const val = harbol_deque_get_data(&i, n);
+		union Value const *const val = harbol_deque_get_data(&i, n);
 		fprintf(debug_stream, "index: %zu - value: %" PRIi64 "\n", n, val->int64);
 	}
 	
 	/// free deque
 	harbol_deque_clear(&i);
-	fprintf(debug_stream, "i's item is null? '%s'\n", i.datum != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's item is null? '%s'\n", i.datum != NULL? "no" : "yes");
 	
 	harbol_deque_clear(p);
-	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL? "no" : "yes");
 	harbol_deque_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL? "no" : "yes");
 }

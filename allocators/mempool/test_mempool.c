@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_mempool_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -31,8 +30,7 @@ int main(void)
 #endif
 }
 
-static void _print_mempool_nodes(const struct HarbolMemPool *const mempool, FILE *const debug_stream)
-{
+static void _print_mempool_nodes(struct HarbolMemPool const *const mempool, FILE *const debug_stream) {
 	fputs("\nmempool :: printing mempool free bucket.\n", debug_stream);
 	for( size_t i=0; i<HARBOL_BUCKET_SIZE; i++ ) {
 		fprintf(debug_stream, "mempool bucket :: %zu | freenodes: %zu.\n", i, mempool->buckets[i].len);
@@ -48,20 +46,19 @@ static void _print_mempool_nodes(const struct HarbolMemPool *const mempool, FILE
 }
 
 
-void test_harbol_mempool(FILE *const debug_stream)
-{
+void test_harbol_mempool(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("mempool :: test allocation/initialization.\n", debug_stream);
 	
 	struct HarbolMemPool i = harbol_mempool_make(1000, &( bool ){false});
 	fprintf(debug_stream, "remaining heap mem: '%zu'\n", harbol_mempool_mem_remaining(&i));
 	
-	const clock_t start = clock();
+	clock_t const start = clock();
 	/// test giving memory
 	fputs("mempool :: test giving memory.\n", debug_stream);
 	fputs("\nmempool :: allocating int ptr.\n", debug_stream);
 	int *p = harbol_mempool_alloc(&i, sizeof *p);
-	fprintf(debug_stream, "p is null? '%s'\n", p ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p? "no" : "yes");
 	if( p ) {
 		*p = 500;
 		fprintf(debug_stream, "p's value: %i\n", *p);
@@ -70,7 +67,7 @@ void test_harbol_mempool(FILE *const debug_stream)
 	
 	fputs("\nmempool :: allocating float ptr.\n", debug_stream);
 	float *f = harbol_mempool_alloc(&i, sizeof *f);
-	fprintf(debug_stream, "f is null? '%s'\n", f ? "no" : "yes");
+	fprintf(debug_stream, "f is null? '%s'\n", f? "no" : "yes");
 	if( f ) {
 		*f = 500.5f;
 		fprintf(debug_stream, "f's value: %f\n", *f);
@@ -85,13 +82,13 @@ void test_harbol_mempool(FILE *const debug_stream)
 	/// test re-giving memory
 	fputs("mempool :: test regiving memory.\n", debug_stream);
 	p = harbol_mempool_alloc(&i, sizeof *p);
-	fprintf(debug_stream, "p is null? '%s'\n", p ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p? "no" : "yes");
 	if( p ) {
 		*p = 532;
 		fprintf(debug_stream, "p's value: %i\n", *p);
 	}
 	f = harbol_mempool_alloc(&i, sizeof *f);
-	fprintf(debug_stream, "f is null? '%s'\n", f ? "no" : "yes");
+	fprintf(debug_stream, "f is null? '%s'\n", f? "no" : "yes");
 	if( f ) {
 		*f = 466.5f;
 		fprintf(debug_stream, "f's value: %f\n", *f);
@@ -103,9 +100,9 @@ void test_harbol_mempool(FILE *const debug_stream)
 	
 	/// test giving array memory
 	fputs("\nmempool :: test giving array memory.\n", debug_stream);
-	const size_t arrsize = 100;
+	size_t const arrsize = 100;
 	p = harbol_mempool_alloc(&i, sizeof *p * arrsize);
-	fprintf(debug_stream, "p is null? '%s'\n", p ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p? "no" : "yes");
 	if( p != NULL ) {
 		for( size_t i=0; i<arrsize; i++ ) {
 			p[i] = i+1;
@@ -114,7 +111,7 @@ void test_harbol_mempool(FILE *const debug_stream)
 	}
 	fprintf(debug_stream, "remaining heap mem: '%zu'\n", harbol_mempool_mem_remaining(&i));
 	f = harbol_mempool_alloc(&i, sizeof *f * arrsize);
-	fprintf(debug_stream, "f is null? '%s'\n", f ? "no" : "yes");
+	fprintf(debug_stream, "f is null? '%s'\n", f? "no" : "yes");
 	if( f != NULL ) {
 		for( size_t i=0; i<arrsize; i++ ) {
 			f[i] = i+1.15f;
@@ -194,7 +191,7 @@ void test_harbol_mempool(FILE *const debug_stream)
 	_print_mempool_nodes(&i, debug_stream);
 	
 	for( struct UniNode *n=list->head; n != NULL; n = n->next )
-		fprintf(debug_stream, "uninode value : %" PRIi64 "\n", (( const union Value* )n->data)->int64);
+		fprintf(debug_stream, "uninode value : %" PRIi64 "\n", (( union Value const* )n->data)->int64);
 	
 	harbol_mempool_free(&i, list),  list =NULL;
 	harbol_mempool_free(&i, node1), node1=NULL;
@@ -208,7 +205,7 @@ void test_harbol_mempool(FILE *const debug_stream)
 	/// test "double freeing"
 	fputs("\nmempool :: test double freeing.\n", debug_stream);
 	p = harbol_mempool_alloc(&i, sizeof *p);
-	fprintf(debug_stream, "p is null? '%s'\n", p ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p? "no" : "yes");
 	if( p ) {
 		*p = 500;
 		fprintf(debug_stream, "p's value: %i\n", *p);
@@ -273,11 +270,11 @@ void test_harbol_mempool(FILE *const debug_stream)
 		fprintf(debug_stream, "mempool :: reallocated newer[%zu] == %i.\n", i, newer[i]);
 	harbol_mempool_free(&i, newer);
 	
-	const clock_t end = clock();
+	clock_t const end = clock();
 	printf("memory pool run time: %f\n", (end-start)/( double )CLOCKS_PER_SEC);
 	/// free data
 	fputs("\nmempool :: test destruction.\n", debug_stream);
 	harbol_mempool_clear(&i);
-	fprintf(debug_stream, "i's heap is null? '%s'\n", i.stack.mem != NIL ? "no" : "yes");
-	fprintf(debug_stream, "i's freelist is null? '%s'\n", i.large.head != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's heap is null? '%s'\n", i.stack.mem != NIL? "no" : "yes");
+	fprintf(debug_stream, "i's freelist is null? '%s'\n", i.large.head != NULL? "no" : "yes");
 }

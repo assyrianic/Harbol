@@ -39,19 +39,19 @@ HARBOL_EXPORT bool harbol_tuple_init(struct HarbolTuple *const tuple, size_t con
 		if( packed || len==1 ) {
 			continue;
 		}
-		size_t const offalign = (i+1 < len) ? sizes[i+1] : prev_size;
-		total_size = harbol_align_size(total_size, offalign >= ptr_size ? ptr_size : offalign);
+		size_t const offalign = (i+1 < len)? sizes[i+1] : prev_size;
+		total_size = harbol_align_size(total_size, offalign >= ptr_size? ptr_size : offalign);
 		prev_size = sizes[i];
 	}
 	
 	/// now do a final size alignment with the largest member.
-	size_t const aligned_total = harbol_align_size(total_size, largest_memb >= ptr_size ? ptr_size : largest_memb);
-	tuple->datum = calloc(packed ? total_size : aligned_total, sizeof *tuple->datum);
+	size_t const aligned_total = harbol_align_size(total_size, largest_memb >= ptr_size? ptr_size : largest_memb);
+	tuple->datum = calloc(packed? total_size : aligned_total, sizeof *tuple->datum);
 	if( tuple->datum==NULL ) {
 		return false;
 	}
 	
-	tuple->len = packed ? total_size : aligned_total;
+	tuple->len = packed? total_size : aligned_total;
 	tuple->fields = harbol_array_make(sizeof(uint32_t), tuple->len, &( bool ){false});
 	uint32_t offset = 0;
 	for( size_t i=0; i < len; i++ ) {
@@ -61,8 +61,8 @@ HARBOL_EXPORT bool harbol_tuple_init(struct HarbolTuple *const tuple, size_t con
 		if( packed || len==1 ) {
 			continue;
 		}
-		size_t const offalign = (i+1<len) ? sizes[i+1] : prev_size;
-		offset = harbol_align_size(offset, offalign >= ptr_size ? ptr_size : offalign);
+		size_t const offalign = (i+1<len)? sizes[i+1] : prev_size;
+		offset = harbol_align_size(offset, offalign >= ptr_size? ptr_size : offalign);
 		prev_size = sizes[i];
 	}
 	return true;
@@ -96,7 +96,7 @@ HARBOL_EXPORT void *harbol_tuple_get(struct HarbolTuple const *const tuple, size
 	}
 	
 	uint32_t const *const field_data = harbol_array_get(&tuple->fields, index, sizeof *field_data);
-	return( field_data==NULL || (*field_data & 0xFFFF) >= tuple->len ) ? NULL : tuple->datum + (*field_data & 0xFFFF);
+	return( field_data==NULL || (*field_data & 0xFFFF) >= tuple->len )? NULL : tuple->datum + (*field_data & 0xFFFF);
 }
 
 HARBOL_EXPORT void *harbol_tuple_set(struct HarbolTuple const *const tuple, size_t const index, void *const val) {

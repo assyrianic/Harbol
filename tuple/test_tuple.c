@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_tuple_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,13 +31,12 @@ int main(void)
 }
 
 
-void test_harbol_tuple(FILE *const debug_stream)
-{
+void test_harbol_tuple(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("tuple :: test allocation/initialization.\n", debug_stream);
 	fputs("\n", debug_stream);
 	
-	const size_t struc[] = { sizeof(char), sizeof(int), sizeof(short) };
+	size_t const struc[] = { sizeof(char), sizeof(int), sizeof(short) };
 	
 	struct HarbolTuple *p = harbol_tuple_new(1[&struc] - 0[&struc], struc, false);
 	assert( p );
@@ -46,9 +44,9 @@ void test_harbol_tuple(FILE *const debug_stream)
 	
 	fputs("\ntuple :: printing 3-tuple fields.\n", debug_stream);
 	for( size_t i=0; i<p->fields.len; i++ ) {
-		const struct {
+		struct {
 			uint16_t offset, size;
-		} *info = harbol_array_get(&p->fields, i, sizeof *info);
+		} const *info = harbol_array_get(&p->fields, i, sizeof *info);
 		fprintf(debug_stream, "index: %zu -> p's offset: '%u' | size: '%u'\n", i, info->offset, info->size);
 	}
 	fputs("\n", debug_stream);
@@ -61,9 +59,9 @@ void test_harbol_tuple(FILE *const debug_stream)
 	
 	fputs("\ntuple :: printing packed 3-tuple fields.\n", debug_stream);
 	for( size_t i=0; i<p->fields.len; i++ ) {
-		const struct {
+		struct {
 			uint16_t offset, size;
-		} *info = harbol_array_get(&p->fields, i, sizeof *info);
+		} const *info = harbol_array_get(&p->fields, i, sizeof *info);
 		fprintf(debug_stream, "index: %zu -> p's offset: '%u' | size: '%u'\n", i, info->offset, info->size);
 	}
 	fputs("\n", debug_stream);
@@ -76,24 +74,24 @@ void test_harbol_tuple(FILE *const debug_stream)
 	
 	fputs("\ntuple :: printing byte 4-tuple fields.\n", debug_stream);
 	for( size_t i=0; i<p->fields.len; i++ ) {
-		const struct {
+		struct {
 			uint16_t offset, size;
-		} *info = harbol_array_get(&p->fields, i, sizeof *info);
+		} const *info = harbol_array_get(&p->fields, i, sizeof *info);
 		fprintf(debug_stream, "index: %zu -> p's offset: '%u' | size: '%u'\n", i, info->offset, info->size);
 	}
 	fputs("\n", debug_stream);
 	
 	harbol_tuple_free(&p);
 	
-	p = harbol_tuple_new(4, (const size_t[]){ sizeof(int64_t), sizeof(char), sizeof(int), sizeof(short) }, false);
+	p = harbol_tuple_new(4, (size_t const[]){ sizeof(int64_t), sizeof(char), sizeof(int), sizeof(short) }, false);
 	assert( p );
 	fprintf(debug_stream, "p's size: '%zu'\n", p->len);
 	
 	fputs("\ntuple :: printing 4-tuple fields.\n", debug_stream);
 	for( size_t i=0; i<p->fields.len; i++ ) {
-		const struct {
+		struct {
 			uint16_t offset, size;
-		} *info = harbol_array_get(&p->fields, i, sizeof *info);
+		} const *info = harbol_array_get(&p->fields, i, sizeof *info);
 		fprintf(debug_stream, "index: %zu -> p's offset: '%u' | size: '%u'\n", i, info->offset, info->size);
 	}
 	fputs("\n", debug_stream);
@@ -105,16 +103,16 @@ void test_harbol_tuple(FILE *const debug_stream)
 	
 	fputs("\ntuple :: printing newly aligned 3-tuple fields.\n", debug_stream);
 	for( size_t i=0; i<p->fields.len; i++ ) {
-		const struct {
+		struct {
 			uint16_t offset, size;
-		} *info = harbol_array_get(&p->fields, i, sizeof *info);
+		} const *info = harbol_array_get(&p->fields, i, sizeof *info);
 		fprintf(debug_stream, "index: %zu -> p's offset: '%u' | size: '%u'\n", i, info->offset, info->size);
 	}
 	fputs("\n", debug_stream);
 	
 	/// free tuple
 	harbol_tuple_clear(p);
-	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL? "no" : "yes");
 	harbol_tuple_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL? "no" : "yes");
 }

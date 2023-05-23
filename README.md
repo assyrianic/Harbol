@@ -38,8 +38,7 @@ You have to store instructions from all basic blocks in one continuous array
 ```c
 #include "harbol.h"
 
-int main(int const argc, char *argv[])
-{
+int main(int const argc, char *argv[]) {
 	bool result = false;
 	struct HarbolString str = harbol_string_make("my initial string!", &result);
 	if( !result ) {

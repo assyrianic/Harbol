@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_plugins_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -33,17 +32,16 @@ int main(void)
 
 
 
-static NO_NULL void on_plugin_load(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, const bool reloading) {
+static NO_NULL void on_plugin_load(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, bool const reloading) {
 	FILE *const restrict debug_stream = userdata;
 	fprintf(debug_stream, "\nplugins :: on plugin load! - path :: %s\n", pl_ctxt->path);
 }
-static NO_NULL void on_plugin_unload(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, const bool reloading) {
+static NO_NULL void on_plugin_unload(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, bool const reloading) {
 	FILE *const restrict debug_stream = userdata;
 	fprintf(debug_stream, "\nplugins :: on plugin unload! - path :: %s\n", pl_ctxt->path);
 }
 
-void test_harbol_plugins(FILE *const debug_stream)
-{
+void test_harbol_plugins(FILE *const debug_stream) {
 	fputs("plugins :: test init.\n", debug_stream);
 	
 	struct HarbolPlugin pl1 = {0}; harbol_plugin_load(&pl1, "./test_harbol_plugins/test_plugin" LIB_EXT, on_plugin_load, debug_stream);

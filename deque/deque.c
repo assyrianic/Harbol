@@ -14,13 +14,13 @@ HARBOL_EXPORT struct HarbolDeque *harbol_deque_new(size_t const init_size) {
 }
 
 HARBOL_EXPORT bool harbol_deque_init(struct HarbolDeque *const deque, size_t const init_size) {
-	deque->datum = harbol_recalloc(deque->datum, init_size, sizeof *deque->datum, deque->cap);
-	deque->nexts = harbol_recalloc(deque->nexts, init_size, sizeof *deque->nexts, deque->cap);
-	deque->prevs = harbol_recalloc(deque->prevs, init_size, sizeof *deque->prevs, deque->cap);
-	if( deque->datum==NULL || deque->nexts==NULL || deque->prevs==NULL ) {
-		harbol_deque_clear(deque);
+	if( !harbol_multi_recalloc(init_size, deque->cap, 3,
+						&deque->nexts, sizeof *deque->nexts,
+						&deque->prevs, sizeof *deque->prevs,
+						&deque->datum, sizeof *deque->datum) ) {
 		return false;
 	}
+	
 	
 	deque->cap = init_size;
 	for( size_t i=0; i < init_size; i++ ) {
@@ -52,9 +52,7 @@ HARBOL_EXPORT void harbol_deque_clear(struct HarbolDeque *const deque) {
 	for( size_t i=0; i < deque->cap; i++ ) {
 		free(deque->datum[i]); deque->datum[i] = NULL;
 	}
-	free(deque->datum); deque->datum = NULL;
-	free(deque->nexts); deque->nexts = NULL;
-	free(deque->prevs); deque->prevs = NULL;
+	harbol_multi_cleanup(3, &deque->nexts, &deque->prevs, &deque->datum);
 	*deque = ( struct HarbolDeque ){0};
 }
 HARBOL_EXPORT void harbol_deque_free(struct HarbolDeque **const dequeref) {
@@ -92,27 +90,11 @@ static void _harbol_deque_free_node(struct HarbolDeque *const deque, size_t cons
 }
 
 static bool _harbol_deque_resize(struct HarbolDeque *const deque, size_t const new_size) {
-	uint8_t **more_datum = harbol_recalloc(deque->datum, new_size, sizeof *deque->datum, deque->cap);
-	if( more_datum==NULL ) {
+	if( !harbol_multi_recalloc(new_size, deque->cap, 3,
+						&deque->nexts, sizeof *deque->nexts,
+						&deque->prevs, sizeof *deque->prevs,
+						&deque->datum, sizeof *deque->datum) ) {
 		return false;
-	} else {
-		deque->datum = more_datum;
-	}
-	
-	size_t *more_nexts = harbol_recalloc(deque->nexts, new_size, sizeof *deque->nexts, deque->cap);
-	if( more_nexts==NULL ) {
-		/// if reallocation fails for ONE of the buffers,
-		/// leave the others reallocated but don't update the deque size.
-		return false;
-	} else {
-		deque->nexts = more_nexts;
-	}
-	
-	size_t *more_prevs = harbol_recalloc(deque->prevs, new_size, sizeof *deque->prevs, deque->cap);
-	if( more_prevs==NULL ) {
-		return false;
-	} else {
-		deque->prevs = more_prevs;
 	}
 	
 	size_t const old_cap = deque->cap;

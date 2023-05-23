@@ -130,6 +130,13 @@ HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_go_string_to_int(struct HarbolString co
 HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_c_string_to_uint(struct HarbolString const *buf, char **end);
 HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_go_string_to_uint(struct HarbolString const *buf, char **end);
 HARBOL_EXPORT NO_NULL floatmax_t lex_string_to_float(struct HarbolString const *buf);
+
+/// TODO:
+struct LexingFlags {
+	int i;
+};
+
+HARBOL_EXPORT NO_NULL void lex_custom_number(char const str[], char const **end, struct HarbolString *buf);
 /********************************************************************/
 
 #ifdef __cplusplus

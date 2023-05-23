@@ -235,7 +235,7 @@ static inline bool harbol_multi_calloc(size_t const size, size_t const n_buffers
 
 /// Works similar to `harbol_multi_calloc` but for `recalloc`ing instead.
 /// use like: 'harbol_multi_calloc(newsize, oldsize, num_bufs, &buf1, sizeof *buf1, ...);'
-/// If allocation fails, all buffers given buffers are unchanged.
+/// If allocation fails, all given buffers are unchanged.
 static inline bool harbol_multi_recalloc(size_t const new_size, size_t const old_size, size_t const n_buffers, ...) {
 	va_list ap; va_start(ap, n_buffers);
 	va_list cp; va_copy(cp, ap);
@@ -335,8 +335,7 @@ static inline size_t harbol_pad_size(size_t const size, size_t const align) {
 static inline NO_NULL size_t string_hash(char const *const key, size_t const seed=0)
 #else
 static inline size_t string_hash(char const key[const static 1], size_t const seed)
-#endif
-{
+#endif {
 	size_t h = seed;
 	for( size_t i=0; key[i] != 0; i++ ) {
 		h = ( size_t )(key[i]) + (h << 6) + (h << 16) - h;
@@ -349,8 +348,7 @@ static inline size_t string_hash(char const key[const static 1], size_t const se
 static inline NO_NULL size_t array_hash(uint8_t const *const key, size_t const len, size_t const seed=0)
 #else
 static inline size_t array_hash(uint8_t const key[const static 1], size_t const len, size_t const seed)
-#endif
-{
+#endif {
 	size_t h = seed;
 	for( size_t i=0; i < len; i++ ) {
 		h = ( size_t )(key[i]) + (h << 6) + (h << 16) - h;
@@ -430,8 +428,7 @@ union HarbolIter {
 static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const file_name, size_t *const restrict bytes)
 #else
 static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[static 1], size_t *const restrict bytes)
-#endif
-{
+#endif {
 	FILE *restrict file = fopen(file_name, "rb");
 	if( file==NULL ) {
 		return NULL;
@@ -456,8 +453,7 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[stat
 static inline NO_NULL char *make_buffer_from_text(char const *const file_name, size_t *const restrict len)
 #else
 static inline NO_NULL char *make_buffer_from_text(char const file_name[static 1], size_t *const restrict len)
-#endif
-{
+#endif {
 	FILE *restrict file = fopen(file_name, "r");
 	if( file==NULL ) {
 		return NULL;
@@ -496,8 +492,7 @@ static inline NO_NULL void *dup_data(void const *const data, size_t const bytes)
 static inline NO_NULL char *dup_cstr(size_t const len, char const *cstr)
 #else
 static inline char *dup_cstr(size_t const len, char const cstr[static len])
-#endif
-{
+#endif {
 #ifdef __cplusplus
 	char *restrict cpy = reinterpret_cast< decltype(cpy) >(calloc(len + 1, sizeof *cpy));
 #else
@@ -511,8 +506,7 @@ static inline char *dup_cstr(size_t const len, char const cstr[static len])
 static inline NO_NULL char *sprintf_alloc(char const *fmt, ...)
 #else
 static inline char *sprintf_alloc(char const fmt[static 1], ...)
-#endif
-{
+#endif {
 	va_list ap; va_start(ap, fmt);
 	va_list st; va_copy(st, ap);
 	
@@ -555,7 +549,7 @@ static inline size_t cstr_switch(char const cstr[static 1], ...) {
 #endif
 	va_list ap; va_start(ap, cstr);
 	size_t index = 0;
-	char const *arg = va_arg(ap, char const *);
+	char const *arg = va_arg(ap, char const*);
 	while( arg != NULL ) {
 		if( !strcmp(cstr, arg) ) {
 			break;
@@ -567,7 +561,7 @@ static inline size_t cstr_switch(char const cstr[static 1], ...) {
 	return arg==NULL? SIZE_MAX : index;
 }
 
-static inline bool array_shift_up(uint8_t *const buf, size_t *const restrict len, size_t const index, size_t const datasize, size_t amount) {
+static inline bool array_shift_up(void *const restrict buf, size_t *const restrict len, size_t const index, size_t const datasize, size_t amount) {
 	if( index >= *len ) {
 		return false;
 	}
@@ -577,15 +571,54 @@ static inline bool array_shift_up(uint8_t *const buf, size_t *const restrict len
 		i = index + amount,
 		j = index
 	;
+	uint8_t *const restrict b = buf;
 	if( i < *len ) {
 		*len -= amount;
-		memmove(&buf[j * datasize], &buf[i * datasize], (*len - j) * datasize);
-		memset(&buf[*len * datasize], 0, amount * datasize);
+		memmove(&b[j * datasize], &b[i * datasize], (*len - j) * datasize);
+		memset(&b[*len * datasize], 0, amount * datasize);
 	} else {
 		/// if i goes out of range, zero everything after and lower the count.
-		memset(&buf[j * datasize], 0, (*len - j) * datasize);
+		memset(&b[j * datasize], 0, (*len - j) * datasize);
 		*len = j;
 	}
+	return true;
+}
+
+
+/// This is for shifting multiple buffers that are controlled by a single length size.
+/// use like: 'multi_array_shift_up(&len, index_to_shift_from, amount_to_shift, num_buffers, buf1, sizeof *buf1, ...);'
+/// perfect for use with parallel arrays/buffers.
+static inline bool multi_array_shift_up(size_t *const restrict len, size_t const index, size_t amount, size_t const n_buffers, ...) {
+	if( index >= *len ) {
+		return false;
+	}
+	
+	va_list ap; va_start(ap, n_buffers);
+	amount += amount==0;
+	size_t const
+		i = index + amount,
+		j = index
+	;
+	
+	if( i < *len ) {
+		*len -= amount;
+		size_t const cur_len = *len;
+		for( size_t n=0; n < n_buffers; n++ ) {
+			uint8_t *const buf      = va_arg(ap, uint8_t*);
+			size_t   const datasize = va_arg(ap, size_t);
+			memmove(&buf[j * datasize], &buf[i * datasize], (cur_len - j) * datasize);
+			memset(&buf[cur_len * datasize], 0, amount * datasize);
+		}
+	} else {
+		size_t const cur_len = *len;
+		for( size_t n=0; n < n_buffers; n++ ) {
+			uint8_t *const restrict buf      = va_arg(ap, uint8_t*);
+			size_t   const          datasize = va_arg(ap, size_t);
+			memset(&buf[j * datasize], 0, (cur_len - j) * datasize);
+		}
+		*len = j;
+	}
+	va_end(ap);
 	return true;
 }
 

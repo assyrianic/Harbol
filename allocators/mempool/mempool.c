@@ -5,8 +5,8 @@
 #endif
 
 
-HARBOL_EXPORT struct HarbolMemNode *harbol_memnode_split(struct HarbolMemNode *const node, const size_t bytes) {
-	const uintptr_t n = ( uintptr_t )(node);
+HARBOL_EXPORT struct HarbolMemNode *harbol_memnode_split(struct HarbolMemNode *const node, size_t const bytes) {
+	uintptr_t const n = ( uintptr_t )(node);
 	struct HarbolMemNode *const r = ( struct HarbolMemNode* )(n + (node->size - bytes));
 	node->size -= bytes;
 	r->size = bytes;
@@ -38,13 +38,13 @@ HARBOL_EXPORT void harbol_freelist_insert_before(struct HarbolFreeList *const li
 }
 
 static void _harbol_freelist_transfer_node(struct HarbolMemPool *const mempool, struct HarbolMemNode *const node) {
-	const size_t slot = (node->size >> HARBOL_BUCKET_BITS) - 1;
-	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE) ? &mempool->buckets[slot] : &mempool->large;
+	size_t const slot = (node->size >> HARBOL_BUCKET_BITS) - 1;
+	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE)? &mempool->buckets[slot] : &mempool->large;
 	harbol_freelist_insert(mempool, l, node, (slot < HARBOL_BUCKET_SIZE));
 }
 
 
-HARBOL_EXPORT void harbol_freelist_insert(struct HarbolMemPool *const mempool, struct HarbolFreeList *const list, struct HarbolMemNode *const node, const bool is_bucket) {
+HARBOL_EXPORT void harbol_freelist_insert(struct HarbolMemPool *const mempool, struct HarbolFreeList *const list, struct HarbolMemNode *const node, bool const is_bucket) {
 	if( list->head==NULL ) {
 		list->head = node;
 		list->len++;
@@ -62,10 +62,10 @@ HARBOL_EXPORT void harbol_freelist_insert(struct HarbolMemPool *const mempool, s
             }
 			continue;
 		}
-		const uintptr_t inode = ( uintptr_t )(node);
-		const uintptr_t iiter = ( uintptr_t )(iter);
-		const uintptr_t iter_end = iiter + iter->size;
-		const uintptr_t node_end = inode + node->size;
+		uintptr_t const inode = ( uintptr_t )(node);
+		uintptr_t const iiter = ( uintptr_t )(iter);
+		uintptr_t const iter_end = iiter + iter->size;
+		uintptr_t const node_end = inode + node->size;
 		
 		if( iter==node ) {
 			return;
@@ -145,7 +145,7 @@ HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_remove(struct HarbolFreeList
 	return node;
 }
 
-HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_find(struct HarbolFreeList *const list, const size_t bytes) {
+HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_find(struct HarbolFreeList *const list, size_t const bytes) {
 	for( struct HarbolMemNode *node = list->head; node != NULL; node = node->next ) {
 		if( node->size < bytes ) {
 			continue;
@@ -160,7 +160,7 @@ HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_find(struct HarbolFreeList *
 }
 
 
-HARBOL_EXPORT bool harbol_mempool_init(struct HarbolMemPool *const mempool, const size_t size) {
+HARBOL_EXPORT bool harbol_mempool_init(struct HarbolMemPool *const mempool, size_t const size) {
 	if( size==0 )
 		return false;
 	
@@ -168,13 +168,13 @@ HARBOL_EXPORT bool harbol_mempool_init(struct HarbolMemPool *const mempool, cons
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make(const size_t size, bool *const res) {
+HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make(size_t const size, bool *const res) {
 	struct HarbolMemPool mempool = {0};
 	*res = harbol_mempool_init(&mempool, size);
 	return mempool;
 }
 
-HARBOL_EXPORT bool harbol_mempool_init_from_buffer(struct HarbolMemPool *const mempool, void *const restrict buf, const size_t size) {
+HARBOL_EXPORT bool harbol_mempool_init_from_buffer(struct HarbolMemPool *const mempool, void *const restrict buf, size_t const size) {
 	if( size==0 || size<=sizeof(struct HarbolMemNode) )
 		return false;
 	
@@ -182,7 +182,7 @@ HARBOL_EXPORT bool harbol_mempool_init_from_buffer(struct HarbolMemPool *const m
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make_from_buffer(void *const restrict buf, const size_t size, bool *const restrict res) {
+HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make_from_buffer(void *const restrict buf, size_t const size, bool *const restrict res) {
 	struct HarbolMemPool mempool = { 0 };
 	*res = harbol_mempool_init_from_buffer(&mempool, buf, size);
 	return mempool;
@@ -193,10 +193,10 @@ HARBOL_EXPORT void harbol_mempool_clear(struct HarbolMemPool *const mempool) {
 	*mempool = ( struct HarbolMemPool ){0};
 }
 
-static NO_NULL void *_get_freenode(struct HarbolMemPool *const mempool, const size_t bytes) {
+static NO_NULL void *_get_freenode(struct HarbolMemPool *const mempool, size_t const bytes) {
 	/// check if we have a good sized node from the buckets.
-	const size_t slot = (bytes >> HARBOL_BUCKET_BITS) - 1;
-	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE) ? &mempool->buckets[slot] : &mempool->large;
+	size_t const slot = (bytes >> HARBOL_BUCKET_BITS) - 1;
+	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE)? &mempool->buckets[slot] : &mempool->large;
 	struct HarbolMemNode *new_mem = harbol_freelist_find(l, bytes);
 	if( new_mem==NULL ) {
 		return NULL;
@@ -207,7 +207,7 @@ static NO_NULL void *_get_freenode(struct HarbolMemPool *const mempool, const si
 	}
 }
 
-static NO_NULL void *_get_stknode(struct HarbolMemPool *const mempool, const size_t alloc_bytes) {
+static NO_NULL void *_get_stknode(struct HarbolMemPool *const mempool, size_t const alloc_bytes) {
 	struct HarbolMemNode *new_mem = harbol_region_alloc(&mempool->stack, alloc_bytes);
 	if( new_mem==NULL ) {
 		return NULL;
@@ -219,7 +219,7 @@ static NO_NULL void *_get_stknode(struct HarbolMemPool *const mempool, const siz
 	}
 }
 
-HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, const size_t size) {
+HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, size_t const size) {
 	if( size==0 || size > mempool->stack.size ) {
 		return NULL;
 	} else {
@@ -233,13 +233,13 @@ HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, co
 		/// |   memory   |
 		/// |   space    | highest addr of block
 		/// --------------
-		const size_t alloc_bytes = harbol_align_size(size + sizeof(struct HarbolMemNode), sizeof(intptr_t));
+		size_t const alloc_bytes = harbol_align_size(size + sizeof(struct HarbolMemNode), sizeof(intptr_t));
 		void *restrict new_mem = _get_freenode(mempool, alloc_bytes);
 		return ( new_mem==NULL )? _get_stknode(mempool, alloc_bytes) : new_mem;
 	}
 }
 
-HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict mempool, void *const ptr, const size_t size) {
+HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict mempool, void *const ptr, size_t const size) {
 	if( size > mempool->stack.size )
 		return NULL;
 	/// NULL ptr should make this work like regular alloc.
@@ -265,7 +265,7 @@ HARBOL_EXPORT bool harbol_mempool_free(struct HarbolMemPool *const restrict memp
 	
 	/// behind the actual pointer data is the allocation info.
 	struct HarbolMemNode *mem_node = ( struct HarbolMemNode* )(( uint8_t* )(ptr) - sizeof *mem_node);
-	const size_t slot = (mem_node->size >> HARBOL_BUCKET_BITS) - 1;
+	size_t const slot = (mem_node->size >> HARBOL_BUCKET_BITS) - 1;
 	
 	/// make sure the pointer data is valid.
 	if( !is_uintptr_in_bounds(( uintptr_t )(mem_node), mempool->stack.mem + mempool->stack.size, mempool->stack.offs)
@@ -287,12 +287,12 @@ HARBOL_EXPORT bool harbol_mempool_cleanup(struct HarbolMemPool *const restrict m
 	if( *ptrref==NULL ) {
 		return false;
 	}
-	const bool free_result = harbol_mempool_free(mempool, *ptrref);
+	bool const free_result = harbol_mempool_free(mempool, *ptrref);
 	*ptrref = NULL;
 	return free_result;
 }
 
-HARBOL_EXPORT size_t harbol_mempool_mem_remaining(const struct HarbolMemPool *mempool) {
+HARBOL_EXPORT size_t harbol_mempool_mem_remaining(struct HarbolMemPool const *mempool) {
 	size_t total_remaining = mempool->stack.offs - mempool->stack.mem;
 	for( struct HarbolMemNode *n = mempool->large.head; n != NULL; n = n->next ) {
 		total_remaining += n->size;

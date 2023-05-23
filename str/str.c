@@ -15,8 +15,7 @@ static NO_NULL bool _harbol_resize_string(struct HarbolString *const restrict st
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolString *harbol_string_new(char const cstr[])
-{
+HARBOL_EXPORT struct HarbolString *harbol_string_new(char const cstr[]) {
 	struct HarbolString *restrict str = calloc(1, sizeof *str);
 	if( str==NULL ) {
 		free(str); str = NULL;
@@ -130,7 +129,7 @@ HARBOL_EXPORT bool harbol_string_copy_cstr(struct HarbolString *const restrict s
 										((str), (val))
 #endif
 
-HARBOL_EXPORT int harbol_string_format(struct HarbolString *const restrict str, const bool clear, char const fmt[static 1], ...) {
+HARBOL_EXPORT int harbol_string_format(struct HarbolString *const restrict str, bool const clear, char const fmt[static 1], ...) {
 	va_list ap, st;
 	va_start(ap, fmt);
 	va_copy(st, ap);
@@ -140,7 +139,7 @@ HARBOL_EXPORT int harbol_string_format(struct HarbolString *const restrict str, 
 	int const size = vsnprintf(&c, 1, fmt, ap);
 	va_end(ap);
 	
-	size_t const old_size = clear ? 0 : str->len;
+	size_t const old_size = clear? 0 : str->len;
 	if( !_harbol_resize_string(str, size + old_size) ) {
 		va_end(st);
 		return -1;
@@ -154,7 +153,7 @@ HARBOL_EXPORT int harbol_string_format(struct HarbolString *const restrict str, 
 HARBOL_EXPORT int harbol_string_scan(struct HarbolString const *const str, char const fmt[static 1], ...) {
 	va_list args;
 	va_start(args, fmt);
-	const int result = vsscanf(str->cstr, fmt, args);
+	int const result = vsscanf(str->cstr, fmt, args);
 	va_end(args);
 	return result;
 }
@@ -165,11 +164,11 @@ HARBOL_EXPORT int harbol_string_cmpcstr(struct HarbolString const *const str, ch
 	}
 	
 	size_t const cstr_len = strlen(cstr);
-	return strncmp(cstr, str->cstr, (str->len > cstr_len) ? str->len : cstr_len);
+	return strncmp(cstr, str->cstr, (str->len > cstr_len)? str->len : cstr_len);
 }
 
 HARBOL_EXPORT int harbol_string_cmpstr(struct HarbolString const *const strA, struct HarbolString const *const strB) {
-	return( strA->cstr==NULL || strB->cstr==NULL ) ? -1 : strncmp(strA->cstr, strB->cstr, strA->len > strB->len ? strA->len : strB->len);
+	return( strA->cstr==NULL || strB->cstr==NULL )? -1 : strncmp(strA->cstr, strB->cstr, strA->len > strB->len? strA->len : strB->len);
 }
 
 #ifdef C11
@@ -199,7 +198,7 @@ HARBOL_EXPORT bool harbol_string_is_palindrome(struct HarbolString const *const 
 }
 
 HARBOL_EXPORT bool harbol_string_read_from_file(struct HarbolString *const str, FILE *const file) {
-	const ssize_t filesize = get_file_size(file);
+	ssize_t const filesize = get_file_size(file);
 	if( filesize<=0 || !_harbol_resize_string(str, filesize) ) {
 		return false;
 	}

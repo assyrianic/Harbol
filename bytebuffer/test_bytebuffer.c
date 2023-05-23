@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_bytebuffer_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,8 +31,7 @@ int main(void)
 }
 
 
-void test_harbol_bytebuffer(FILE *const debug_stream)
-{
+void test_harbol_bytebuffer(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("bytebuffer :: test allocation/initialization.\n", debug_stream);
 	struct HarbolByteBuf *p = harbol_bytebuffer_new();
@@ -81,7 +79,7 @@ void test_harbol_bytebuffer(FILE *const debug_stream)
 		fprintf(debug_stream, "i[%zu]= %u\n", n, i.table[n]);
 	
 	fputs("\nbytebuffer :: test string appending.\n", debug_stream);
-	const char *s = "supercalifragilisticexpialidocius";
+	char const *s = "supercalifragilisticexpialidocius";
 	harbol_bytebuffer_insert_cstr(p, s);
 	harbol_bytebuffer_insert_cstr(&i, s);
 	for( size_t n=0; n<p->len; n++ )
@@ -161,10 +159,10 @@ void test_harbol_bytebuffer(FILE *const debug_stream)
 	/// free data
 	fputs("\nbytebuffer :: test destruction.\n", debug_stream);
 	harbol_bytebuffer_clear(&i);
-	fprintf(debug_stream, "i's table is null? '%s'\n", i.table != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's table is null? '%s'\n", i.table != NULL? "no" : "yes");
 	
 	harbol_bytebuffer_clear(p);
-	fprintf(debug_stream, "p's table is null? '%s'\n", p->table != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's table is null? '%s'\n", p->table != NULL? "no" : "yes");
 	harbol_bytebuffer_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
 }

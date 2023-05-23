@@ -160,7 +160,7 @@ HARBOL_EXPORT bool harbol_plugin_dir_open(char const dir[static 1], HarbolPlugin
 			fprintf(stderr, "Harbol Plugin Directory Error: **** unable to open dir: '%s' ****\n", pl_dir);
 			tinydir_close(dir_handle);
 		} else {
-			_dir_open(dir_handle, dir_fn, userdata, custom_ext==NULL ? LIB_EXT : custom_ext);
+			_dir_open(dir_handle, dir_fn, userdata, custom_ext==NULL? LIB_EXT : custom_ext);
 		}
 		free(pl_dir); pl_dir = NULL;
 		return true;

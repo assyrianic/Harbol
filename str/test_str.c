@@ -9,8 +9,7 @@ void test_harbol_string(FILE *debug_stream);
 struct HarbolMemPool *g_pool;
 #endif
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_string_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -27,8 +26,7 @@ int main(void)
 #endif
 }
 
-void test_harbol_string(FILE *const debug_stream)
-{
+void test_harbol_string(FILE *const debug_stream) {
 	if( debug_stream==NULL )
 		return;
 	
@@ -144,17 +142,17 @@ void test_harbol_string(FILE *const debug_stream)
 	/// test string switch
 	fputs("\nstring :: test removing chars.\n", debug_stream);
 	
-	const size_t removed = harbol_string_rm_char(&i, 'l');
+	size_t const removed = harbol_string_rm_char(&i, 'l');
 	fprintf(debug_stream, "i's string: '%s', l's removed: %zu\n", i.cstr, removed);
 	
 	/// free data
 	fputs("string :: test destruction.", debug_stream);
 	fputs("\n", debug_stream);
 	harbol_string_clear(&i);
-	fprintf(debug_stream, "i's string is null? '%s'\n", i.cstr != NULL ? "no" : "yes");
+	fprintf(debug_stream, "i's string is null? '%s'\n", i.cstr != NULL? "no" : "yes");
 	
 	harbol_string_clear(p);
-	fprintf(debug_stream, "p's string is null? '%s'\n", p->cstr != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's string is null? '%s'\n", p->cstr != NULL? "no" : "yes");
 	harbol_string_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
 }

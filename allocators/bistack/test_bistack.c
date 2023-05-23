@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_bistack_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -32,7 +31,6 @@ int main(void)
 }
 
 
-void test_harbol_bistack(FILE *const debug_stream)
-{
+void test_harbol_bistack(FILE *const debug_stream) {
 	
 }

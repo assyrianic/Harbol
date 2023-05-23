@@ -14,8 +14,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_tree_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -33,11 +32,10 @@ int main(void)
 }
 
 
-void test_harbol_tree(FILE *const debug_stream)
-{
+void test_harbol_tree(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("tree :: test allocation/initialization.\n", debug_stream);
-	const size_t u_val_size = sizeof(union Value);
+	size_t const u_val_size = sizeof(union Value);
 	struct HarbolTree *p = harbol_tree_new(&( union Value ){.int64=1}, u_val_size);
 	if( p != NULL )
 		fputs("tree :: allocation/initialization of p is GOOD.\n", debug_stream);
@@ -60,13 +58,13 @@ void test_harbol_tree(FILE *const debug_stream)
 	harbol_tree_insert_val(p, &( union Value ){.int64=5}, u_val_size);
 	for( size_t n=0; n<p->kids.len; n++ ) {
 		struct HarbolTree *child = harbol_tree_get_node_by_index(p, n);
-		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( const union Value* )child->data)->int64);
+		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( union Value const* )child->data)->int64);
 	}
 	fputs("\ndeleting index 1\n", debug_stream);
 	harbol_tree_rm_index(p, 1);
 	for( size_t n=0; n<p->kids.len; n++ ) {
 		struct HarbolTree *child = harbol_tree_get_node_by_index(p, n);
-		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( const union Value* )child->data)->int64);
+		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( union Value const* )child->data)->int64);
 	}
 	/// Test delete by node reference
 	fputs("\ntree :: test deletion by node reference.\n", debug_stream);
@@ -78,12 +76,12 @@ void test_harbol_tree(FILE *const debug_stream)
 	}
 	for( size_t n=0; n<p->kids.len; n++ ) {
 		struct HarbolTree *child = harbol_tree_get_node_by_index(p, n);
-		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( const union Value* )child->data)->int64);
+		fprintf(debug_stream, "child #%zu value: '%" PRIi64 "'\n", n, (( union Value const* )child->data)->int64);
 	}
 	/// Test creating something of an abstract syntax tree.
 	fputs("\ntree :: test creating something of an abstract syntax tree.\n", debug_stream);
 	harbol_tree_free(&p);
-	const size_t hstr_size = sizeof(struct HarbolString);
+	size_t const hstr_size = sizeof(struct HarbolString);
 	
 	struct HarbolString str = harbol_string_make("program", &( bool ){false});
 	p = harbol_tree_new(&str, hstr_size);
@@ -126,7 +124,7 @@ void test_harbol_tree(FILE *const debug_stream)
 	/// free data
 	fputs("\ntree :: test destruction.\n", debug_stream);
 	harbol_tree_clear(p);
-	fprintf(debug_stream, "p's children vector is null? '%s'\n", p->kids.table != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p's children vector is null? '%s'\n", p->kids.table != NULL? "no" : "yes");
 	harbol_tree_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL ? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
 }

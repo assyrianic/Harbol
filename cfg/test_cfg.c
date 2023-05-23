@@ -13,8 +13,7 @@ union Value {
 	int64_t int64;
 };
 
-int main(void)
-{
+int main(void) {
 	FILE *debug_stream = fopen("harbol_cfg_output.txt", "w");
 	if( debug_stream==NULL )
 		return -1;
@@ -36,7 +35,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("cfg :: test allocation/initialization.\n", debug_stream);
 	struct HarbolMap *cfg = harbol_cfg_parse_cstr("'section': { 'lel': null }");
-	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL ? "yes" : "no");
+	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL? "yes" : "no");
 	
 	if( cfg != NULL ) {
 		fputs("\ncfg :: testing config to string conversion.\n", debug_stream);
@@ -47,7 +46,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 	
 	/// Test realistic config file string
 	fputs("cfg :: test realistic config file string.\n", debug_stream);
-	const char *test_cfg = "'root': { \
+	char const *test_cfg = "'root': { \
 		'firstName': 'John', \
 		'lastName': 'Smith', \
 		'isAlive': true, \
@@ -103,12 +102,12 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		    '7': IOTA \
 		} \
 	}";
-	const clock_t start = clock();
+	clock_t const start = clock();
 	struct HarbolMap *larger_cfg = harbol_cfg_parse_cstr(test_cfg);
-	const clock_t end = clock();
+	clock_t const end = clock();
 	printf("cfg parsing time: %f\n", (end-start)/(double)CLOCKS_PER_SEC);
 	
-	fprintf(debug_stream, "larger_cfg ptr valid?: '%s'\n", larger_cfg != NULL ? "yes" : "no");
+	fprintf(debug_stream, "larger_cfg ptr valid?: '%s'\n", larger_cfg != NULL? "yes" : "no");
 	if( larger_cfg != NULL ) {
 		fputs("\ncfg :: iterating realistic config.\n", debug_stream);
 		struct HarbolString stringcfg = harbol_cfg_to_str(larger_cfg);
@@ -132,12 +131,12 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		fputs("\ncfg :: test retrieving string value from subsection of realistic config.\n", debug_stream);
 		size_t type_len = 0;
 		char *type = harbol_cfg_get_cstr(larger_cfg, "root.phoneNumbers\\..1.type", &type_len);
-		fprintf(debug_stream, "root.phoneNumbers\\..1.type type valid?: '%s'\n", type ? "yes" : "no");
+		fprintf(debug_stream, "root.phoneNumbers\\..1.type type valid?: '%s'\n", type? "yes" : "no");
 		if( type ) {
 			fprintf(debug_stream, "root.phoneNumbers\\..1.type: %s\n", type);
 		}
 		type = harbol_cfg_get_cstr(larger_cfg, "root.age", &type_len);
-		fprintf(debug_stream, "root.age string type valid?: '%s'\n", type ? "yes" : "no");
+		fprintf(debug_stream, "root.age string type valid?: '%s'\n", type? "yes" : "no");
 		if( type ) {
 			fprintf(debug_stream, "root.age: %s\n", type);
 		}
@@ -161,7 +160,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		}
 		
 		fputs("\ncfg :: test building cfg file!\n", debug_stream);
-		fprintf(debug_stream, "\nconfig construction result: '%s'\n", harbol_cfg_build_file(larger_cfg, "large_cfg.ini", true) ? "success" : "failure");
+		fprintf(debug_stream, "\nconfig construction result: '%s'\n", harbol_cfg_build_file(larger_cfg, "large_cfg.ini", true)? "success" : "failure");
 		
 		fputs("\ncfg :: test setting a key back to null\n", debug_stream);
 		harbol_cfg_set_to_null(larger_cfg, "root.spouse");
@@ -186,12 +185,12 @@ void test_harbol_cfg(FILE *const debug_stream) {
 			harbol_string_clear(&stringcfg);
 		}
 		fputs("\ncfg :: test building newer cfg file!\n", debug_stream);
-		fprintf(debug_stream, "\nconfig construction result: '%s'\n", harbol_cfg_build_file(larger_cfg, "large_cfg_new_sect.ini", true) ? "success" : "failure");
+		fprintf(debug_stream, "\nconfig construction result: '%s'\n", harbol_cfg_build_file(larger_cfg, "large_cfg_new_sect.ini", true)? "success" : "failure");
 		harbol_cfg_free(&larger_cfg);
-		fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg ? "yes" : "no");
+		fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg? "yes" : "no");
 	}
 	cfg = NULL;
 	fputs("\ncfg :: test destruction.\n", debug_stream);
 	harbol_cfg_free(&cfg);
-	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL ? "yes" : "no");
+	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL? "yes" : "no");
 }

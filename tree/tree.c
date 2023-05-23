@@ -75,11 +75,11 @@ HARBOL_EXPORT bool harbol_tree_insert_val(struct HarbolTree *const restrict tree
 		return false;
 	}
 	struct HarbolTree *node = harbol_tree_new(val, datasize);
-	return( node==NULL || node->data==NULL ) ? false : harbol_array_insert(&tree->kids, &node, sizeof node);
+	return( node==NULL || node->data==NULL )? false : harbol_array_insert(&tree->kids, &node, sizeof node);
 }
 
 HARBOL_EXPORT bool harbol_tree_insert_node(struct HarbolTree *const tree, struct HarbolTree **const child_ref) {
-	return( (*child_ref)->data==NULL || (harbol_array_full(&tree->kids) && !harbol_array_grow(&tree->kids, sizeof tree)) ) ? false : harbol_array_insert(&tree->kids, child_ref, sizeof *child_ref);
+	return( (*child_ref)->data==NULL || (harbol_array_full(&tree->kids) && !harbol_array_grow(&tree->kids, sizeof tree)) )? false : harbol_array_insert(&tree->kids, child_ref, sizeof *child_ref);
 }
 
 HARBOL_EXPORT bool harbol_tree_rm_node(struct HarbolTree *const tree, struct HarbolTree **const child_ref) {
