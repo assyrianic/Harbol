@@ -335,7 +335,8 @@ static inline size_t harbol_pad_size(size_t const size, size_t const align) {
 static inline NO_NULL size_t string_hash(char const *const key, size_t const seed=0)
 #else
 static inline size_t string_hash(char const key[const static 1], size_t const seed)
-#endif {
+#endif
+{
 	size_t h = seed;
 	for( size_t i=0; key[i] != 0; i++ ) {
 		h = ( size_t )(key[i]) + (h << 6) + (h << 16) - h;
@@ -348,7 +349,8 @@ static inline size_t string_hash(char const key[const static 1], size_t const se
 static inline NO_NULL size_t array_hash(uint8_t const *const key, size_t const len, size_t const seed=0)
 #else
 static inline size_t array_hash(uint8_t const key[const static 1], size_t const len, size_t const seed)
-#endif {
+#endif
+{
 	size_t h = seed;
 	for( size_t i=0; i < len; i++ ) {
 		h = ( size_t )(key[i]) + (h << 6) + (h << 16) - h;
@@ -428,7 +430,8 @@ union HarbolIter {
 static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const file_name, size_t *const restrict bytes)
 #else
 static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[static 1], size_t *const restrict bytes)
-#endif {
+#endif
+{
 	FILE *restrict file = fopen(file_name, "rb");
 	if( file==NULL ) {
 		return NULL;
@@ -453,7 +456,8 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[stat
 static inline NO_NULL char *make_buffer_from_text(char const *const file_name, size_t *const restrict len)
 #else
 static inline NO_NULL char *make_buffer_from_text(char const file_name[static 1], size_t *const restrict len)
-#endif {
+#endif
+{
 	FILE *restrict file = fopen(file_name, "r");
 	if( file==NULL ) {
 		return NULL;
@@ -492,7 +496,8 @@ static inline NO_NULL void *dup_data(void const *const data, size_t const bytes)
 static inline NO_NULL char *dup_cstr(size_t const len, char const *cstr)
 #else
 static inline char *dup_cstr(size_t const len, char const cstr[static len])
-#endif {
+#endif
+{
 #ifdef __cplusplus
 	char *restrict cpy = reinterpret_cast< decltype(cpy) >(calloc(len + 1, sizeof *cpy));
 #else
@@ -506,7 +511,8 @@ static inline char *dup_cstr(size_t const len, char const cstr[static len])
 static inline NO_NULL char *sprintf_alloc(char const *fmt, ...)
 #else
 static inline char *sprintf_alloc(char const fmt[static 1], ...)
-#endif {
+#endif
+{
 	va_list ap; va_start(ap, fmt);
 	va_list st; va_copy(st, ap);
 	

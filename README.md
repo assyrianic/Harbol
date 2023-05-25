@@ -21,6 +21,7 @@
 * Fixed Size floating-point types.
 * Double Ended Queue (Deque).
 * Lexing tools for C/Golang style numbers and strings.
+* Rust-style Diagnostic Messager/Emitter.
 
 
 ### Future

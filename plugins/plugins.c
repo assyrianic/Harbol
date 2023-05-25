@@ -47,7 +47,7 @@ HARBOL_EXPORT bool harbol_plugin_changed(struct HarbolPlugin *const pl) {
 		return false;
 	}
 	
-	struct stat result;
+	struct stat result = {0};
 	if( !stat(pl->path, &result) ) {
 		bool const change = pl->last_write != result.st_mtime;
 		if( change ) {

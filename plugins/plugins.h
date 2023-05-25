@@ -11,10 +11,6 @@ extern "C" {
 
 #include "tinydir.h"
 
-#ifndef HARBOL_EXPORT
-#	define HARBOL_EXPORT    static inline
-#endif
-
 
 #ifdef OS_WINDOWS
 #	include <windows.h>

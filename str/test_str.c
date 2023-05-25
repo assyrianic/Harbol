@@ -139,14 +139,41 @@ void test_harbol_string(FILE *const debug_stream) {
 	fputs(i.cstr, debug_stream);
 	fputs("\n", debug_stream);
 	
-	/// test string switch
+	/// test removing chars
 	fputs("\nstring :: test removing chars.\n", debug_stream);
 	
 	size_t const removed = harbol_string_rm_char(&i, 'l');
 	fprintf(debug_stream, "i's string: '%s', l's removed: %zu\n", i.cstr, removed);
 	
+	/// test counting substrings.
+	fputs("\nstring :: test counting substrings.\n", debug_stream);
+	harbol_string_copy_cstr(p, "abababababa");
+	fprintf(debug_stream, "p's string: '%s', 'ba''s counted: %zu\n", p->cstr, harbol_string_count_cstr(p, "ba"));
+	
+	/// test replacing substrings.
+	fputs("\nstring :: test replacing substrings.\n", debug_stream);
+	harbol_string_copy_cstr(p, "a_____BBa_BBa__BBa___BBa____BBa");
+	fprintf(debug_stream, "p's string before replace: '%s' | '%zu'\n", p->cstr, p->len);
+	harbol_string_replace_cstr(p, "BB", "    ", -1);
+	fprintf(debug_stream, "p's string after  replace: '%s' | '%zu'\n", p->cstr, p->len);
+	
+	/// test getting offsets of a substring occurrence.
+	fputs("\nstring :: test getting offsets of a substring occurrence.\n", debug_stream);
+	
+	harbol_string_copy_cstr(p, "int i;\n lol;\n if(lel){\n\t\td+=1000;}");
+	
+	fprintf(debug_stream, "p's string: '%s' | '%zu'\n", p->cstr, p->len);
+	size_t const newlines = harbol_string_count_cstr(p, "\n");
+	size_t *newline_offsets = calloc(newlines, sizeof *newline_offsets);
+	
+	harbol_string_cstr_offsets(p, "\n", newline_offsets, newlines);
+	for( size_t i=0; i < newlines; i++ ) {
+		fprintf(debug_stream, "newlines[%zu] == '%zu' - p[newlines[%zu]] == '%c' :\n", i, newline_offsets[i], i, p->cstr[newline_offsets[i]]);
+	}
+	free(newline_offsets); newline_offsets = NULL;
+	
 	/// free data
-	fputs("string :: test destruction.", debug_stream);
+	fputs("\nstring :: test destruction.", debug_stream);
 	fputs("\n", debug_stream);
 	harbol_string_clear(&i);
 	fprintf(debug_stream, "i's string is null? '%s'\n", i.cstr != NULL? "no" : "yes");

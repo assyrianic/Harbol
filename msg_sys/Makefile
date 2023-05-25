@@ -12,7 +12,7 @@ debug:
 	$(CC) $(TFLAGS) -c $(SRCS)
 
 test:
-	$(CC) $(TFLAGS) $(SRCS) test_$(SRCS) -o harbol_msg_sys_test
+	$(CC) $(TFLAGS) $(SRCS) test_msg_sys.c -o harbol_msg_sys_test
 
 clean:
 	$(RM) *.o

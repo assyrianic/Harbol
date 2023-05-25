@@ -27,6 +27,7 @@ HARBOL_EXPORT NO_NULL char *harbol_string_mut_cstr(struct HarbolString const *st
 HARBOL_EXPORT NO_NULL size_t harbol_string_len(struct HarbolString const *str);
 
 HARBOL_EXPORT NO_NULL bool harbol_string_add_char(struct HarbolString *str, char chr);
+HARBOL_EXPORT NO_NULL bool harbol_string_add_char_rep(struct HarbolString *str, char c, size_t amount);
 HARBOL_EXPORT NO_NULL bool harbol_string_add_str(struct HarbolString *strA, struct HarbolString const *strB);
 HARBOL_EXPORT NEVER_NULL(1) bool harbol_string_add_cstr(struct HarbolString *str, char const cstr[]);
 
@@ -54,7 +55,9 @@ HARBOL_EXPORT NEVER_NULL(1) bool harbol_string_copy_cstr(struct HarbolString *st
 #endif
 
 HARBOL_EXPORT NEVER_NULL(1, 3) int harbol_string_format(struct HarbolString *str, bool clear, char const fmt[], ...);
+HARBOL_EXPORT NEVER_NULL(1, 3) int harbol_string_format_va(struct HarbolString *str, bool clear, char const fmt[], va_list va_l);
 HARBOL_EXPORT NEVER_NULL(1, 2) int harbol_string_scan(struct HarbolString const *str, char const fmt[], ...);
+HARBOL_EXPORT NEVER_NULL(1, 2) int harbol_string_scan_va(struct HarbolString const *str, char const fmt[], va_list va_l);
 
 HARBOL_EXPORT NEVER_NULL(1) int harbol_string_cmpcstr(struct HarbolString const *str, char const cstr[]);
 HARBOL_EXPORT NO_NULL int harbol_string_cmpstr(struct HarbolString const *strA, struct HarbolString const *strB);
@@ -74,9 +77,12 @@ HARBOL_EXPORT NO_NULL bool harbol_string_is_palindrome(struct HarbolString const
 HARBOL_EXPORT NO_NULL bool harbol_string_read_from_file(struct HarbolString *str, FILE *file);
 HARBOL_EXPORT NO_NULL bool harbol_string_read_file(struct HarbolString *str, char const filename[]);
 
-HARBOL_EXPORT NO_NULL bool harbol_string_replace(struct HarbolString *str, char to_replace, char with);
+HARBOL_EXPORT NO_NULL bool harbol_string_replace_char(struct HarbolString *str, char to_replace, char with);
+HARBOL_EXPORT NO_NULL bool harbol_string_replace_cstr(struct HarbolString *str, char const to_replace[], char const with[], size_t amount);
 
-HARBOL_EXPORT NO_NULL size_t harbol_string_count(struct HarbolString const *str, char occurrence);
+HARBOL_EXPORT NO_NULL size_t harbol_string_count_char(struct HarbolString const *str, char occurrence);
+HARBOL_EXPORT NO_NULL size_t harbol_string_count_cstr(struct HarbolString const *str, char const occurrence[]);
+HARBOL_EXPORT NO_NULL bool harbol_string_cstr_offsets(struct HarbolString const *str, char const occurrence[], size_t offsets[], size_t offsets_len);
 
 HARBOL_EXPORT NO_NULL bool harbol_string_upper(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_lower(struct HarbolString *str);

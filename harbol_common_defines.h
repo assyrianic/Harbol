@@ -367,6 +367,10 @@
 #	ifndef IS_NUMERIC_TYPE
 #		define IS_NUMERIC_TYPE(n)   IS_FLOAT_TYPE(n) || IS_UNSIGNED_INT_TYPE(n) || IS_SIGNED_INT_TYPE(n)
 #	endif
+
+#	ifndef IS_SIGNED_TYPE
+#		define IS_SIGNED_TYPE(n)    IS_FLOAT_TYPE(n) || IS_SIGNED_INT_TYPE(n)
+#	endif
 #endif
 
 
@@ -397,6 +401,10 @@
 #	else
 #		define REG_CALL
 #	endif
+#endif
+
+#ifndef HEADER_IMPL
+#	define HEADER_IMPL    static inline
 #endif
 
 #endif /** HARBOL_COMMON_DEFINES_INCLUDED */
