@@ -33,7 +33,11 @@ HARBOL_EXPORT bool harbol_msg_span_init(struct HarbolMsgSpan *const restrict msg
 	harbol_string_replace_cstr(&msgspan->src.code, "\r",   "\n", -1);
 	harbol_string_replace_cstr(&msgspan->src.code, "\t", "    ", -1);
 	
-	size_t const newlines = harbol_string_count_cstr(&msgspan->src.code, "\n");
+	size_t newlines = harbol_string_count_cstr(&msgspan->src.code, "\n");
+	if( newlines==0 ) {
+		newlines = 1;
+	}
+	
 	size_t *newline_offs = calloc(newlines, sizeof *newline_offs);
 	if( newline_offs==NULL ) {
 		harbol_string_clear(&msgspan->src.code);
@@ -117,7 +121,7 @@ HARBOL_EXPORT size_t harbol_msg_span_get_num_lines(struct HarbolMsgSpan const *c
 }
 
 
-HARBOL_EXPORT bool harbol_msg_span_add_label(struct HarbolMsgSpan *const restrict msgspan, struct HarbolTokenSpan const span, char const sym_color[const restrict static 1], int32_t const sym, char const msg_color[const restrict static 1], char const msg[const restrict static 1], ...) {
+HARBOL_EXPORT bool harbol_msg_span_add_label(struct HarbolMsgSpan *const restrict msgspan, struct HarbolTokenSpan const span, char const sym_color[const restrict], int32_t const sym, char const msg_color[const restrict], char const msg[const restrict static 1], ...) {
 	struct HarbolMsgLabel label = {
 		.span      = span,
 		.sym       = sym,
@@ -167,14 +171,14 @@ HARBOL_EXPORT bool harbol_msg_span_add_note(struct HarbolMsgSpan *const restrict
 }
 
 
-static NEVER_NULL(1) void _print_file_margins(FILE *const restrict stream, char const filename[const restrict static 1], size_t const *const restrict line, size_t const *const restrict col) {
+static NEVER_NULL(1) void _print_file_margins(FILE *const restrict stream, char const filename[const restrict static 1], uint32_t const *const restrict line, uint32_t const *const restrict col) {
 	if( filename != NULL ) {
 		fprintf(stream, "\n--> %s", filename);
 		if( line != NULL ) {
-			fprintf(stream, ":%zu", *line);
+			fprintf(stream, ":%u", *line);
 		}
 		if( col != NULL ) {
-			fprintf(stream, ":%zu", *col);
+			fprintf(stream, ":%u", *col);
 		}
 	}
 }
@@ -187,16 +191,29 @@ static uint32_t ilog10(uint32_t const v) {
 			(v >= 1000)? 3       : (v >= 100)? 2       : (v >= 10)? 1 : 0;
 }
 
+
+static NO_NULL void _output_span(struct HarbolMsgSpan const *const msgspan, struct HarbolTokenSpan const span, size_t const len, FILE *const stream) {
+	for( uint32_t line = span.line_start; line <= span.line_end; line++ ) {
+		struct HarbolString line_num_pad = {0};
+		harbol_string_add_char_rep(&line_num_pad, ' ', len - (ilog10(line) + 1));
+		struct HarbolString const *code_line = harbol_msg_span_get_line(msgspan, line-1);
+		fprintf(stream, "%u%s|%s\n", line, line_num_pad.cstr, code_line->cstr);
+		harbol_string_clear(&line_num_pad);
+	}
+}
+
+/// TODO: add option for line color when emitting notes.
+/// TODO: add option for msg color when emitting the main message.
 HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
-	struct HarbolMsgSpan const *const restrict msgspan,
+	struct HarbolMsgSpan *const restrict       msgspan,
 	size_t *const restrict                     msg_cnt,
 	FILE *const restrict                       stream,
-	char const                                 filename[const restrict static 1],
-	char const                                 msgtype[const restrict static 1],
-	char const                                 code_num[const restrict static 1],
+	char const                                 filename[const restrict],
+	char const                                 msgtype[const restrict],
+	char const                                 code_num[const restrict],
 	char const                                 msgtype_color[const restrict static 1],
-	size_t const *const restrict               line,
-	size_t const *const restrict               col,
+	uint32_t const *const restrict             file_line,
+	uint32_t const *const restrict             file_col,
 	char const                                 msg_fmt[const restrict static 1],
 	...
 ) {
@@ -209,11 +226,15 @@ HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 	}
 	va_list args; va_start(args, msg_fmt);
 	vfprintf(stream, msg_fmt, args);
-	_print_file_margins(stream, filename, line, col);
+	_print_file_margins(stream, filename, file_line, file_col);
+	
+	if( msg_cnt != NULL ) {
+		++*msg_cnt;
+	}
 	
 	if( msgspan->labels.len > 0 ) {
 		fprintf(stream, "\n");
-		size_t largest_span = 0;
+		uint32_t largest_span = 0;
 		struct HarbolMsgLabel const *labels = ( struct HarbolMsgLabel const* )(msgspan->labels.table);
 		for( size_t i=0; i < msgspan->labels.len; i++ ) {
 			if( largest_span < labels[i].span.line_end ) {
@@ -230,13 +251,7 @@ HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 			struct HarbolTokenSpan const span = labels[i].span;
 			
 			/// here we emit the actual code line.
-			for( uint32_t line = span.line_start; line <= span.line_end; line++ ) {
-				struct HarbolString line_num_pad = {0};
-				harbol_string_add_char_rep(&line_num_pad, ' ', span_pad.len - (ilog10(line) + 1));
-				struct HarbolString const *code_line = harbol_msg_span_get_line(msgspan, line-1);
-				fprintf(stream, "%u%s|%s\n", line, line_num_pad.cstr, code_line->cstr);
-				harbol_string_clear(&line_num_pad);
-			}
+			_output_span(msgspan, span, span_pad.len, stream);
 			
 			/// here we emit the label msgs.
 			struct HarbolString colm_pad={0}, hilighter={0};

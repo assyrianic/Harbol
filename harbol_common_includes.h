@@ -427,9 +427,9 @@ union HarbolIter {
 };
 
 #ifdef __cplusplus
-static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const file_name, size_t *const restrict bytes)
+static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const restrict file_name, size_t *const restrict bytes)
 #else
-static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[static 1], size_t *const restrict bytes)
+static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[const restrict static 1], size_t *const restrict bytes)
 #endif
 {
 	FILE *restrict file = fopen(file_name, "rb");
@@ -442,6 +442,7 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[stat
 		fclose(file);
 		return NULL;
 	}
+	
 #ifdef __cplusplus
 	uint8_t *restrict stream = reinterpret_cast< decltype(stream) >(calloc(filesize, sizeof *stream));
 #else
@@ -453,9 +454,9 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[stat
 }
 
 #ifdef __cplusplus
-static inline NO_NULL char *make_buffer_from_text(char const *const file_name, size_t *const restrict len)
+static inline NO_NULL char *make_buffer_from_text(char const *const restrict file_name, size_t *const restrict len)
 #else
-static inline NO_NULL char *make_buffer_from_text(char const file_name[static 1], size_t *const restrict len)
+static inline NO_NULL char *make_buffer_from_text(char const file_name[const restrict static 1], size_t *const restrict len)
 #endif
 {
 	FILE *restrict file = fopen(file_name, "r");
@@ -483,7 +484,7 @@ static inline bool is_ptr_aligned(void const *const ptr, size_t const bytes) {
 	return (( uintptr_t )(ptr) & (bytes-1))==0;
 }
 
-static inline NO_NULL void *dup_data(void const *const data, size_t const bytes) {
+static inline NO_NULL void *dup_data(void const *const restrict data, size_t const bytes) {
 #ifdef __cplusplus
 	uint8_t *restrict cpy = reinterpret_cast< decltype(cpy) >(calloc(bytes, sizeof *cpy));
 #else
@@ -495,7 +496,7 @@ static inline NO_NULL void *dup_data(void const *const data, size_t const bytes)
 #ifdef __cplusplus
 static inline NO_NULL char *dup_cstr(size_t const len, char const *cstr)
 #else
-static inline char *dup_cstr(size_t const len, char const cstr[static len])
+static inline NO_NULL char *dup_cstr(size_t const len, char const cstr[const restrict static len])
 #endif
 {
 #ifdef __cplusplus
@@ -508,9 +509,9 @@ static inline char *dup_cstr(size_t const len, char const cstr[static len])
 
 
 #ifdef __cplusplus
-static inline NO_NULL char *sprintf_alloc(char const *fmt, ...)
+static inline NO_NULL char *sprintf_alloc(char const *const restrict fmt, ...)
 #else
-static inline char *sprintf_alloc(char const fmt[static 1], ...)
+static inline NO_NULL char *sprintf_alloc(char const fmt[const restrict static 1], ...)
 #endif
 {
 	va_list ap; va_start(ap, fmt);
@@ -639,5 +640,15 @@ static inline size_t next_pow_of_2(size_t x) {
 #endif
 	return x + 1;
 }
+
+/// Saving here for future components of Harbol.
+/*
+static inline bool yes_or_no(FILE *const restrict output, char const *const restrict msg, char const *const restrict yes) {
+	fputs(msg, output);
+	char letter[5] = {0};
+	fgets(letter, sizeof letter, stdin);
+	return !strcmp(letter, yes);
+}
+*/
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */

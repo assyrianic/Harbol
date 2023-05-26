@@ -21,12 +21,13 @@ HARBOL_EXPORT struct HarbolMap harbol_map_make(size_t const init_size, bool *con
 }
 
 HARBOL_EXPORT bool harbol_map_init(struct HarbolMap *const map, size_t const init_size) {
-	if( !harbol_multi_calloc(init_size, 5,
-						&map->keys,    sizeof *map->keys,
-						&map->keylens, sizeof *map->keylens,
-						&map->datum,   sizeof *map->datum,
-						&map->hashes,  sizeof *map->hashes,
-						&map->buckets, sizeof *map->buckets)
+	if( !harbol_multi_calloc(init_size, 6,
+						&map->keys,     sizeof *map->keys,
+						&map->keylens,  sizeof *map->keylens,
+						&map->datum,    sizeof *map->datum,
+						&map->datalens, sizeof *map->datalens,
+						&map->hashes,   sizeof *map->hashes,
+						&map->buckets,  sizeof *map->buckets)
 	) {
 		return false;
 	}
@@ -48,7 +49,7 @@ HARBOL_EXPORT void harbol_map_clear(struct HarbolMap *const map) {
 		free(map->keys[i]);  map->keys[i] = NULL;
 		free(map->datum[i]); map->datum[i] = NULL;
 	}
-	harbol_multi_cleanup(5, &map->keys, &map->keylens, &map->datum, &map->hashes, &map->buckets);
+	harbol_multi_cleanup(6, &map->keys, &map->keylens, &map->datum, &map->hashes, &map->buckets, &map->datalens);
 	map->len = map->cap = 0;
 }
 
@@ -61,7 +62,7 @@ HARBOL_EXPORT void harbol_map_free(struct HarbolMap **const map_ref) {
 }
 
 
-HARBOL_EXPORT size_t harbol_map_get_entry_index(struct HarbolMap const *const map, void const *const key, size_t const keylen) {	
+HARBOL_EXPORT size_t harbol_map_get_entry_index(struct HarbolMap const *const map, void const *const key, size_t const keylen) {
 	uint8_t const *const restrict desired_key = key;
 	size_t const hash    = array_hash(desired_key, keylen, map->seed);
 	size_t const mask    = map->cap - 1;
@@ -111,12 +112,13 @@ static bool _harbol_map_insert_entry(struct HarbolMap *const map, size_t const n
 }
 
 HARBOL_EXPORT bool harbol_map_rehash(struct HarbolMap *const map, size_t const new_size) {
-	if( !harbol_multi_recalloc(new_size, map->cap, 5,
-						&map->keys,    sizeof *map->keys,
-						&map->keylens, sizeof *map->keylens,
-						&map->datum,   sizeof *map->datum,
-						&map->hashes,  sizeof *map->hashes,
-						&map->buckets, sizeof *map->buckets) ) {
+	if( !harbol_multi_recalloc(new_size, map->cap, 6,
+						&map->keys,     sizeof *map->keys,
+						&map->keylens,  sizeof *map->keylens,
+						&map->datum,    sizeof *map->datum,
+						&map->datalens, sizeof *map->datalens,
+						&map->hashes,   sizeof *map->hashes,
+						&map->buckets,  sizeof *map->buckets) ) {
 		return false;
 	}
 	
@@ -156,7 +158,8 @@ HARBOL_EXPORT bool harbol_map_insert(struct HarbolMap *const restrict map, void 
 		map->hashes[val_idx] = 0;
 		return false;
 	}
-	map->keylens[val_idx] = keylen;
+	map->keylens[val_idx]  = keylen;
+	map->datalens[val_idx] = datasize;
 	map->len++;
 	return true;
 }
@@ -179,7 +182,7 @@ HARBOL_EXPORT size_t harbol_map_idx_val(struct HarbolMap const *const map, void 
 	
 	for( size_t i=0; i < map->len; i++ ) {
 		uint8_t const *const restrict desired_val = val;
-		if( map->datum[i][0]==desired_val[0] && !memcmp(map->datum[i], val, datasize) ) {
+		if( map->datum[i][0]==desired_val[0] && map->datalens[i]==datasize && !memcmp(map->datum[i], val, datasize) ) {
 			return i;
 		}
 	}
@@ -214,7 +217,6 @@ HARBOL_EXPORT bool harbol_map_idx_set(struct HarbolMap *const restrict map, size
 	if( data==NULL ) {
 		return false;
 	}
-	
 	free(map->datum[index]);
 	map->datum[index] = data;
 	return true;
@@ -239,13 +241,14 @@ HARBOL_EXPORT bool harbol_map_idx_rm(struct HarbolMap *const map, size_t const n
 	
 	free(map->keys[n]);  map->keys[n]  = NULL;
 	free(map->datum[n]); map->datum[n] = NULL;
-	map->hashes[n] = map->keylens[n] = 0;
+	map->hashes[n] = map->keylens[n] = map->datalens[n] = 0;
 	map->buckets[bkt_idx] = SIZE_MAX;
 	
-	return multi_array_shift_up(&map->len, n, 1, 4,
-			map->keys,    sizeof *map->keys,
-			map->datum,   sizeof *map->datum,
-			map->hashes,  sizeof *map->hashes,
-			map->keylens, sizeof *map->keylens
+	return multi_array_shift_up(&map->len, n, 1, 5,
+			map->keys,     sizeof *map->keys,
+			map->datum,    sizeof *map->datum,
+			map->hashes,   sizeof *map->hashes,
+			map->keylens,  sizeof *map->keylens,
+			map->datalens, sizeof *map->datalens
 	);
 }

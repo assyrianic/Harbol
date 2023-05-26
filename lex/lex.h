@@ -12,7 +12,7 @@ extern "C" {
 
 enum {
 	DigitSep_C  = '\'',
-	DigitSep_Go = '_'
+	DigitSep_Go = '_',
 };
 
 HARBOL_EXPORT bool is_alphabetic(int32_t c);
@@ -24,9 +24,11 @@ HARBOL_EXPORT bool is_binary(int32_t c);
 HARBOL_EXPORT bool is_whitespace(int32_t c);
 
 HARBOL_EXPORT bool is_valid_unicode(int32_t u);
-HARBOL_EXPORT bool check_is_char(char const str[], size_t len, size_t idx, int32_t c);
+HARBOL_EXPORT NO_NULL bool check_is_char(char const str[], size_t len, size_t idx, int32_t c);
+HARBOL_EXPORT NO_NULL bool check_is_rune(int32_t const str[], size_t len, size_t idx, int32_t c);
 
 HARBOL_EXPORT size_t get_utf8_len(char c);
+HARBOL_EXPORT NO_NULL size_t get_str_rune_len(char const cstr[]);
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_chars(char const str[], bool checker(int32_t c), size_t *lines);
 
@@ -47,9 +49,13 @@ HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_multiquote_string(char const 
 HARBOL_EXPORT NO_NULL bool lex_single_line_comment(char const str[], char const **end, struct HarbolString *buf, size_t *lines);
 HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(char const str[], char const **end, char const end_token[], size_t end_len, struct HarbolString *buf, size_t *lines);
 
+/// TODO:
+HARBOL_EXPORT NO_NULL bool lex_multiquote_string(char const str[], char const **end, char const quote[], size_t quote_len, int32_t esc, struct HarbolString *buf);
+
 HARBOL_EXPORT NO_NULL size_t write_utf8_cstr(char buf[], size_t buflen, int32_t rune);
 HARBOL_EXPORT NO_NULL bool write_utf8_str(struct HarbolString *str, int32_t rune);
 HARBOL_EXPORT NO_NULL size_t read_utf8(char const cstr[], size_t cstrlen, int32_t *rune);
+HARBOL_EXPORT NO_NULL int32_t read_utf8_rune(char const cstr[], size_t cstrlen);
 
 HARBOL_EXPORT NO_NULL int32_t *utf8_to_rune(struct HarbolString const *str, size_t *rune_len);
 HARBOL_EXPORT NO_NULL char *rune_to_utf8_cstr(int32_t const runes[], size_t rune_len, size_t *cstr_len);
@@ -125,18 +131,50 @@ HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(char const str[], char const **en
 HARBOL_EXPORT NO_NULL bool lex_c_style_identifier(char const str[], char const **end, struct HarbolString *buf);
 HARBOL_EXPORT NO_NULL bool lex_until(char const str[], char const **end, struct HarbolString *buf, int32_t control);
 
-HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_c_string_to_int(struct HarbolString const *buf, char **end);
-HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_go_string_to_int(struct HarbolString const *buf, char **end);
-HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_c_string_to_uint(struct HarbolString const *buf, char **end);
-HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_go_string_to_uint(struct HarbolString const *buf, char **end);
-HARBOL_EXPORT NO_NULL floatmax_t lex_string_to_float(struct HarbolString const *buf);
+HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_c_string_to_int(struct HarbolString const *str, char **end);
+HARBOL_EXPORT NEVER_NULL(1) intmax_t lex_go_string_to_int(struct HarbolString const *str, char **end);
+HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_c_string_to_uint(struct HarbolString const *str, char **end);
+HARBOL_EXPORT NEVER_NULL(1) uintmax_t lex_go_string_to_uint(struct HarbolString const *str, char **end);
+HARBOL_EXPORT NO_NULL floatmax_t lex_string_to_float(struct HarbolString const *str);
 
-/// TODO:
-struct LexingFlags {
-	int i;
+
+/// TODO: finish this up.
+/// Examples
+/// 1, 1.0, .1, .3f, 0x23, 0o337, 0b010110, 1'2'3,
+/// 1_2_3, 1e-3, 1ull, 1llu, 1u, 1ul
+/// 0x0.1p3, 1i32, 1_i32, 9.81_m/s^2
+enum LexingFlag {
+	LexFlagRepeatable      = 1 << 0,
+	LexFlagNumSeparator    = 1 << 1,
+	LexFlagSymSeparator    = 1 << 2,
+	LexFlagReqOneNumBefore = 1 << 3,
+	LexFlagReqOneNumAfter  = 1 << 4,
+	LexFlagMustBeLast      = 1 << 5,
+	LexFlagNoNumBefore     = 1 << 6,
+	LexFlagNoNumAfter      = 1 << 7,
+	LexFlagReqOtherFlags   = 1 << 8,
+	LexFlagSeparatorBefore = 1 << 9,
+	LexFlagSeparatorAfter  = 1 << 10,
+	LexFlagReqSymBefore    = 1 << 11,
+	LexFlagReqSymAfter     = 1 << 12,
+	LexFlagOptionNumAfter  = 1 << 13,
+	LexFlagOptionSymAfter  = 1 << 14,
 };
 
-HARBOL_EXPORT NO_NULL void lex_custom_number(char const str[], char const **end, struct HarbolString *buf);
+/// for LexFlagRepeatable
+struct RepeatingSym {
+	char const *sym;
+	size_t      len;
+	uint32_t    limit, matched;
+};
+
+
+struct LexingRules {
+	//struct HarbolMap prefixes, suffixes; /// map[string]LexingFlag
+	struct HarbolString valid_digits;
+};
+
+HARBOL_EXPORT NO_NULL bool lex_custom_number(char const str[], char const **end, struct LexingRules const *rules, struct HarbolString *buf);
 /********************************************************************/
 
 #ifdef __cplusplus

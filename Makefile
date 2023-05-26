@@ -1,7 +1,7 @@
 #CC = clang-11.0
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c99 -s -O2
-TFLAGS = -Wall -Wextra -pedantic -std=c99 -g -O2
+CFLAGS = -Wall -Wextra -pedantic -std=c99 -Warray-parameter=0 -s -O2
+TFLAGS = -Wall -Wextra -pedantic -std=c99 -Warray-parameter=0 -g -O2
 # -fsanitize=undefined 
 
 LIB_NAME = harbol

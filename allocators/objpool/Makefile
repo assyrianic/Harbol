@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c99 -s -O2
-TFLAGS = -Wall -Wextra -pedantic -std=c99 -g -O2
+CFLAGS = -Wall -Wextra -pedantic -std=c99 -s -Warray-parameter=0 -O2
+TFLAGS = -Wall -Wextra -pedantic -std=c99 -Warray-parameter=0 -g -O2
 
 SRCS = objpool.c
 OBJS = $(SRCS:.c=.o)

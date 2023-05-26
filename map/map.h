@@ -12,7 +12,7 @@ extern "C" {
 /// ordered hash table.
 struct HarbolMap {
 	uint8_t **datum, **keys;
-	size_t   *buckets, *hashes, *keylens, cap, len, seed;
+	size_t   *buckets, *hashes, *keylens, *datalens, cap, len, seed;
 };
 
 

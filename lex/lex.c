@@ -41,17 +41,32 @@ HARBOL_EXPORT bool is_valid_unicode(int32_t const u) {
 }
 
 HARBOL_EXPORT bool check_is_char(char const str[static 1], size_t const len, size_t const idx, int32_t const c) {
-	return ( idx >= len )? false : str[idx] != 0 && str[idx]==c;
+	return( idx >= len )? false : str[idx] != 0 && str[idx]==c;
+}
+
+HARBOL_EXPORT bool check_is_rune(int32_t const str[static 1], size_t const len, size_t const idx, int32_t const c) {
+	return( idx >= len )? false : str[idx] != 0 && str[idx]==c;
 }
 
 HARBOL_EXPORT size_t get_utf8_len(char const c) {
 	for( size_t i=7; i < 8; i-- ) {
 		if( !(c & (1 << i)) ) {
-			return 7 - i;
+			return (7 - i)==0? 1 : 7 - i;
 		}
 	}
 	return 8;
 }
+
+HARBOL_EXPORT size_t get_str_rune_len(char const cstr[const static 1]) {
+	size_t runes = 0;
+	for( size_t i=0; cstr[i] != 0; ) {
+		size_t const read = get_utf8_len(cstr[i]);
+		i += read;
+		runes++;
+	}
+	return runes;
+}
+
 
 HARBOL_EXPORT char const *skip_chars(char const str[static 1], bool checker(int32_t c), size_t *const restrict lines) {
 	while( *str != 0 && checker(*str) ) {
@@ -182,6 +197,12 @@ HARBOL_EXPORT bool lex_multi_line_comment(char const str[static 1], char const *
 	return buf->len > 0;
 }
 
+/// TODO: implement & test.
+HARBOL_EXPORT bool lex_multiquote_string(char const str[const static 1], char const **const end, char const quote[const restrict static 1], size_t quote_len, int32_t const esc, struct HarbolString *const restrict buf) {
+	return true;
+}
+
+
 HARBOL_EXPORT size_t write_utf8_cstr(char buf[static 1], size_t const buflen, int32_t const rune) {
 	if( rune < 0x80 ) {
 		buf[0] = rune;
@@ -246,58 +267,70 @@ HARBOL_EXPORT bool write_utf8_str(struct HarbolString *const str, int32_t const 
 	}
 }
 
-HARBOL_EXPORT size_t read_utf8(char const cstr[static 1], size_t const cstrlen, int32_t *const restrict rune) {
+static NO_NULL size_t _prechecked_utf8_read(char const cstr[const restrict static 4], size_t const utf8len, int32_t *const restrict rune) {
+	if( utf8len==1 ) {
+		*rune = cstr[0];
+		return 1;
+	}
+	
+	for( size_t i=1; i < utf8len; i++ ) {
+		if( (cstr[i] & 0xc0) != 0x80 ) {
+			return 0;
+		}
+	}
+	switch( utf8len ) {
+		case 2: *rune = ((cstr[0] & 0x1F) << 6) | (cstr[1] & 0x3F); break;
+		case 3: *rune = ((cstr[0] & 0xF) << 12) | ((cstr[1] & 0x3F) << 6) | (cstr[2] & 0x3F); break;
+		case 4: *rune = ((cstr[0] & 0x7) << 18) | ((cstr[1] & 0x3F) << 12) | ((cstr[2] & 0x3F) << 6) | (cstr[3] & 0x3F); break;
+		default:
+			return 0;
+	}
+	return utf8len;
+}
+
+HARBOL_EXPORT size_t read_utf8(char const cstr[const restrict static 1], size_t const cstrlen, int32_t *const restrict rune) {
 	*rune = -1;
+	if( cstr[0]==0 ) {
+		return 0;
+	}
+	size_t const utf8len = get_utf8_len(cstr[0]);
+	return( utf8len > cstrlen )? 0 : _prechecked_utf8_read(cstr, utf8len, rune);
+}
+
+HARBOL_EXPORT int32_t read_utf8_rune(char const cstr[], size_t cstrlen) {
 	if( cstr[0]==0 ) {
 		return 0;
 	}
 	
 	size_t const utf8len = get_utf8_len(cstr[0]);
-	if( utf8len==0 ) {
-		*rune = cstr[0];
-		return 1;
-	} else if( utf8len > cstrlen ) {
-		return 0;
-	} else {
-		for( size_t i=1; i<utf8len; i++ ) {
-			if( (cstr[i] & 0xc0) != 0x80 ) {
-				return 0;
-			}
-		}
-		switch( utf8len ) {
-			case 2: *rune = ((cstr[0] & 0x1F) << 6) | (cstr[1] & 0x3F); break;
-			case 3: *rune = ((cstr[0] & 0xF) << 12) | ((cstr[1] & 0x3F) << 6) | (cstr[2] & 0x3F); break;
-			case 4: *rune = ((cstr[0] & 0x7) << 18) | ((cstr[1] & 0x3F) << 12) | ((cstr[2] & 0x3F) << 6) | (cstr[3] & 0x3F); break;
-			default:
-				return 0;
-		}
-		return utf8len;
+	if( utf8len > cstrlen ) {
+		return -1;
 	}
+	
+	int32_t rune = 0;
+	return _prechecked_utf8_read(cstr, utf8len, &rune) > 0? rune : -1;
 }
 
+
 HARBOL_EXPORT int32_t *utf8_to_rune(struct HarbolString const *const str, size_t *const restrict rune_len) {
-	size_t rune_count = 0;
+	size_t const rune_count = get_str_rune_len(str->cstr);
 	int32_t *restrict runes = calloc(rune_count + 1, sizeof *runes);
 	if( runes==NULL ) {
 		*rune_len = 0;
 		return NULL;
 	}
 	
-	size_t iter_len = 0;
-	/// TODO: split this into two loops, one for getting the total size.
-	/// other for encoding from utf8 to rune array.
+	size_t
+		iter_len  = 0,
+		rune_iter = 0
+	;
 	while( str->cstr[iter_len] != 0 ) {
-		size_t const bytes_read = read_utf8(&str->cstr[iter_len], str->len - iter_len, &runes[rune_count]);
-		if( runes[rune_count] <= 0 ) {
+		size_t const bytes_read = read_utf8(&str->cstr[iter_len], str->len - iter_len, &runes[rune_iter]);
+		if( runes[rune_iter]==0 ) {
 			break;
 		}
 		iter_len += bytes_read;
-		rune_count++;
-		int32_t *const new_buf = harbol_recalloc(runes, rune_count + 1, sizeof *runes, rune_count);
-		if( new_buf==NULL ) {
-			break;
-		}
-		runes = new_buf;
+		rune_iter++;
 	}
 	*rune_len = rune_count;
 	runes[rune_count] = 0;
@@ -306,7 +339,7 @@ HARBOL_EXPORT int32_t *utf8_to_rune(struct HarbolString const *const str, size_t
 
 HARBOL_EXPORT struct HarbolString rune_to_utf8_str(int32_t const runes[static 1], size_t const rune_len) {
 	struct HarbolString str = {0};
-	for( size_t i=0; i<rune_len; i++ ) {
+	for( size_t i=0; i < rune_len; i++ ) {
 		if( !write_utf8_str(&str, runes[i]) ) {
 			break;
 		}
@@ -377,7 +410,7 @@ exit:;
 
 HARBOL_EXPORT int32_t lex_unicode_char(char const str[static 1], char const **const end, size_t const encoding) {
 	int32_t r = 0;
-	for( size_t i=0; i < encoding * 2; i++ ) {
+	for( size_t i=0; i < encoding*2; i++ ) {
 		int_fast8_t const c = *str;
 		switch( c ) {
 			case '0': case '1': case '2': case '3': case '4':
@@ -1442,11 +1475,12 @@ HARBOL_EXPORT bool lex_identifier(char const str[static 1], char const **const e
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT bool lex_identifier_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
 	bool res = false;
+	char const *const ending = str + strlen(str);
 	while( *str != 0 ) {
 		int32_t rune = 0;
-		size_t const bytes = read_utf8(str, sizeof rune, &rune);
+		size_t const bytes = read_utf8(str, ending - str, &rune);
 		if( bytes==0 ) {
 			goto lex_id_u8_err;
 		} else if( checker(rune) ) {
@@ -1479,41 +1513,57 @@ HARBOL_EXPORT bool lex_until(char const str[static 1], char const **const end, s
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT intmax_t lex_c_string_to_int(struct HarbolString const *const buf, char **const end) {
-	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+HARBOL_EXPORT intmax_t lex_c_string_to_int(struct HarbolString const *const str, char **const end) {
+	bool const is_binary = !strncmp(str->cstr, "0b", 2) || !strncmp(str->cstr, "0B", 2);
 	size_t const extra = (is_binary)? 2 : 0;
-	return strtoll(&buf->cstr[extra], end, is_binary? 2 : 0);
+	return strtoll(&str->cstr[extra], end, is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT intmax_t lex_go_string_to_int(struct HarbolString const *const buf, char **const end) {
-	bool const is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
-	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+HARBOL_EXPORT intmax_t lex_go_string_to_int(struct HarbolString const *const str, char **const end) {
+	bool const is_octal  = !strncmp(str->cstr, "0o", 2) || !strncmp(str->cstr, "0O", 2);
+	bool const is_binary = !strncmp(str->cstr, "0b", 2) || !strncmp(str->cstr, "0B", 2);
 	size_t const extra = (is_octal || is_binary)? 2 : 0;
-	return strtoll(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
+	return strtoll(&str->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
 
-HARBOL_EXPORT uintmax_t lex_c_string_to_uint(struct HarbolString const *const buf, char **const end) {
-	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+HARBOL_EXPORT uintmax_t lex_c_string_to_uint(struct HarbolString const *const str, char **const end) {
+	bool const is_binary = !strncmp(str->cstr, "0b", 2) || !strncmp(str->cstr, "0B", 2);
 	size_t const extra = (is_binary)? 2 : 0;
-	return strtoull(&buf->cstr[extra], end, is_binary? 2 : 0);
+	return strtoull(&str->cstr[extra], end, is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT uintmax_t lex_go_string_to_uint(struct HarbolString const *const buf, char **const end) {
-	bool const is_octal  = !strncmp(buf->cstr, "0o", 2) || !strncmp(buf->cstr, "0O", 2);
-	bool const is_binary = !strncmp(buf->cstr, "0b", 2) || !strncmp(buf->cstr, "0B", 2);
+HARBOL_EXPORT uintmax_t lex_go_string_to_uint(struct HarbolString const *const str, char **const end) {
+	bool const is_octal  = !strncmp(str->cstr, "0o", 2) || !strncmp(str->cstr, "0O", 2);
+	bool const is_binary = !strncmp(str->cstr, "0b", 2) || !strncmp(str->cstr, "0B", 2);
 	size_t const extra = (is_octal || is_binary)? 2 : 0;
-	return strtoull(&buf->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
+	return strtoull(&str->cstr[extra], end, is_octal? 8 : is_binary? 2 : 0);
 }
 
-HARBOL_EXPORT floatmax_t lex_string_to_float(struct HarbolString const *const buf) {
-	bool const is_hex = !strncmp(buf->cstr, "0x", 2) || !strncmp(buf->cstr, "0X", 2);
+HARBOL_EXPORT floatmax_t lex_string_to_float(struct HarbolString const *const str) {
+	bool const is_hex = !strncmp(str->cstr, "0x", 2) || !strncmp(str->cstr, "0X", 2);
 	floatmax_t f = 0;
-	harbol_string_scan(buf, is_hex? "%" SCNxfMAX "" : "%" SCNfMAX "", &f);
+	harbol_string_scan(str, is_hex? "%" SCNxfMAX "" : "%" SCNfMAX "", &f);
 	return f;
 }
 
 
-HARBOL_EXPORT NO_NULL void lex_custom_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
-	/// TODO: ...
+HARBOL_EXPORT bool lex_custom_number(char const str[static 1], char const **const end, struct LexingRules const *const restrict rules, struct HarbolString *const restrict buf) {
+	bool res = false;
+	char const *const ending = str + strlen(str);
+	while( *str != 0 ) {
+		int32_t rune = 0;
+		size_t const bytes = read_utf8(str, ending - str, &rune);
+		if( bytes==0 ) {
+			goto lex_custom_lit_err;
+		} else {
+			/// TODO:
+		}
+		str += bytes;
+	}
+	
+	res = buf->len > 0;
+lex_custom_lit_err:;
+	*end = str;
+	return res;
 }

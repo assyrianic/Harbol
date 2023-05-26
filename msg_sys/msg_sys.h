@@ -20,7 +20,7 @@ extern "C" {
 #define COLOR_RESET     "\033[0m"     /// used to reset the color.
 
 /// 'stream', 'color', and 'msg_fmt' shouldn't be NULL.
-HARBOL_EXPORT NEVER_NULL(2,5,8) void harbol_write_msg(size_t *msg_cnt, FILE *stream, char const filename[], char const msgtype[], char const color[], size_t const *line, size_t const *col, char const msg_fmt[], ...);
+HARBOL_EXPORT NEVER_NULL(2,5,8) void harbol_write_msg(size_t *msg_cnt, FILE *stream, char const filename[], char const msgtype[], char const msg_color[], uint32_t const *line, uint32_t const *col, char const msg_fmt[], ...);
 
 #ifdef __cplusplus
 }

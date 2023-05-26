@@ -42,16 +42,15 @@ void test_harbol_msg_span(FILE *const debug_stream) {
 		fprintf(debug_stream, "line %zu : '%s'\n", i, msg_span.src.lines[i].cstr);
 	}
 	
-	struct HarbolTokenSpan const test_span = { 121, 125, 4, 35 };
+	struct HarbolTokenSpan const test_span = { 125, 129, 4, 35 };
 	harbol_msg_span_add_label(&msg_span, test_span, COLOR_MAGENTA, '^', COLOR_GREEN, "this code is bad & you should feel bad.");
 	harbol_msg_span_add_label(&msg_span, test_span, COLOR_GREEN, '=',  COLOR_MAGENTA, "big lel");
 	
-	struct HarbolTokenSpan const test_span2 = { 121, 125, 4, 20 };
-	harbol_msg_span_add_label(&msg_span, test_span2, COLOR_WHITE, L'⇧', COLOR_CYAN, "time to rewrite in rust?");
-	harbol_msg_span_add_note(&msg_span, COLOR_YELLOW, "= help :: try to this instead.");
+	struct HarbolTokenSpan const test_span2 = { test_span.line_start, test_span.line_end, 4, 35 };
+	harbol_msg_span_add_label(&msg_span, test_span2, COLOR_WHITE, L'☝', COLOR_CYAN, "time to rewrite in rust?");
+	harbol_msg_span_add_note(&msg_span, COLOR_YELLOW, "= help :: try doing this instead.");
 	
-	size_t line = 121, col = 4;
-	harbol_msg_span_emit_to_stream(&msg_span, NULL, stdout, filename, "big err", "E0001", COLOR_RED, &line, &col, "yo, you got a big error mang. %zu", msg_span.src.len);
+	harbol_msg_span_emit_to_stream(&msg_span, NULL, stdout, filename, "big err", "E0001", COLOR_RED, &test_span.line_start, &test_span.colm_start, "yo, you got a big error mang. %zu", msg_span.src.len);
 	
 	fputs("msg span :: test deallocation / freeing.\n", debug_stream);
 	harbol_msg_span_clear(&msg_span);
