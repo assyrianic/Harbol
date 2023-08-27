@@ -15,6 +15,7 @@ enum {
 	DigitSep_Go = '_',
 };
 
+
 HARBOL_EXPORT bool is_alphabetic(int32_t c);
 HARBOL_EXPORT bool is_possible_id(int32_t c);
 HARBOL_EXPORT bool is_decimal(int32_t c);
@@ -29,16 +30,18 @@ HARBOL_EXPORT NO_NULL bool check_is_rune(int32_t const str[], size_t len, size_t
 
 HARBOL_EXPORT size_t get_utf8_len(char c);
 HARBOL_EXPORT NO_NULL size_t get_str_rune_len(char const cstr[]);
+HARBOL_EXPORT NO_NULL size_t find_rune_in_runes(int32_t const runes[], int32_t c);
+HARBOL_EXPORT NO_NULL bool has_rune_in_runes(int32_t const runes[], int32_t c);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_chars(char const str[], bool checker(int32_t c), size_t *lines);
+HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_chars(char const str[], bool checker(int32_t c), uint32_t *lines);
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_chars_until_newline(char const str[], bool checker(int32_t c));
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_string_literal(char const str[], char esc);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_single_line_comment(char const str[], size_t *lines);
+HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_single_line_comment(char const str[], uint32_t *lines);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_multi_line_comment(char const str[], char const end_token[], size_t end_len, size_t *lines);
+HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_multi_line_comment(char const str[], char const end_token[], size_t end_len, uint32_t *lines);
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char *clear_single_line_comment(char str[]);
 
@@ -46,20 +49,22 @@ HARBOL_EXPORT NO_NULL NONNULL_RET char *clear_multi_line_comment(char str[], cha
 
 HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_multiquote_string(char const str[], char const quote[], size_t quote_len, char esc);
 
-HARBOL_EXPORT NO_NULL bool lex_single_line_comment(char const str[], char const **end, struct HarbolString *buf, size_t *lines);
-HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(char const str[], char const **end, char const end_token[], size_t end_len, struct HarbolString *buf, size_t *lines);
+HARBOL_EXPORT NO_NULL bool lex_single_line_comment(char const str[], char const **end, struct HarbolString *buf, uint32_t *lines);
+HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(char const str[], char const **end, char const end_token[], size_t end_len, struct HarbolString *buf, uint32_t *lines);
 
 /// TODO:
-HARBOL_EXPORT NO_NULL bool lex_multiquote_string(char const str[], char const **end, char const quote[], size_t quote_len, int32_t esc, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL bool lex_multiquote_string(char const str[], char const **end, char const quote[], size_t quote_len, struct HarbolString *buf, size_t *line);
 
+HARBOL_EXPORT size_t rune_byte_len(int32_t rune);
 HARBOL_EXPORT NO_NULL size_t write_utf8_cstr(char buf[], size_t buflen, int32_t rune);
 HARBOL_EXPORT NO_NULL bool write_utf8_str(struct HarbolString *str, int32_t rune);
 HARBOL_EXPORT NO_NULL size_t read_utf8(char const cstr[], size_t cstrlen, int32_t *rune);
 HARBOL_EXPORT NO_NULL int32_t read_utf8_rune(char const cstr[], size_t cstrlen);
 
-HARBOL_EXPORT NO_NULL int32_t *utf8_to_rune(struct HarbolString const *str, size_t *rune_len);
-HARBOL_EXPORT NO_NULL char *rune_to_utf8_cstr(int32_t const runes[], size_t rune_len, size_t *cstr_len);
-HARBOL_EXPORT NO_NULL struct HarbolString rune_to_utf8_str(int32_t const runes[], size_t rune_len);
+HARBOL_EXPORT NO_NULL int32_t *utf8_cstr_to_rune(char const cstr[], size_t cstr_len, size_t *rune_len);
+HARBOL_EXPORT NO_NULL int32_t *utf8_str_to_rune(struct HarbolString const *str, size_t *rune_len);
+HARBOL_EXPORT NO_NULL char *rune_to_utf8_cstr(int32_t const runes[], size_t *cstr_len);
+HARBOL_EXPORT NO_NULL struct HarbolString rune_to_utf8_str(int32_t const runes[]);
 
 HARBOL_EXPORT NO_NULL int32_t lex_hex_escape_char(char const str[], char const **end);
 HARBOL_EXPORT NO_NULL int32_t lex_octal_escape_char(char const str[], char const **end);
@@ -175,6 +180,15 @@ struct LexingRules {
 };
 
 HARBOL_EXPORT NO_NULL bool lex_custom_number(char const str[], char const **end, struct LexingRules const *rules, struct HarbolString *buf);
+
+
+HARBOL_EXPORT NO_NULL void lex_fix_newlines(struct HarbolString *str, bool replace_tabs_w_spaces);
+
+/// int version can handle minus sign in the string.
+HARBOL_EXPORT NO_NULL intmax_t convert_runes_to_base_int(int32_t const runes[], uint8_t base, int32_t const numerals[], bool *res);
+HARBOL_EXPORT NO_NULL uintmax_t convert_runes_to_base_uint(int32_t const runes[], uint8_t base, int32_t const numerals[], bool *res);
+
+HARBOL_EXPORT NO_NULL int32_t *runes_from_stream(FILE *stream, size_t *rune_len);
 /********************************************************************/
 
 #ifdef __cplusplus

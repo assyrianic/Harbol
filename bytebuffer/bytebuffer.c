@@ -121,7 +121,7 @@ HARBOL_EXPORT bool harbol_bytebuffer_insert_zeros(struct HarbolByteBuf *const bu
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_del(struct HarbolByteBuf *const buf, size_t const index, size_t const range) {
-	return harbol_gen_array_shift_up(buf->table, &buf->len, index, sizeof *buf->table, range);
+	return array_shift_up(buf->table, &buf->len, index, sizeof *buf->table, range);
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_to_file(struct HarbolByteBuf const *const buf, FILE *const file) {

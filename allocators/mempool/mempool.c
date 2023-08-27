@@ -240,19 +240,20 @@ HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, si
 }
 
 HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict mempool, void *const ptr, size_t const size) {
-	if( size > mempool->stack.size )
+	if( size > mempool->stack.size ) {
 		return NULL;
-	/// NULL ptr should make this work like regular alloc.
-	else if( ptr==NULL )
+	} else if( ptr==NULL ) {
+		/// NULL ptr should make this work like regular alloc.
 		return harbol_mempool_alloc(mempool, size);
-	else if( ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < mempool->stack.mem )
+	} else if( ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < ( uintptr_t )(mempool->stack.mem) ) {
 		return NULL;
+	}
 	
 	struct HarbolMemNode *node = ( struct HarbolMemNode* )(( uint8_t* )(ptr) - sizeof *node);
 	uint8_t *resized_block = harbol_mempool_alloc(mempool, size);
-	if( resized_block==NULL )
+	if( resized_block==NULL ) {
 		return NULL;
-	
+	}
 	struct HarbolMemNode *resized = ( struct HarbolMemNode* )(resized_block - sizeof *resized);
 	memmove(resized_block, ptr, ((node->size > resized->size)? (resized->size) : (node->size)) - sizeof *node);
 	harbol_mempool_free(mempool, ptr);
@@ -260,15 +261,15 @@ HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict 
 }
 
 HARBOL_EXPORT bool harbol_mempool_free(struct HarbolMemPool *const restrict mempool, void *const ptr) {
-	if( ptr==NULL || ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < mempool->stack.mem )
+	if( ptr==NULL || ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < ( uintptr_t )(mempool->stack.mem) ) {
 		return false;
-	
+	}
 	/// behind the actual pointer data is the allocation info.
 	struct HarbolMemNode *mem_node = ( struct HarbolMemNode* )(( uint8_t* )(ptr) - sizeof *mem_node);
 	size_t const slot = (mem_node->size >> HARBOL_BUCKET_BITS) - 1;
 	
 	/// make sure the pointer data is valid.
-	if( !is_uintptr_in_bounds(( uintptr_t )(mem_node), mempool->stack.mem + mempool->stack.size, mempool->stack.offs)
+	if( !is_uintptr_in_bounds(( uintptr_t )(mem_node), ( uintptr_t )(mempool->stack.mem + mempool->stack.size), ( uintptr_t )(mempool->stack.offs))
 			|| !is_uint_in_bounds(mem_node->size, mempool->stack.size, sizeof(struct HarbolMemNode)) )
 		return false;
 	
@@ -293,7 +294,7 @@ HARBOL_EXPORT bool harbol_mempool_cleanup(struct HarbolMemPool *const restrict m
 }
 
 HARBOL_EXPORT size_t harbol_mempool_mem_remaining(struct HarbolMemPool const *mempool) {
-	size_t total_remaining = mempool->stack.offs - mempool->stack.mem;
+	size_t total_remaining = mempool->stack.mem - (mempool->stack.mem + mempool->stack.offs);
 	for( struct HarbolMemNode *n = mempool->large.head; n != NULL; n = n->next ) {
 		total_remaining += n->size;
 	}

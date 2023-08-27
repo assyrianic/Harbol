@@ -22,6 +22,8 @@ SRCS += plugins/plugins.c
 SRCS += deque/deque.c
 SRCS += lex/lex.c
 SRCS += msg_sys/msg_sys.c
+SRCS += msg_span/msg_span.c
+SRCS += math/math_parser.c
 
 OBJS = $(SRCS:.c=.o)
 
@@ -42,6 +44,8 @@ harbol_static:
 	+$(MAKE) -C deque
 	+$(MAKE) -C lex
 	+$(MAKE) -C msg_sys
+	+$(MAKE) -C msg_span
+	+$(MAKE) -C math
 	ar cr lib$(LIB_NAME).a $(OBJS)
 
 harbol_shared:
@@ -61,6 +65,8 @@ harbol_shared:
 	+$(MAKE) -C deque
 	+$(MAKE) -C lex
 	+$(MAKE) -C msg_sys
+	+$(MAKE) -C msg_span
+	+$(MAKE) -C math
 	$(CC) -shared -o lib$(LIB_NAME).so $(OBJS)
 
 test:
@@ -80,6 +86,8 @@ test:
 	+$(MAKE) -C deque test
 	+$(MAKE) -C lex test
 	+$(MAKE) -C msg_sys test
+	+$(MAKE) -C msg_span test
+	+$(MAKE) -C math test
 
 debug:
 	+$(MAKE) -C str debug
@@ -98,6 +106,8 @@ debug:
 	+$(MAKE) -C deque debug
 	+$(MAKE) -C lex debug
 	+$(MAKE) -C msg_sys debug
+	+$(MAKE) -C msg_span debug
+	+$(MAKE) -C math debug
 	ar cr lib$(LIB_NAME).a $(OBJS)
 
 debug_shared:
@@ -117,6 +127,8 @@ debug_shared:
 	+$(MAKE) -C deque debug
 	+$(MAKE) -C lex debug
 	+$(MAKE) -C msg_sys debug
+	+$(MAKE) -C msg_span debug
+	+$(MAKE) -C math debug
 	$(CC) -shared -o lib$(LIB_NAME).so $(OBJS)
 
 clean:
@@ -136,6 +148,8 @@ clean:
 	+$(MAKE) -C deque clean
 	+$(MAKE) -C lex clean
 	+$(MAKE) -C msg_sys clean
+	+$(MAKE) -C msg_span clean
+	+$(MAKE) -C math clean
 	$(RM) *.o
 
 run_test:
@@ -155,4 +169,6 @@ run_test:
 	+$(MAKE) -C deque run_test
 	+$(MAKE) -C lex run_test
 	+$(MAKE) -C msg_sys run_test
+	+$(MAKE) -C msg_span run_test
+	+$(MAKE) -C math run_test
 	$(RM) *.o

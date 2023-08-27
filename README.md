@@ -21,16 +21,14 @@
 * Fixed Size floating-point types.
 * Double Ended Queue (Deque).
 * Lexing tools for C/Golang style numbers and strings.
-* Rust-style Diagnostic Messager/Emitter.
-
+* Basic as well as a Rust-style Diagnostic Messager/Emitter.
+* Integer Logarithm Generator.
+* Mersenne Twister (header-only).
+* Math Parser.
 
 ### Future
 
-* C compiler/interpreter
-* reg allocator -> https://github.com/bytecodealliance/regalloc2
-You have to store instructions from all basic blocks in one continuous array
-^ necessary for linear scan regalloc, cause you need index -> instruction mapping 
-
+* C Lexer [+ Parser]
 * HTML Generator
 
 

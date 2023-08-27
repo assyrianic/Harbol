@@ -63,6 +63,18 @@ extern "C" {
 /// Lexing Tools
 #include "lex/lex.h"
 
+/// Basic Messaging/Diagnostics
+#include "msg_sys/msg_sys.h"
+
+/// Rust-style Messaging/Diagnostics
+#include "msg_span/msg_span.h"
+
+/// Mersenne Twister
+#include "mtwister/mtwister.h"
+
+/// Mersenne Twister
+#include "math/math_parser.h"
+
 #ifdef __cplusplus
 }
 #endif

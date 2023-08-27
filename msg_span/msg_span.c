@@ -29,9 +29,7 @@ HARBOL_EXPORT bool harbol_msg_span_init(struct HarbolMsgSpan *const restrict msg
 	if( is_filename ) {
 		harbol_string_copy_cstr(&msgspan->src.filename, cstr);
 	}
-	harbol_string_replace_cstr(&msgspan->src.code, "\r\n", "\n", -1);
-	harbol_string_replace_cstr(&msgspan->src.code, "\r",   "\n", -1);
-	harbol_string_replace_cstr(&msgspan->src.code, "\t", "    ", -1);
+	lex_fix_newlines(&msgspan->src.code, true);
 	
 	size_t newlines = harbol_string_count_cstr(&msgspan->src.code, "\n");
 	if( newlines==0 ) {
@@ -184,18 +182,10 @@ static NEVER_NULL(1) void _print_file_margins(FILE *const restrict stream, char 
 }
 
 
-static uint32_t ilog10(uint32_t const v) {
-	return  (v >= 1000000000)? 9 : (v >= 100000000)? 8 : 
-			(v >= 10000000)? 7   : (v >= 1000000)? 6   : 
-			(v >= 100000)? 5     : (v >= 10000)? 4     :
-			(v >= 1000)? 3       : (v >= 100)? 2       : (v >= 10)? 1 : 0;
-}
-
-
 static NO_NULL void _output_span(struct HarbolMsgSpan const *const msgspan, struct HarbolTokenSpan const span, size_t const len, FILE *const stream) {
 	for( uint32_t line = span.line_start; line <= span.line_end; line++ ) {
 		struct HarbolString line_num_pad = {0};
-		harbol_string_add_char_rep(&line_num_pad, ' ', len - (ilog10(line) + 1));
+		harbol_string_add_char_rep(&line_num_pad, ' ', len - base_10_digits(line));
 		struct HarbolString const *code_line = harbol_msg_span_get_line(msgspan, line-1);
 		fprintf(stream, "%u%s|%s\n", line, line_num_pad.cstr, code_line->cstr);
 		harbol_string_clear(&line_num_pad);
@@ -244,7 +234,7 @@ HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 		
 		/// Using log10 + 1 gives us how many digits a decimal value has.
 		struct HarbolString span_pad = {0};
-		harbol_string_add_char_rep(&span_pad, ' ', (ilog10(largest_span) + 2));
+		harbol_string_add_char_rep(&span_pad, ' ', (base_10_digits(largest_span) + 1));
 		fprintf(stream, "%s|\n", span_pad.cstr);
 		
 		for( size_t i=0; i < msgspan->labels.len; i++ ) {

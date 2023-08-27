@@ -123,7 +123,7 @@ HARBOL_EXPORT bool harbol_string_copy_cstr(struct HarbolString *const restrict s
 	}
 	
 	size_t const cstr_len = strlen(cstr);
-	if( !_harbol_resize_string(str, cstr_len) ) {
+	if( cstr_len==0 || !_harbol_resize_string(str, cstr_len) ) {
 		return false;
 	}
 	strcpy(str->cstr, cstr);
@@ -179,7 +179,6 @@ HARBOL_EXPORT int harbol_string_cmpcstr(struct HarbolString const *const str, ch
 	if( cstr==NULL || str->cstr==NULL ) {
 		return -1;
 	}
-	
 	size_t const cstr_len = strlen(cstr);
 	return strncmp(cstr, str->cstr, (str->len > cstr_len)? str->len : cstr_len);
 }
@@ -317,13 +316,11 @@ HARBOL_EXPORT size_t harbol_string_count_cstr(struct HarbolString const *const r
 	
 	size_t occurrences = 0;
 	size_t const occ_len = strlen(occurrence);
-	//printf("|||||||||||||||||||||||harbol_string_count_cstr :: src -> '%s'\n", str->cstr);
 	char const *pos = strstr(str->cstr, occurrence);
 	while( pos != NULL ) {
 		occurrences++;
 		pos = strstr(pos + occ_len, occurrence);
 	}
-	//printf("|||||||||||||||||||||||harbol_string_count_cstr :: '%s' -> '%zu'\n", occurrence, occurrences);
 	return occurrences;
 }
 
@@ -393,6 +390,21 @@ HARBOL_EXPORT size_t harbol_string_rm_char(struct HarbolString *const str, char 
 			str->cstr[j++] = str->cstr[i];
 		} else {
 			counts++;
+		}
+	}
+	str->cstr[j] = 0;
+	return counts;
+}
+
+
+HARBOL_EXPORT size_t harbol_string_rm_all_space(struct HarbolString *const str) {
+	size_t j = 0, counts = 0;
+	for( size_t i=0; str->cstr[i] != 0; i++ ) {
+		if( !isspace(str->cstr[i]) ) {
+			str->cstr[j++] = str->cstr[i];
+		} else {
+			counts++;
+			str->len--;
 		}
 	}
 	str->cstr[j] = 0;

@@ -171,6 +171,14 @@ void test_harbol_string(FILE *const debug_stream) {
 		fprintf(debug_stream, "newlines[%zu] == '%zu' - p[newlines[%zu]] == '%c' :\n", i, newline_offsets[i], i, p->cstr[newline_offsets[i]]);
 	}
 	free(newline_offsets); newline_offsets = NULL;
+	harbol_string_clear(&i);
+	harbol_string_clear(p);
+	
+	fputs("\nstring :: test removing spaces.", debug_stream);
+	i = harbol_string_make("   hello world  !  \n", &( bool ){false});
+	fprintf(debug_stream, "before :: i == '%s' | %zu\n", i.cstr, i.len);
+	harbol_string_rm_all_space(&i);
+	fprintf(debug_stream, "after  :: i == '%s' | %zu\n", i.cstr, i.len);
 	
 	/// free data
 	fputs("\nstring :: test destruction.", debug_stream);

@@ -42,7 +42,7 @@ void test_harbol_msg_span(FILE *const debug_stream) {
 		fprintf(debug_stream, "line %zu : '%s'\n", i, msg_span.src.lines[i].cstr);
 	}
 	
-	struct HarbolTokenSpan const test_span = { 125, 129, 4, 35 };
+	struct HarbolTokenSpan const test_span = { 85, 129, 4, 35 };
 	harbol_msg_span_add_label(&msg_span, test_span, COLOR_MAGENTA, '^', COLOR_GREEN, "this code is bad & you should feel bad.");
 	harbol_msg_span_add_label(&msg_span, test_span, COLOR_GREEN, '=',  COLOR_MAGENTA, "big lel");
 	

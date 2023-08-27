@@ -88,7 +88,7 @@ HARBOL_EXPORT NO_NULL bool harbol_string_upper(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_lower(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_reverse(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL size_t harbol_string_rm_char(struct HarbolString *str, char c);
-
+HARBOL_EXPORT NO_NULL size_t harbol_string_rm_all_space(struct HarbolString *str);
 
 #ifdef __cplusplus
 }

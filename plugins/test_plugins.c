@@ -31,11 +31,11 @@ int main(void) {
 }
 
 
-
 static NO_NULL void on_plugin_load(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, bool const reloading) {
 	FILE *const restrict debug_stream = userdata;
 	fprintf(debug_stream, "\nplugins :: on plugin load! - path :: %s\n", pl_ctxt->path);
 }
+
 static NO_NULL void on_plugin_unload(struct HarbolPlugin *const restrict pl_ctxt, void *const restrict userdata, bool const reloading) {
 	FILE *const restrict debug_stream = userdata;
 	fprintf(debug_stream, "\nplugins :: on plugin unload! - path :: %s\n", pl_ctxt->path);

@@ -9,6 +9,8 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
+#include <ctype.h>
+#include <tgmath.h>
 
 #ifdef __cplusplus
 #	include <type_traits>
@@ -16,13 +18,13 @@
 
 
 /** placing this here so we can get this after including inttypes.h */
-#if defined(INTPTR_MAX)
-#	if defined(INT32_MAX) && INTPTR_MAX==INT32_MAX
+#if defined(SIZE_MAX)
+#	if defined(UINT32_MAX) && SIZE_MAX==UINT32_MAX
 #		ifndef HARBOL32
 #			define HARBOL32
 #		endif
 #	endif
-#	if defined(INT64_MAX) && INTPTR_MAX==INT64_MAX
+#	if defined(UINT64_MAX) && SIZE_MAX==UINT64_MAX
 #		ifndef HARBOL64
 #			define HARBOL64
 #		endif
@@ -370,7 +372,7 @@ static inline size_t float_hash(floatptr_t const a, size_t const seed) {
 	union {
 		floatptr_t const f;
 		size_t     const s;
-	} c = {a};
+	} const c = {a};
 	return int_hash(c.s, seed);
 }
 
@@ -378,13 +380,16 @@ static inline NO_NULL size_t ptr_hash(void const *const p, size_t const seed) {
 	union {
 		void const *const p;
 		size_t const      y;
-	} c = {p};
-	return (c.y >> 4u) | ((c.y << (8u * sizeof(void*) - 4u)) + seed);
+	} const c = {p};
+	return (c.y >> 4ul) | ((c.y << (8ul * sizeof(void*) - 4ul)) + seed);
 }
 
 #ifdef C11
 #	define harbol_hash(h)   _Generic((h)+0, \
 				int         : int_hash,     \
+				unsigned int: int_hash,     \
+				uint32_t    : int_hash,     \
+				int32_t     : int_hash,     \
 				size_t      : int_hash,     \
 				int64_t     : int_hash,     \
 				uint64_t    : int_hash,     \
@@ -426,6 +431,26 @@ union HarbolIter {
 	union HarbolIter const   *self;
 };
 
+
+static inline NO_NULL uint8_t *make_buffer_from_file(FILE *const restrict file, size_t *const restrict bytes) {
+	ssize_t const filesize = get_file_size(file);
+	if( filesize <= 0 ) {
+		return NULL;
+	}
+	
+#ifdef __cplusplus
+	uint8_t *restrict stream = reinterpret_cast< decltype(stream) >(calloc(filesize, sizeof *stream));
+#else
+	uint8_t *restrict stream = calloc(filesize, sizeof *stream);
+#endif
+	if( stream==NULL ) {
+		*bytes = SIZE_MAX;
+	} else {
+		*bytes = fread(stream, sizeof *stream, filesize, file);
+	}
+	return stream;
+}
+
 #ifdef __cplusplus
 static inline NO_NULL uint8_t *make_buffer_from_binary(char const *const restrict file_name, size_t *const restrict bytes)
 #else
@@ -437,18 +462,11 @@ static inline NO_NULL uint8_t *make_buffer_from_binary(char const file_name[cons
 		return NULL;
 	}
 	
-	ssize_t const filesize = get_file_size(file);
-	if( filesize <= 0 ) {
-		fclose(file);
-		return NULL;
-	}
-	
 #ifdef __cplusplus
-	uint8_t *restrict stream = reinterpret_cast< decltype(stream) >(calloc(filesize, sizeof *stream));
+	uint8_t *restrict stream = reinterpret_cast< decltype(stream) >( make_buffer_from_file(file, bytes) );
 #else
-	uint8_t *restrict stream = calloc(filesize, sizeof *stream);
+	uint8_t *restrict stream = make_buffer_from_file(file, bytes);
 #endif
-	*bytes = fread(stream, sizeof *stream, filesize, file);
 	fclose(file); file = NULL;
 	return stream;
 }
@@ -464,18 +482,11 @@ static inline NO_NULL char *make_buffer_from_text(char const file_name[const res
 		return NULL;
 	}
 	
-	ssize_t const filesize = get_file_size(file);
-	if( filesize <= 0 ) {
-		fclose(file);
-		return NULL;
-	}
-	
 #ifdef __cplusplus
-	char *restrict stream = reinterpret_cast< decltype(stream) >(calloc(filesize + 1, sizeof *stream));
+	char *restrict stream = reinterpret_cast< decltype(stream) >( make_buffer_from_file(file, len) );
 #else
-	char *restrict stream = calloc(filesize + 1, sizeof *stream);
+	char *restrict stream = ( char* )(make_buffer_from_file(file, len));
 #endif
-	*len = fread(stream, sizeof *stream, filesize, file);
 	fclose(file); file = NULL;
 	return stream;
 }
@@ -550,7 +561,7 @@ static inline NO_NULL bool is_uintptr_in_bounds(uintptr_t const val, uintptr_t c
 /// Within a variable list of strings to compare to,
 /// returns an index or SIZE_MAX aka (size_t)(-1) if not found
 #ifdef __cplusplus
-static inline size_t cstr_switch(char const *cstr, ...) {
+static inline size_t cstr_switch(char const *const cstr, ...) {
 #else
 static inline size_t cstr_switch(char const cstr[static 1], ...) {
 #endif
@@ -629,7 +640,8 @@ static inline bool multi_array_shift_up(size_t *const restrict len, size_t const
 	return true;
 }
 
-static inline size_t next_pow_of_2(size_t x) {
+
+static inline size_t bitwise_ceil(size_t x) {
 	x |= x >> 1;
 	x |= x >> 2;
 	x |= x >> 4;
@@ -638,17 +650,169 @@ static inline size_t next_pow_of_2(size_t x) {
 #if SIZE_MAX==UINT64_MAX
 	x |= x >> 32;
 #endif
-	return x + 1;
+	return x;
 }
 
-/// Saving here for future components of Harbol.
-/*
-static inline bool yes_or_no(FILE *const restrict output, char const *const restrict msg, char const *const restrict yes) {
-	fputs(msg, output);
-	char letter[5] = {0};
-	fgets(letter, sizeof letter, stdin);
-	return !strcmp(letter, yes);
+static inline size_t next_pow_of_2(size_t const x) {
+	return bitwise_ceil(x) + 1;
 }
-*/
+
+static inline size_t int_log2(size_t const x) {
+#if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
+	if( x==0 ) {
+		return 0;
+	}
+	return (sizeof x * CHAR_BIT) - __builtin_clzl(x) - 1;
+#else
+#	if SIZE_MAX==UINT32_MAX
+		size_t const de_bruijn_tab[/** 32 */] = {
+			 0,  9,  1, 10, 13, 21,  2, 29,
+			11, 14, 16, 18, 22, 25,  3, 30,
+			 8, 12, 20, 28, 15, 17, 24,  7,
+			19, 27, 23,  6, 26,  5,  4, 31
+		};
+		enum { DeBruijnLog2Magic = 0x07C4ACDDU };
+		return de_bruijn_tab[(bitwise_ceil(x) * DeBruijnLog2Magic) >> 27];
+#	elif SIZE_MAX==UINT64_MAX
+		size_t const de_bruijn_tab[/** 64 */] = {
+			0,  58, 1,  59, 47, 53, 2,  60,
+			39, 48, 27, 54, 33, 42, 3,  61,
+			51, 37, 40, 49, 18, 28, 20, 55,
+			30, 34, 11, 43, 14, 22, 4,  62,
+			57, 46, 52, 38, 26, 32, 41, 50,
+			36, 17, 19, 29, 10, 13, 21, 56,
+			45, 25, 31, 35, 16,  9, 12, 44,
+			24, 15,  8, 23,  7,  6,  5, 63
+		};
+		enum { DeBruijnLog2Magic = 0x03F6EAF2CD271461UL };
+		return de_bruijn_tab[(bitwise_ceil(x) * DeBruijnLog2Magic) >> 58];
+#	else
+#	error "no valid SIZE_MAX for `int_log2`."
+#	endif
+#endif
+}
+
+static inline size_t base_2_digits(size_t const x) {
+#if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
+	return x > 0? (sizeof(size_t) * CHAR_BIT) - __builtin_clzl(x) : 0;
+#else
+	return int_log2(x) + 1;
+#endif
+}
+
+
+static inline size_t int_log10(size_t const x) {
+	size_t const log10_tab[] = {
+		 0,  0,  0,  0,  1,  1,  1,  2,
+		 2,  2,  3,  3,  3,  3,  4,  4,
+		 4,  5,  5,  5,  6,  6,  6,  6,
+		 7,  7,  7,  8,  8,  8,  9,  9,
+		 9,  9,
+#if SIZE_MAX==UINT64_MAX
+		10, 10, 10, 11, 11, 11,
+		12, 12, 12, 12, 13, 13, 13, 14,
+		14, 14, 15, 15, 15, 15, 16, 16,
+		16, 17, 17, 17, 18, 18, 18, 18, 
+#endif
+         0
+	};
+	size_t const powers_of_10[] = {
+		1UL, 10UL, 100UL, 1000UL, 10000UL,
+		100000UL, 1000000UL, 10000000UL, 100000000UL, 1000000000UL
+#if SIZE_MAX==UINT64_MAX
+		,
+		10000000000UL, 100000000000UL, 1000000000000UL, 10000000000000UL, 100000000000000UL,
+		1000000000000000UL, 10000000000000000UL, 100000000000000000UL,
+		1000000000000000000UL, 10000000000000000000UL
+#endif
+	};
+	size_t const log2_of_x = int_log2(x);
+	size_t const power_idx = log10_tab[log2_of_x];
+	size_t const next_pow  = powers_of_10[power_idx + 1];
+	return power_idx + (0 < next_pow && next_pow <= x);
+}
+
+static inline size_t base_10_digits(size_t const x) {
+	return int_log10(x) + 1;
+}
+
+
+/**
+#include <stdio.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <math.h>
+#include <limits.h>
+
+	size_t const base = 3;
+    size_t log_table[MAX_LOG_TABLE_SIZE]={0}, *powers=NULL;
+    size_t const num_powers = make_int_log_tables(base, &log_table, &powers);
+    printf("num powers: %zu\n", num_powers);
+    
+    puts("");
+    for( size_t i=0; i < MAX_LOG_TABLE_SIZE; i++ ) {
+        printf("log%zu table[%zu]: %zu\n", base, i, log_table[i]);
+    }
+    
+    puts("");
+    for( size_t i=0; i < num_powers; i++ ) {
+        printf("powers of %zu table[%zu]: %zu\n", base, i, powers[i]);
+    }
+    
+    puts("");
+    //for( size_t i=0; i < num_powers; i++ ) {
+        size_t const x = -1UL;
+        size_t const res = int_log(x, &log_table, &powers[0]);
+        printf("log%zu(%zu) == %zu\n", base, x, res);
+    //}
+    
+    free(powers); powers = NULL;
+ */
+enum {
+	MAX_LOG_TABLE_SIZE = (sizeof(size_t) * CHAR_BIT) + 1
+};
+
+static inline NO_NULL size_t int_log(
+	size_t const x,
+	size_t const (*const logN_table)[MAX_LOG_TABLE_SIZE],
+#ifdef __cplusplus
+	size_t const *const powers_of_N
+#else
+	size_t const powers_of_N[const static 1]
+#endif
+) {
+	size_t const log2_of_x = int_log2(x);
+	size_t const power_idx = (*logN_table)[log2_of_x];
+	size_t const next_pow  = powers_of_N[power_idx + 1];
+	return power_idx + (0 < next_pow && next_pow <= x);
+}
+
+static inline NO_NULL size_t make_int_log_tables(size_t const base, size_t (*const logN_table)[MAX_LOG_TABLE_SIZE], size_t **const restrict powers_of_N) {
+	if( base < 3 ) {
+		return 0;
+	}
+	/// floor( log ~0 / log base ) === highest power of the base `size_t` or other int types can reach.
+	size_t const num_exp = ( size_t )(log(SIZE_MAX) / log(base)) + 1;
+	size_t *powers = calloc(num_exp + 1, sizeof *powers);
+	if( powers==NULL ) {
+		return 0;
+	}
+	
+	/// Generate our powers of the base.
+	powers[0] = 1;
+	for( size_t i=1; i < num_exp; i++ ) {
+		size_t const prev_pow = powers[i-1];
+		powers[i] = prev_pow * base;
+	}
+	*powers_of_N = powers;
+	
+	/// generate log of N table.
+	for( size_t i=0; i < MAX_LOG_TABLE_SIZE; i++ ) {
+		(*logN_table)[i] = floor( log(1UL << i) / log(base) );
+	}
+	return num_exp;
+}
+
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */

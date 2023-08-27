@@ -12,7 +12,7 @@ HARBOL_EXPORT bool harbol_plugin_load(struct HarbolPlugin *const restrict pl, ch
 		return false;
 	}
 	
-	pl->path = dup_str(path);
+	pl->path = dup_cstr(strlen(path), path);
 	struct stat result;
 	if( !stat(path, &result) ) {
 		pl->last_write = result.st_mtime;

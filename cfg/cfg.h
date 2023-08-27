@@ -27,16 +27,17 @@ enum HarbolCfgType {
 	HarbolCfgType_Null,
 	HarbolCfgType_Map,    /// ordered hashmap type
 	HarbolCfgType_String, /// string type
-	HarbolCfgType_Float,  /// floatmax_t, as defined by Harbol.
-	HarbolCfgType_Int,    /// intmax_t aka long long int
+	HarbolCfgType_Float,  /// floatmax_t, as defined by Harbol
+	HarbolCfgType_Int,    /// intmax_t aka long long int or bigger
 	HarbolCfgType_Bool,   /// bool
 	HarbolCfgType_Color,  /// 4 byte color array
 	HarbolCfgType_Vec4D,  /// 16 byte float32 array
 };
 
 union HarbolColor {
-	uint32_t int32;
+	uint32_t uint32;
 	struct{ uint8_t r,g,b,a; } bytes;
+	uint8_t array[sizeof(uint32_t)];
 };
 
 struct HarbolVec4D {

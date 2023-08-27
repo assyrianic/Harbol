@@ -293,16 +293,25 @@ void test_harbol_lex(FILE *const debug_stream) {
 	{
 		size_t len = 0;
 		struct HarbolString utf8 = { "ܩܙܛas日本語dsads", sizeof "ܩܙܛas日本語dsads" - 1 };
-		int32_t *runes = utf8_to_rune(&utf8, &len);
+		int32_t *runes = utf8_str_to_rune(&utf8, &len);
 		fprintf(debug_stream, "lex tools :: utf8 -> '%s' | '%zu'\nlex tools :: iterating runes (count: %zu).\n", utf8.cstr, utf8.len, len);
-		for( size_t i=0; i<=len; i++ ) {
+		for( size_t i=0; runes[i] != 0; i++ ) {
 			fprintf(debug_stream, "runes[%zu]:: 'U+%.8X'\n", i, runes[i]);
 		}
 		fputs("\nlex tools :: test converting runes to utf8.\n", debug_stream);
 		/// 'utf8'-s buffer is allocated here!
-		utf8 = rune_to_utf8_str(runes, len);
+		utf8 = rune_to_utf8_str(runes);
 		free(runes); runes = NULL;
 		fprintf(debug_stream, "lex tools :: utf8 -> '%s' | '%zu'\n", utf8.cstr, utf8.len);
 		harbol_string_clear(&utf8);
+	}
+	fputs("\nlex tools :: test `lex_multiquote_string`.\n", debug_stream);
+	{
+		size_t line = 1;
+		struct HarbolString buf = {0};
+		char const *end = NULL;
+		bool const res = lex_multiquote_string("`` lol you are a fish head. ``", &end, "``", sizeof "``"-1, &buf, &line);
+		fprintf(debug_stream, "lex tools :: success? '%s' | buffer: '%s'\n", res? "yes" : "no", buf.cstr);
+		harbol_string_clear(&buf);
 	}
 }

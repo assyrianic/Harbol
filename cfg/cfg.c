@@ -6,7 +6,7 @@
 
 
 /** CFG Parser in EBNF grammar:
- * keyval = <string> [':'] (<value>|<section>) [','] ;
+ * keyval = ( <string> | "<include>" ) [':'] (<value>|<section>) [','] ;
  * section = '{' *<keyval> '}' ;
  * value = <string> | <number> | <vec> | "true" | "false" | "null" | "iota" | "<FILE>" ;
  * matrix = '[' <number> [','] [<number>] [','] [<number>] [','] [<number>] ']' ;
@@ -15,9 +15,10 @@
  */
 
 typedef struct {
-	size_t      errc, curr_line;
+	size_t      errc;
 	intmax_t   *local_iota, *local_enum, global_iota, global_enum;
 	char const *cfg_filename;
+	uint32_t    curr_line;
 } HarbolCfgState;
 
 
@@ -169,7 +170,7 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 		}
 		parse_state->local_iota = old_iota;
 		parse_state->local_enum = old_enum;
-	} else if( **cfgcoderef=='"'||**cfgcoderef=='\'' ) {
+	} else if( **cfgcoderef=='"' || **cfgcoderef=='\'' ) {
 		/// string value.
 		struct HarbolString *str = harbol_string_new(NULL);
 		if( str==NULL ) {
@@ -212,30 +213,16 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 			bool const result = _lex_number(cfgcoderef, &numstr, &type, parse_state);
 			if( iterations < 4 ) {
 				if( valtype=='c' ) {
-					switch( iterations ) {
-						case 0: matrix_value.color.bytes.r = ( uint8_t )(strtoul(numstr.cstr, NULL, 0)); break;
-						case 1: matrix_value.color.bytes.g = ( uint8_t )(strtoul(numstr.cstr, NULL, 0)); break;
-						case 2: matrix_value.color.bytes.b = ( uint8_t )(strtoul(numstr.cstr, NULL, 0)); break;
-						case 3: matrix_value.color.bytes.a = ( uint8_t )(strtoul(numstr.cstr, NULL, 0)); break;
-					}
-					iterations++;
+					matrix_value.color.array[iterations] = ( uint8_t )(strtoul(numstr.cstr, NULL, 0));
 				} else {
 					switch( iterations ) {
-						case 0:
-							matrix_value.vec4d.x = lex_string_to_float(&numstr);
-							break;
-						case 1:
-							matrix_value.vec4d.y = lex_string_to_float(&numstr);
-							break;
-						case 2:
-							matrix_value.vec4d.z = lex_string_to_float(&numstr);
-							break;
-						case 3:
-							matrix_value.vec4d.w = lex_string_to_float(&numstr);
-							break;
+						case 0: matrix_value.vec4d.x = lex_string_to_float(&numstr); break;
+						case 1: matrix_value.vec4d.y = lex_string_to_float(&numstr); break;
+						case 2: matrix_value.vec4d.z = lex_string_to_float(&numstr); break;
+						case 3: matrix_value.vec4d.w = lex_string_to_float(&numstr); break;
 					}
-					iterations++;
 				}
+				iterations++;
 			}
 			harbol_string_clear(&numstr);
 			if( !result ) {
@@ -416,7 +403,8 @@ HARBOL_EXPORT struct HarbolMap *harbol_cfg_parse_file(char const filename[static
 		harbol_write_msg(&parse_state.errc, stderr, NULL, "parse error", COLOR_RED, NULL, NULL, "Harbol Config Parser :: failed to read file '%s' into string.\n", filename);
 		return NULL;
 	}
-	
+	/// fix up new lines and tabs.
+	lex_fix_newlines(&cfg, true);
 	parse_state.cfg_filename = filename;
 	struct HarbolMap *const restrict objs = _harbol_cfg_parse(cfg.cstr, &parse_state);
 	harbol_string_clear(&cfg);
@@ -545,7 +533,7 @@ static NO_NULL bool harbol_cfg_parse_target_path(char const key[static 1], struc
 	return str->len > 0;
 }
 
-static NO_NULL struct HarbolVariant *_get_var(struct HarbolMap const *const cfgmap, char const key[static 1]) {
+static NO_NULL struct HarbolVariant *_get_var(struct HarbolMap const *const cfgmap, char const key[const]) {
 	/// first check if we're getting a singular value OR we iterate through a sectional path.
 	char const *dot = strchr(key, '.');
 	

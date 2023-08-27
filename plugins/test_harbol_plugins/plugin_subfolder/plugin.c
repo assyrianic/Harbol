@@ -4,13 +4,11 @@
 #include "../../plugins.h"
 
 
-int32_t plugin_load()
-{
+int32_t plugin_load() {
 	puts("loading another plugin.");
 	return 1;
 }
 
-void plugin_unload()
-{
+void plugin_unload() {
 	puts("unloading another plugin.");
 }
