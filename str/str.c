@@ -6,12 +6,11 @@
 #endif
 
 static NO_NULL bool _harbol_resize_string(struct HarbolString *const restrict str, size_t const new_size) {
-	char *restrict new_cstr = harbol_recalloc(str->cstr, new_size + 1, sizeof *new_cstr, str->len);
+	char *new_cstr = ( char* )(harbol_resize_string(( uint8_t* )(str->cstr), sizeof *str->cstr, &str->len, new_size));
 	if( new_cstr==NULL ) {
 		return false;
 	}
 	str->cstr = new_cstr;
-	str->len  = new_size;
 	return true;
 }
 
@@ -90,7 +89,7 @@ HARBOL_EXPORT bool harbol_string_add_cstr(struct HarbolString *const restrict st
 	}
 	
 	size_t const cstr_len = strlen(cstr);
-	if( !_harbol_resize_string(str, str->len + cstr_len) ) {
+	if( cstr_len==0 || !_harbol_resize_string(str, str->len + cstr_len) ) {
 		return false;
 	}
 	strcat(str->cstr, cstr);
@@ -291,7 +290,7 @@ HARBOL_EXPORT bool harbol_string_replace_cstr(struct HarbolString *const restric
 	
 	harbol_string_clear(str);
 	str->cstr = rep_str.cstr;
-	str->len  = rep_len;
+	str->len  = rep_str.len;
 	return true;
 }
 
@@ -397,7 +396,7 @@ HARBOL_EXPORT size_t harbol_string_rm_char(struct HarbolString *const str, char 
 }
 
 
-HARBOL_EXPORT size_t harbol_string_rm_all_space(struct HarbolString *const str) {
+HARBOL_EXPORT size_t harbol_string_trim_spaces(struct HarbolString *const str) {
 	size_t j = 0, counts = 0;
 	for( size_t i=0; str->cstr[i] != 0; i++ ) {
 		if( !isspace(str->cstr[i]) ) {
@@ -409,4 +408,41 @@ HARBOL_EXPORT size_t harbol_string_rm_all_space(struct HarbolString *const str) 
 	}
 	str->cstr[j] = 0;
 	return counts;
+}
+
+
+static NO_NULL size_t _find_chr(char const src[const static 1], char const c) {
+	char const *const pos = strchr(src, c);
+	return( pos==NULL )? SIZE_MAX : ( size_t )(pos - src);
+}
+
+HARBOL_EXPORT size_t harbol_string_find_char(struct HarbolString const *const str, char const c) {
+	return _find_chr(str->cstr, c);
+}
+
+
+HARBOL_EXPORT bool harbol_string_replace_range(struct HarbolString *const restrict str, size_t const lower, size_t upper, char const with[const restrict static 1]) {
+	if( lower >= str->len ) {
+		return false;
+	}
+	
+	if( upper > str->len ) {
+		upper = str->len - 1;
+	}
+	
+	size_t const range_diff = upper - lower;
+	if( range_diff > upper ) {
+		return false;
+	}
+	
+	char *start = &str->cstr[lower];
+	start[0] = 0;
+	char const *end = &str->cstr[upper];
+	struct HarbolString s = {0};
+	harbol_string_add_cstr(&s, str->cstr);
+	harbol_string_add_cstr(&s, with);
+	harbol_string_add_cstr(&s, &end[1]);
+	harbol_string_clear(str);
+	*str = s;
+	return true;
 }

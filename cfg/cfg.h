@@ -11,6 +11,7 @@ extern "C" {
 #include "../map/map.h"
 #include "../variant/variant.h"
 #include "../lex/lex.h"
+#include "../math/math_parser.h"
 
 
 /** CFG Parser in EBNF grammar:
@@ -68,6 +69,9 @@ HARBOL_EXPORT NO_NULL bool harbol_cfg_set_bool(struct HarbolMap *cfg, char const
 HARBOL_EXPORT NO_NULL bool harbol_cfg_set_color(struct HarbolMap *cfg, char const keypath[], union HarbolColor color, bool override_convert);
 HARBOL_EXPORT NO_NULL bool harbol_cfg_set_vec4D(struct HarbolMap *cfg, char const keypath[], struct HarbolVec4D vec4d, bool override_convert);
 HARBOL_EXPORT NO_NULL bool harbol_cfg_set_to_null(struct HarbolMap *cfg, char const keypath[]);
+
+/// requires expressions be of string type.
+HARBOL_EXPORT NEVER_NULL(1, 2) floatmax_t harbol_cfg_calc_math(struct HarbolMap const *cfg, char const keypath[], HarbolMathVarFunc *var_func, void *data, size_t data_len);
 
 #ifdef C11
 #	define harbol_cfg_set(cfg, keypath, val, override)  _Generic((val)+0, \

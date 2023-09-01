@@ -52,7 +52,6 @@ HARBOL_EXPORT NO_NULL NONNULL_RET char const *skip_multiquote_string(char const 
 HARBOL_EXPORT NO_NULL bool lex_single_line_comment(char const str[], char const **end, struct HarbolString *buf, uint32_t *lines);
 HARBOL_EXPORT NO_NULL bool lex_multi_line_comment(char const str[], char const **end, char const end_token[], size_t end_len, struct HarbolString *buf, uint32_t *lines);
 
-/// TODO:
 HARBOL_EXPORT NO_NULL bool lex_multiquote_string(char const str[], char const **end, char const quote[], size_t quote_len, struct HarbolString *buf, size_t *line);
 
 HARBOL_EXPORT size_t rune_byte_len(int32_t rune);
@@ -65,13 +64,14 @@ HARBOL_EXPORT NO_NULL int32_t *utf8_cstr_to_rune(char const cstr[], size_t cstr_
 HARBOL_EXPORT NO_NULL int32_t *utf8_str_to_rune(struct HarbolString const *str, size_t *rune_len);
 HARBOL_EXPORT NO_NULL char *rune_to_utf8_cstr(int32_t const runes[], size_t *cstr_len);
 HARBOL_EXPORT NO_NULL struct HarbolString rune_to_utf8_str(int32_t const runes[]);
+HARBOL_EXPORT NO_NULL int32_t utf8_to_rune_iter(char const cstr[], size_t cstr_len, size_t *idx);
 
 HARBOL_EXPORT NO_NULL int32_t lex_hex_escape_char(char const str[], char const **end);
 HARBOL_EXPORT NO_NULL int32_t lex_octal_escape_char(char const str[], char const **end);
 HARBOL_EXPORT NO_NULL int32_t lex_unicode_char(char const str[], char const **end, size_t encoding);
 
 
-enum {
+enum HarbolLexErrType {
 	HarbolLexNoErr,
 	HarbolLexEoF,
 	HarbolLexMissing0,
@@ -111,28 +111,28 @@ enum {
 	HarbolLexDigitSepNotSepDigits,
 };
 
-HARBOL_EXPORT NO_NULL int lex_c_style_hex(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
-HARBOL_EXPORT NO_NULL int lex_go_style_hex(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_hex(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_hex(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
 
-HARBOL_EXPORT NO_NULL int lex_c_style_octal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
-HARBOL_EXPORT NO_NULL int lex_go_style_octal(char const str[], char const **end, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_octal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_octal(char const str[], char const **end, struct HarbolString *buf);
 
-HARBOL_EXPORT NO_NULL int lex_c_style_binary(char const str[], char const **end, struct HarbolString *buf);
-HARBOL_EXPORT NO_NULL int lex_go_style_binary(char const str[], char const **end, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_binary(char const str[], char const **end, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_binary(char const str[], char const **end, struct HarbolString *buf);
 
-HARBOL_EXPORT NO_NULL int lex_c_style_decimal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
-HARBOL_EXPORT NO_NULL int lex_go_style_decimal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_decimal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_decimal(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
 
-HARBOL_EXPORT NO_NULL int lex_c_style_number(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
-HARBOL_EXPORT NO_NULL int lex_go_style_number(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_number(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_number(char const str[], char const **end, struct HarbolString *buf, bool *is_float);
 
-HARBOL_EXPORT NO_NULL int lex_c_style_str(char const str[], char const **end, struct HarbolString *buf);
-HARBOL_EXPORT NO_NULL int lex_go_style_str(char const str[], char const **end, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_c_style_str(char const str[], char const **end, struct HarbolString *buf);
+HARBOL_EXPORT NO_NULL enum HarbolLexErrType lex_go_style_str(char const str[], char const **end, struct HarbolString *buf);
 
-HARBOL_EXPORT NO_NULL NONNULL_RET char const *lex_get_err(int const err_code);
+HARBOL_EXPORT NO_NULL NONNULL_RET char const *lex_get_err(enum HarbolLexErrType err_code);
 
-HARBOL_EXPORT NO_NULL bool lex_identifier(char const str[], char const **end, struct HarbolString *buf, bool checker(int32_t c));
-HARBOL_EXPORT NO_NULL bool lex_identifier_utf8(char const str[], char const **end, struct HarbolString *buf, bool checker(int32_t c));
+HARBOL_EXPORT NO_NULL bool lex_until_false(char const str[], char const **end, struct HarbolString *buf, bool checker(int32_t c));
+HARBOL_EXPORT NO_NULL bool lex_until_false_utf8(char const str[], char const **end, struct HarbolString *buf, bool checker(int32_t c));
 HARBOL_EXPORT NO_NULL bool lex_c_style_identifier(char const str[], char const **end, struct HarbolString *buf);
 HARBOL_EXPORT NO_NULL bool lex_until(char const str[], char const **end, struct HarbolString *buf, int32_t control);
 
@@ -168,9 +168,8 @@ enum LexingFlag {
 
 /// for LexFlagRepeatable
 struct RepeatingSym {
-	char const *sym;
-	size_t      len;
-	uint32_t    limit, matched;
+	struct HarbolString sym;
+	uint32_t            limit, matched;
 };
 
 
@@ -185,10 +184,13 @@ HARBOL_EXPORT NO_NULL bool lex_custom_number(char const str[], char const **end,
 HARBOL_EXPORT NO_NULL void lex_fix_newlines(struct HarbolString *str, bool replace_tabs_w_spaces);
 
 /// int version can handle minus sign in the string.
-HARBOL_EXPORT NO_NULL intmax_t convert_runes_to_base_int(int32_t const runes[], uint8_t base, int32_t const numerals[], bool *res);
-HARBOL_EXPORT NO_NULL uintmax_t convert_runes_to_base_uint(int32_t const runes[], uint8_t base, int32_t const numerals[], bool *res);
+HARBOL_EXPORT NO_NULL intmax_t  convert_runes_to_base_int(int32_t const runes[], uint_fast8_t base, int32_t const numerals[], bool *res);
+HARBOL_EXPORT NO_NULL uintmax_t convert_runes_to_base_uint(int32_t const runes[], uint_fast8_t base, int32_t const numerals[], bool *res);
+HARBOL_EXPORT NO_NULL intmax_t  convert_cstr_to_base_int(char const cstr[], uint_fast8_t base, char const numerals[], bool *res);
+HARBOL_EXPORT NO_NULL uintmax_t convert_cstr_to_base_uint(char const cstr[], uint_fast8_t base, char const numerals[], bool *res);
 
 HARBOL_EXPORT NO_NULL int32_t *runes_from_stream(FILE *stream, size_t *rune_len);
+
 /********************************************************************/
 
 #ifdef __cplusplus

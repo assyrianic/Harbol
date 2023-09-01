@@ -274,9 +274,9 @@ void test_harbol_lex(FILE *const debug_stream) {
 	{
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
 		char const *end = NULL;
-		size_t lines = 0;
+		uint32_t lines = 0;
 		bool const res = lex_single_line_comment("/// kektus \\      \n foobar  \\ \n bazbard", &end, &lexeme, &lines);
-		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%zu'\n", res==0? "yes" : "no", lexeme.cstr, lines);
+		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%u'\n", res==0? "yes" : "no", lexeme.cstr, lines);
 		harbol_string_clear(&lexeme);
 	}
 	
@@ -284,9 +284,9 @@ void test_harbol_lex(FILE *const debug_stream) {
 	{
 		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
 		char const *end = NULL;
-		size_t lines = 0;
+		uint32_t lines = 0;
 		bool const res = lex_multi_line_comment("/** kektus \n foobar  \n bazbard */", &end, "*/", sizeof "*/"-1, &lexeme, &lines);
-		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%zu'\n", res==0? "yes" : "no", lexeme.cstr, lines);
+		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%u'\n", res==0? "yes" : "no", lexeme.cstr, lines);
 		harbol_string_clear(&lexeme);
 	}
 	fputs("\nlex tools :: test converting utf8 to runes.\n", debug_stream);
@@ -313,5 +313,29 @@ void test_harbol_lex(FILE *const debug_stream) {
 		bool const res = lex_multiquote_string("`` lol you are a fish head. ``", &end, "``", sizeof "``"-1, &buf, &line);
 		fprintf(debug_stream, "lex tools :: success? '%s' | buffer: '%s'\n", res? "yes" : "no", buf.cstr);
 		harbol_string_clear(&buf);
+	}
+	fputs("\nlex tools :: test converting string to number.\n", debug_stream);
+	{
+		bool res = false;
+		char const *val = "1100";
+		char const numerals[] = "01";
+		intmax_t const i = convert_cstr_to_base_int(val, sizeof numerals - 1, numerals, &res);
+		fprintf(debug_stream, "lex tools :: success? '%s' | i: '%" PRIiMAX "'\n", res? "yes" : "no", i);
+	}
+	fputs("\nlex tools :: test loop-reading runes.\n", debug_stream);
+	{
+		char const p[] = "ܐܢܫܐ ܚܡܪܐ";
+		fprintf(debug_stream, "lex tools :: printing str: '%s'\n\n", p);
+		for( size_t i=0; p[i] != 0; ) {
+			int32_t const rune = utf8_to_rune_iter(p, sizeof p-1, &i);
+			fprintf(debug_stream, "lex tools :: iter-read rune: '%#.4x'\n", rune);
+			char rune_str[5] = {0};
+			write_utf8_cstr(rune_str, sizeof rune_str - 1, rune);
+			fprintf(debug_stream, "lex tools :: iter-read rune as str: '%s'\n\n", rune_str);
+			if( rune <= 0 ) {
+				fprintf(debug_stream, "lex tools :: hit bad rune: idx '%zu'\n", i);
+				break;
+			}
+		}
 	}
 }

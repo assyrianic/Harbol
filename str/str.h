@@ -87,8 +87,12 @@ HARBOL_EXPORT NO_NULL bool harbol_string_cstr_offsets(struct HarbolString const 
 HARBOL_EXPORT NO_NULL bool harbol_string_upper(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_lower(struct HarbolString *str);
 HARBOL_EXPORT NO_NULL bool harbol_string_reverse(struct HarbolString *str);
+
 HARBOL_EXPORT NO_NULL size_t harbol_string_rm_char(struct HarbolString *str, char c);
-HARBOL_EXPORT NO_NULL size_t harbol_string_rm_all_space(struct HarbolString *str);
+HARBOL_EXPORT NO_NULL size_t harbol_string_trim_spaces(struct HarbolString *str);
+HARBOL_EXPORT NO_NULL size_t harbol_string_find_char(struct HarbolString const *str, char c);
+
+HARBOL_EXPORT NO_NULL bool harbol_string_replace_range(struct HarbolString *str, size_t lower, size_t upper, char const with[]);
 
 #ifdef __cplusplus
 }

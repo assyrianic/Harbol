@@ -320,6 +320,15 @@ static inline NO_NULL void *harbol_memccpy(void *const restrict dest, void const
 #endif
 }
 
+static inline uint8_t *harbol_resize_string(uint8_t *const restrict cstr, size_t const bytes, size_t *const restrict len, size_t const new_size) {
+	uint8_t *restrict new_cstr = harbol_recalloc(cstr, new_size + 1, bytes, *len);
+	if( new_cstr==NULL ) {
+		return NULL;
+	}
+	*len = new_size;
+	return new_cstr;
+}
+
 
 static inline size_t harbol_align_size(size_t const size, size_t const align) {
 	return (size + (align - 1)) & ~(align - 1);
@@ -592,7 +601,9 @@ static inline bool array_shift_up(void *const restrict buf, size_t *const restri
 	uint8_t *const restrict b = buf;
 	if( i < *len ) {
 		*len -= amount;
+		printf("array_shift_up :: i (%zu) | j (%zu) | '%zu'\n", i, j, amount);
 		memmove(&b[j * datasize], &b[i * datasize], (*len - j) * datasize);
+		printf("array_shift_up :: b '%s'\n", &b[j * datasize]);
 		memset(&b[*len * datasize], 0, amount * datasize);
 	} else {
 		/// if i goes out of range, zero everything after and lower the count.
@@ -687,7 +698,7 @@ static inline size_t int_log2(size_t const x) {
 		enum { DeBruijnLog2Magic = 0x03F6EAF2CD271461UL };
 		return de_bruijn_tab[(bitwise_ceil(x) * DeBruijnLog2Magic) >> 58];
 #	else
-#	error "no valid SIZE_MAX for `int_log2`."
+#		error "no valid SIZE_MAX for `int_log2`."
 #	endif
 #endif
 }
@@ -698,6 +709,10 @@ static inline size_t base_2_digits(size_t const x) {
 #else
 	return int_log2(x) + 1;
 #endif
+}
+
+static inline size_t base_2_num_chars(size_t const x) {
+	return base_2_digits(x) + 1;
 }
 
 
@@ -734,6 +749,26 @@ static inline size_t int_log10(size_t const x) {
 
 static inline size_t base_10_digits(size_t const x) {
 	return int_log10(x) + 1;
+}
+
+static inline size_t base_10_num_chars_uint(size_t const x) {
+	return base_10_digits(x) + 1;
+}
+static inline size_t base_10_num_chars_int(ssize_t const x) {
+#ifdef C11
+	ssize_t const y = _Generic(x, int: abs(x), long: labs(x), long long: llabs(x));
+#else
+	ssize_t const y = 
+#	if SIZE_MAX==UINT_MAX
+		abs(x)
+#	elif SIZE_MAX==ULONG_MAX
+		labs(x)
+#	elif SIZE_MAX==ULLONG_MAX
+		llabs(x)
+#	endif
+	;
+#endif
+	return base_10_digits(y) + 2; /// 2 for the negative sign symbol.
 }
 
 
@@ -813,6 +848,57 @@ static inline NO_NULL size_t make_int_log_tables(size_t const base, size_t (*con
 	}
 	return num_exp;
 }
+
+
+static inline size_t base_N_digits(
+	size_t const x,
+	size_t const (*const logN_table)[MAX_LOG_TABLE_SIZE],
+#ifdef __cplusplus
+	size_t const *const powers_of_N
+#else
+	size_t const powers_of_N[const static 1]
+#endif
+) {
+	return int_log(x, logN_table, powers_of_N) + 1;
+}
+
+static inline size_t base_N_num_chars_uint(
+	size_t const x,
+	size_t const (*const logN_table)[MAX_LOG_TABLE_SIZE],
+#ifdef __cplusplus
+	size_t const *const powers_of_N
+#else
+	size_t const powers_of_N[const static 1]
+#endif
+) {
+	return base_N_digits(x, logN_table, powers_of_N) + 1;
+}
+
+static inline size_t base_N_num_chars_int(
+	ssize_t const x,
+	size_t const (*const logN_table)[MAX_LOG_TABLE_SIZE],
+#ifdef __cplusplus
+	size_t const *const powers_of_N
+#else
+	size_t const powers_of_N[const static 1]
+#endif
+) {
+#ifdef C11
+	ssize_t const y = _Generic( x, int: abs(x), long: labs(x), long long: llabs(x) );
+#else
+	ssize_t const y = 
+#	if SIZE_MAX==UINT_MAX
+		abs(x)
+#	elif SIZE_MAX==ULONG_MAX
+		labs(x)
+#	elif SIZE_MAX==ULLONG_MAX
+		llabs(x)
+#	endif
+	;
+#endif
+	return base_N_digits(y, logN_table, powers_of_N) + 2; /// 2 for the negative sign symbol.
+}
+
 
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */

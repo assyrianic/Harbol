@@ -372,6 +372,12 @@ HARBOL_EXPORT int32_t *utf8_str_to_rune(struct HarbolString const *const str, si
 	return utf8_cstr_to_rune(str->cstr, str->len, rune_len);
 }
 
+HARBOL_EXPORT char *rune_to_utf8_cstr(int32_t const runes[static 1], size_t *const cstr_len) {
+	struct HarbolString const str = rune_to_utf8_str(runes);
+	*cstr_len = str.len;
+	return str.cstr;
+}
+
 HARBOL_EXPORT struct HarbolString rune_to_utf8_str(int32_t const runes[static 1]) {
 	struct HarbolString str = {0};
 	for( size_t i=0; runes[i] != 0; i++ ) {
@@ -382,10 +388,17 @@ HARBOL_EXPORT struct HarbolString rune_to_utf8_str(int32_t const runes[static 1]
 	return str;
 }
 
-HARBOL_EXPORT char *rune_to_utf8_cstr(int32_t const runes[static 1], size_t *const cstr_len) {
-	struct HarbolString const str = rune_to_utf8_str(runes);
-	*cstr_len = str.len;
-	return str.cstr;
+
+HARBOL_EXPORT int32_t utf8_to_rune_iter(char const cstr[const restrict static 1], size_t const cstr_len, size_t *const restrict idx) {
+	if( *idx >= cstr_len || cstr[*idx]==0 ) {
+		return -1;
+	}
+	int32_t rune = -1;
+	size_t const bytes_read = read_utf8(&cstr[*idx], cstr_len, &rune);
+	if( bytes_read > 0 ) {
+		*idx += bytes_read;
+	}
+	return rune;
 }
 
 
@@ -465,7 +478,7 @@ exit:;
 	return !is_valid_unicode(r)? -1 : r;
 }
 
-HARBOL_EXPORT int lex_c_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -664,7 +677,7 @@ lex_c_style_hex_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_hex(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -776,7 +789,7 @@ lex_go_style_hex_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -863,7 +876,7 @@ lex_c_style_octal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_octal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -923,7 +936,7 @@ lex_go_style_octal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -1015,7 +1028,7 @@ lex_c_style_binary_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_binary(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -1074,7 +1087,7 @@ lex_go_style_binary_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -1241,7 +1254,7 @@ lex_c_style_decimal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_go_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_decimal(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	int result = HarbolLexNoErr;
 	if( *str==0 ) {
 		return HarbolLexEoF;
@@ -1340,7 +1353,7 @@ lex_go_style_decimal_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	switch( *str ) {
 		case '0': {
 			switch( str[1] ) {
@@ -1361,7 +1374,7 @@ HARBOL_EXPORT int lex_c_style_number(char const str[static 1], char const **cons
 	return HarbolLexNoErr;
 }
 
-HARBOL_EXPORT int lex_go_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_number(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool *const restrict is_float) {
 	switch( *str ) {
 		case '0': {
 			switch( str[1] ) {
@@ -1379,7 +1392,7 @@ HARBOL_EXPORT int lex_go_style_number(char const str[static 1], char const **con
 	return HarbolLexNoErr;
 }
 
-static NO_NULL int _lex_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool const raw) {
+static NO_NULL enum HarbolLexErrType _lex_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool const raw) {
 	int result = HarbolLexNoErr;
 	for( int_fast8_t const quote = *str++; *str != quote; str++ ) {
 		int_fast8_t const c = *str;
@@ -1451,15 +1464,15 @@ lex_str_err:;
 	return result;
 }
 
-HARBOL_EXPORT int lex_c_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT enum HarbolLexErrType lex_c_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	return _lex_str(str, end, buf, false);
 }
 
-HARBOL_EXPORT int lex_go_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
+HARBOL_EXPORT enum HarbolLexErrType lex_go_style_str(char const str[static 1], char const **const end, struct HarbolString *const restrict buf) {
 	return _lex_str(str, end, buf, *str=='`');
 }
 
-HARBOL_EXPORT char const *lex_get_err(int const err_code) {
+HARBOL_EXPORT char const *lex_get_err(enum HarbolLexErrType const err_code) {
 	switch( err_code ) {
 		case HarbolLexNoErr:                     return "No Lexing Error.";
 		case HarbolLexEoF:                       return "Sudden End of File/Str.";
@@ -1502,7 +1515,7 @@ HARBOL_EXPORT char const *lex_get_err(int const err_code) {
 	}
 }
 
-HARBOL_EXPORT bool lex_identifier(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT bool lex_until_false(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
 	while( *str != 0 && checker(*str) ) {
 		harbol_string_add_char(buf, *str++);
 	}
@@ -1510,7 +1523,7 @@ HARBOL_EXPORT bool lex_identifier(char const str[static 1], char const **const e
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT bool lex_identifier_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT bool lex_until_false_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
 	bool res = false;
 	char const *const ending = str + strlen(str);
 	while( *str != 0 ) {
@@ -1518,9 +1531,10 @@ HARBOL_EXPORT bool lex_identifier_utf8(char const str[static 1], char const **co
 		size_t const bytes = read_utf8(str, ending - str, &rune);
 		if( bytes==0 ) {
 			goto lex_id_u8_err;
-		} else if( checker(rune) ) {
-			write_utf8_str(buf, rune);
+		} else if( !checker(rune) ) {
+			break;
 		}
+		write_utf8_str(buf, rune);
 		str += bytes;
 	}
 	res = buf->len > 0;
@@ -1615,7 +1629,7 @@ HARBOL_EXPORT void lex_fix_newlines(struct HarbolString *const str, bool const r
  
 HARBOL_EXPORT intmax_t convert_runes_to_base(
 	int32_t const        runes[const restrict static 1],
-	uint8_t const        base,
+	uint_fast8_t const   base,
 	int32_t const        numerals[const restrict static 1],
 	bool *const restrict res
 ) {
@@ -1641,7 +1655,7 @@ HARBOL_EXPORT intmax_t convert_runes_to_base(
 
 HARBOL_EXPORT uintmax_t convert_runes_to_base_uint(
 	int32_t const        runes[const restrict static 1],
-	uint8_t const        base,
+	uint_fast8_t const   base,
 	int32_t const        numerals[const restrict static 1],
 	bool *const restrict res
 ) {
@@ -1669,4 +1683,40 @@ HARBOL_EXPORT int32_t *runes_from_stream(FILE *const restrict stream, size_t *co
 	int32_t *runes = utf8_cstr_to_rune(text, len, rune_len);
 	free(text); text = NULL;
 	return runes;
+}
+
+HARBOL_EXPORT intmax_t convert_cstr_to_base_int(char const cstr[const static 1], uint_fast8_t const base, char const numerals[const static 1], bool *const restrict res) {
+	intmax_t value = 0;
+	int sign = 1;
+	for( size_t i=0; cstr[i] != 0; i++ ) {
+		if( cstr[i]=='-' ) {
+			sign = -1;
+			continue;
+		}
+		
+		char const *const p = strchr(numerals, cstr[i]);
+		if( p != NULL ) {
+			value = value * base + (p - &numerals[0]);
+			continue;
+		}
+		*res = false;
+		return value;
+	}
+	*res = true;
+	return value * sign;
+}
+
+HARBOL_EXPORT uintmax_t convert_cstr_to_base_uint(char const cstr[], uint_fast8_t const base, char const numerals[const static 1], bool *const restrict res) {
+	uintmax_t value = 0;
+	for( size_t i=0; cstr[i] != 0; i++ ) {
+		char const *const p = strchr(numerals, cstr[i]);
+		if( p != NULL ) {
+			value = value * base + (p - &numerals[0]);
+			continue;
+		}
+		*res = false;
+		return value;
+	}
+	*res = true;
+	return value;
 }

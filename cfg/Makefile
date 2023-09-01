@@ -9,6 +9,7 @@ SRCS += ../variant/variant.c
 SRCS += ../map/map.c
 SRCS += ../array/array.c
 SRCS += ../str/str.c
+SRCS += ../math/math_parser.c
 OBJS = $(SRCS:.c=.o)
 
 harbol_cfg:
@@ -18,7 +19,7 @@ debug:
 	$(CC) $(TFLAGS) -c $(SRCS)
 
 test:
-	$(CC) $(TFLAGS) $(SRCS) test_cfg.c -o harbol_cfg_test
+	$(CC) $(TFLAGS) $(SRCS) test_cfg.c -o harbol_cfg_test -lm
 
 clean:
 	$(RM) *.o

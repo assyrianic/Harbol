@@ -53,6 +53,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		'age': 0x18 , \
 		'money': 35.42e4 \
 		'myself': <FILE> \
+		'test math': 'ln(e^9) equals => <math ln(e^9)>' \
 		'address': { \
 			'streetAddress': '21 2nd Street', \
 			'city': 'New York', \
@@ -116,7 +117,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		
 		fputs("\ncfg :: test retrieving sub section of realistic config.\n", debug_stream);
 		struct HarbolMap *phone_numbers1 = harbol_cfg_get_section(larger_cfg, "root.phoneNumbers\\..1");
-		printf("larger_cfg (%p) :: phone_numbers1 (%p) -> root.phoneNumbers\\..1\n", larger_cfg, phone_numbers1);
+		printf("larger_cfg (%p) :: phone_numbers1 (%p) -> root.phoneNumbers\\\\..1\n", larger_cfg, phone_numbers1);
 		if( phone_numbers1 ) {
 			stringcfg = harbol_cfg_to_str(phone_numbers1);
 			fprintf(debug_stream, "\nphone_numbers to string conversion: \n%s\n", stringcfg.cstr);

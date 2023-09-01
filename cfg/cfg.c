@@ -5,13 +5,16 @@
 #endif
 
 
-/** CFG Parser in EBNF grammar:
- * keyval = ( <string> | "<include>" ) [':'] (<value>|<section>) [','] ;
- * section = '{' *<keyval> '}' ;
- * value = <string> | <number> | <vec> | "true" | "false" | "null" | "iota" | "<FILE>" ;
- * matrix = '[' <number> [','] [<number>] [','] [<number>] [','] [<number>] ']' ;
- * vec = ('v' | 'c') <matrix> ;
- * string = '"' chars '"' | "'" chars "'" ;
+/** CFG Parser in EBNF grammar
+```ebnf
+keyval  = ( string | "<include>" | "<enum>" | math ) [':'] ( value | section ) [','] .
+section = '{' *keyval '}' .
+value   = string | number | vec | "true" | "false" | "null" | "iota" | "<FILE>" | math .
+matrix  = '[' number [','] [number] [','] [number] [','] [number] ']' .
+vec     = ('v' | 'c') matrix .
+string  = '"' chars '"' | "'" chars "'" .
+math    = "<math" expression ">" . /// See HarbolMath module for math parser's grammar.
+```
  */
 
 typedef struct {
@@ -73,10 +76,127 @@ static bool NO_NULL _lex_number(char const **restrict strref, struct HarbolStrin
 	return str->len > 0;
 }
 
-static NO_NULL bool harbol_cfg_parse_section(struct HarbolMap *, char const **, HarbolCfgState *);
-static NO_NULL bool harbol_cfg_parse_number(struct HarbolMap *, struct HarbolString const *, char const **, HarbolCfgState *);
+static NO_NULL bool harbol_cfg_parse_section(struct HarbolMap *cfg, char const **code_ref, HarbolCfgState *parse_state);
+static NO_NULL bool harbol_cfg_parse_number(struct HarbolMap *cfg, struct HarbolString const *key, char const **code_ref, HarbolCfgState *parse_state);
 
-/// keyval = <string> [':'] (<value>|<section>) [','] ;
+
+static inline floatmax_t cfg_sin(floatmax_t const x)      { return sin(x); }
+static inline floatmax_t cfg_cos(floatmax_t const x)      { return cos(x); }
+static inline floatmax_t cfg_tan(floatmax_t const x)      { return tan(x); }
+static inline floatmax_t cfg_arcsin(floatmax_t const x)   { return asin(x); }
+static inline floatmax_t cfg_arccos(floatmax_t const x)   { return acos(x); }
+static inline floatmax_t cfg_arctan(floatmax_t const x)   { return atan(x); }
+static inline floatmax_t cfg_ln(floatmax_t const x)       { return log(x); }
+static inline floatmax_t cfg_log(floatmax_t const x)      { return log10(x); }
+static inline floatmax_t cfg_floor(floatmax_t const x)    { return floor(x); }
+static inline floatmax_t cfg_ceil(floatmax_t const x)     { return ceil(x); }
+static inline floatmax_t cfg_round(floatmax_t const x)    { return round(x); }
+static inline floatmax_t cfg_fraction(floatmax_t const x) { return x - floor(x); }
+static inline floatmax_t cfg_radians(floatmax_t const x)  { return x * (cfg_arccos(-1.0) / 180.0); }
+static inline floatmax_t cfg_degrees(floatmax_t const x)  { return x * (180.0 / cfg_arccos(-1.0)); }
+
+static void _harbol_cfg_math_var_func(
+	char   const                    var_name[const restrict static 1],
+	size_t const                    var_len,
+	floatmax_t      *const restrict value,
+	HarbolMathFunc **const restrict math_func,
+	void            *const          data,
+	size_t const                    data_len,
+	bool            *const restrict is_func
+) {
+	(void)(var_len);
+	(void)(data_len);
+	HarbolCfgState const *const restrict parse_state = data;
+	if( !strcmp(var_name, "IOTA") ) {
+		*value = ( floatmax_t )(parse_state->global_iota);
+	} else if( !strcmp(var_name, "iota") ) {
+		*value = ( floatmax_t )(*parse_state->local_iota);
+	} else if( !strcmp(var_name, "ENUM") ) {
+		*value = ( floatmax_t )(parse_state->global_enum);
+	} else if( !strcmp(var_name, "enum") ) {
+		*value = ( floatmax_t )(*parse_state->local_enum);
+	} else if( !strcmp(var_name, "e") ) {
+		*value = exp(( floatmax_t )(1.0));
+	} else if( !strcmp(var_name, "pi") ) {
+		*value = acos(( floatmax_t )(-1.0));
+	} else if( !strcmp(var_name, "sin") ) {
+		*math_func = cfg_sin;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "cos") ) {
+		*math_func = cfg_cos;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "tan") ) {
+		*math_func = cfg_tan;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "arcsin") ) {
+		*math_func = cfg_arcsin;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "arccos") ) {
+		*math_func = cfg_arccos;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "arctan") ) {
+		*math_func = cfg_arctan;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "ln") ) {
+		*math_func = cfg_ln;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "log") ) {
+		*math_func = cfg_log;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "floor") ) {
+		*math_func = cfg_floor;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "ceil") ) {
+		*math_func = cfg_ceil;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "round") ) {
+		*math_func = cfg_round;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "fraction") ) {
+		*math_func = cfg_fraction;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "radians") ) {
+		*math_func = cfg_radians;
+		*is_func   = true;
+	} else if( !strcmp(var_name, "degrees") ) {
+		*math_func = cfg_degrees;
+		*is_func   = true;
+	}
+}
+
+static NO_NULL floatmax_t _harbol_cfg_parse_inline_math(struct HarbolString *const str, HarbolCfgState *const parse_state, bool const replace_str_with_res) {
+	union {
+		uintmax_t  u;
+		floatmax_t f;
+	} const c = { -1ULL };
+	char const *math_str = strstr(str->cstr, "<math");
+	if( math_str==NULL ) {
+		return c.f;
+	}
+	char const *expr_start = math_str + sizeof "<math" - 1;
+	char *math_end = strchr(expr_start, '>');
+	if( math_end==NULL ) {
+		/// missing ending '>'. Forgot it?
+		harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "syntax error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: ending '>' for math expression\n");
+		return c.f;
+	}
+	math_end[0] = 0; /// temporarily set it as null terminator.
+	floatmax_t const result = harbol_math_parse_expr(expr_start, _harbol_cfg_math_var_func, parse_state, sizeof *parse_state);
+	math_end[0] = '>';
+	if( replace_str_with_res ) {
+		size_t const start = ( size_t )(math_str - str->cstr);
+		char result_str[30] = {0};
+		snprintf(&result_str[0],  sizeof result_str - 1,  "%" PRIfMAX "", result);
+		harbol_string_replace_range(str, start, (math_end==NULL)? SIZE_MAX : ( size_t )(math_end - math_str), result_str);
+	}
+	return result;
+}
+
+static inline bool _cfgmath_end_and_newline(int32_t const c) {
+	return c != '>' && c != '\n';
+}
+
+/// keyval = ( string | "<include>" | "<enum>" | math ) [':'] ( value | section ) [','] .
 static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char const **cfgcoderef, HarbolCfgState *const restrict parse_state) {
 	if( *cfgcoderef==NULL ) {
 		harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "parse error", COLOR_RED, NULL, NULL, "Harbol Config Parser :: invalid config buffer!\n");
@@ -100,22 +220,12 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 		return false;
 	} else if( harbol_map_has_key(map, keystr.cstr, keystr.len+1) ) {
 		harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "syntax error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: duplicate string key '%s'.\n", keystr.cstr);
-		for( size_t i=0; i < map->len; i++ ) {
-			printf("key: '%s' - idx: '%zu'\n", map->keys[i], i);
-			printf("hash: '%zu' - idx: '%zu'\n", map->hashes[i], i);
-		}
 		harbol_string_clear(&keystr);
 		return false;
 	}
 	skip_ws_and_comments(cfgcoderef, parse_state);
 	
-	if( !harbol_string_cmpcstr(&keystr, "<enum>") ) {
-		harbol_string_format(&keystr, true, "%" PRIiMAX "", *parse_state->local_enum);
-		++*parse_state->local_enum;
-	} else if( !harbol_string_cmpcstr(&keystr, "<ENUM>") ) {
-		harbol_string_format(&keystr, true, "%" PRIiMAX "", parse_state->global_enum);
-		++parse_state->global_enum;
-	} else if( !harbol_string_cmpcstr(&keystr, "<INCLUDE>") || !harbol_string_cmpcstr(&keystr, "<include>") ) {
+	if( !harbol_string_cmpcstr(&keystr, "<INCLUDE>") || !harbol_string_cmpcstr(&keystr, "<include>") ) {
 		if( **cfgcoderef != '"' && **cfgcoderef != '\'' ) {
 			harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "syntax error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: file for config inclusion is missing string quotes.\n");
 			harbol_string_clear(&keystr);
@@ -143,6 +253,26 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 			harbol_string_clear(&file_path);
 			return inclusion_res;
 		}
+	} else {
+		intmax_t const local_enum_value    = *parse_state->local_enum;
+		intmax_t const global_enum_value   = parse_state->global_enum;
+		size_t const num_local_enum_chars  = base_10_num_chars_int(local_enum_value);
+		size_t const num_global_enum_chars = base_10_num_chars_int(global_enum_value);
+		
+		char local_enum_str[num_local_enum_chars];
+		memset(&local_enum_str[0], 0, num_local_enum_chars);
+		snprintf(&local_enum_str[0],  num_local_enum_chars,  "%" PRIiMAX "", local_enum_value);
+		
+		char global_enum_str[num_global_enum_chars];
+		memset(&global_enum_str[0], 0, num_global_enum_chars);
+		snprintf(&global_enum_str[0], num_global_enum_chars, "%" PRIiMAX "", global_enum_value);
+		if( harbol_string_replace_cstr(&keystr, "<enum>", local_enum_str, SIZE_MAX) ) {
+			++*parse_state->local_enum;
+		}
+		if( harbol_string_replace_cstr(&keystr, "<ENUM>", global_enum_str, SIZE_MAX) ) {
+			++parse_state->global_enum;
+		}
+		_harbol_cfg_parse_inline_math(&keystr, parse_state, true);
 	}
 	
 	bool res = false;
@@ -184,6 +314,21 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 			harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "syntax error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: invalid string value '%s' for key '%s' %s.\n", str->cstr, keystr.cstr, lex_get_err(str_res));
 			harbol_string_clear(&keystr);
 			return false;
+		}
+		char *math_marker = strstr(str->cstr, "<math");
+		if( math_marker != NULL ) {
+			char *const math_start = math_marker + sizeof "<math"-1;
+			char *const math_end = strchr(math_start, '>');
+			if( math_end != NULL ) {
+				*math_end = 0;
+			}
+			floatmax_t const expr_result = harbol_math_parse_expr(math_start, _harbol_cfg_math_var_func, parse_state, sizeof *parse_state);
+			if( math_end != NULL ) {
+				*math_end = '>';
+			}
+			char *number = sprintf_alloc("%" PRIfMAX "", expr_result);
+			harbol_string_replace_range(str, math_marker - str->cstr, ( size_t )(math_end - str->cstr), number);
+			free(number); number = NULL;
 		}
 		struct HarbolVariant var = harbol_variant_make(&str, sizeof str, HarbolCfgType_String, &( bool ){0});
 		harbol_map_insert(map, keystr.cstr, keystr.len+1, &var, sizeof var);
@@ -304,8 +449,8 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 		return false;
 	} else if( **cfgcoderef=='<' ) { /// control/special value.
 		/// <FILE> is the name of the config file we're parsing.
-		size_t const cstr_len = sizeof("<file>") - 1;
-		if( !strncmp("<file>", *cfgcoderef, cstr_len) || !strncmp("<FILE>", *cfgcoderef, cstr_len) ) {
+		size_t const file_cstr_len = sizeof("<file>") - 1;
+		if( !strncmp("<file>", *cfgcoderef, file_cstr_len) || !strncmp("<FILE>", *cfgcoderef, file_cstr_len) ) {
 			struct HarbolString *str = harbol_string_new(NULL);
 			if( str==NULL ) {
 				harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "memory error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: unable to allocate string value for key '%s'.\n", keystr.cstr);
@@ -316,7 +461,7 @@ static bool harbol_cfg_parse_key_val(struct HarbolMap *const restrict map, char 
 			harbol_string_copy_cstr(str, ( parse_state->cfg_filename==NULL )? "C-string-cfg" : parse_state->cfg_filename);
 			struct HarbolVariant var = harbol_variant_make(&str, sizeof str, HarbolCfgType_String, &( bool ){0});
 			res = harbol_map_insert(map, keystr.cstr, keystr.len+1, &var, sizeof var);
-			*cfgcoderef += cstr_len;
+			*cfgcoderef += file_cstr_len;
 		} else {
 			harbol_write_msg(&parse_state->errc, stderr, parse_state->cfg_filename, "syntax error", COLOR_RED, &parse_state->curr_line, NULL, "Harbol Config Parser :: unknown control/command '%c'.\n", (*cfgcoderef)[1]);
 			res = false;
@@ -585,6 +730,7 @@ static NO_NULL struct HarbolVariant *_get_var(struct HarbolMap const *const cfgm
 
 HARBOL_EXPORT struct HarbolMap *harbol_cfg_get_section(struct HarbolMap const *const restrict cfgmap, char const key[static 1]) {
 	struct HarbolVariant const *const var = _get_var(cfgmap, key);
+	//printf("harbol_cfg_get_section :: var->tag==HarbolCfgType_Map: %u\n", var != NULL? var->tag==HarbolCfgType_Map : -1);
 	return( var==NULL || var->tag != HarbolCfgType_Map )? NULL : *( struct HarbolMap** )(var->data);
 }
 
@@ -773,14 +919,10 @@ static NO_NULL bool _harbol_cfg_build_file(struct HarbolMap const *const map, FI
 				fputs("}\n", file);
 				break;
 			
-			case HarbolCfgType_String:
-				fprintf(file, "\"%s\"\n", (*cv.str)->cstr); break;
-			case HarbolCfgType_Float:
-				fprintf(file, "%" PRIfMAX "\n", *cv.f); break;
-			case HarbolCfgType_Int:
-				fprintf(file, "%" PRIiMAX "\n", *cv.i); break;
-			case HarbolCfgType_Bool:
-				fprintf(file, "%s\n", (*cv.b)? "true" : "false"); break;
+			case HarbolCfgType_String: fprintf(file, "\"%s\"\n", (*cv.str)->cstr);       break;
+			case HarbolCfgType_Float:  fprintf(file, "%" PRIfMAX "\n", *cv.f);           break;
+			case HarbolCfgType_Int:    fprintf(file, "%" PRIiMAX "\n", *cv.i);           break;
+			case HarbolCfgType_Bool:   fprintf(file, "%s\n", (*cv.b)? "true" : "false"); break;
 			case HarbolCfgType_Color:
 				fprintf(file, "c[ %u, %u, %u, %u ]\n", cv.c->bytes.r, cv.c->bytes.g, cv.c->bytes.b, cv.c->bytes.a); break;
 			case HarbolCfgType_Vec4D:
@@ -799,4 +941,17 @@ HARBOL_EXPORT bool harbol_cfg_build_file(struct HarbolMap const *const cfg, char
 	bool const result = _harbol_cfg_build_file(cfg, cfgfile, 0);
 	fclose(cfgfile); cfgfile=NULL;
 	return result;
+}
+
+
+HARBOL_EXPORT floatmax_t harbol_cfg_calc_math(struct HarbolMap const *const restrict cfg, char const key[const restrict static 1], HarbolMathVarFunc *const var_func, void *const restrict data, size_t const data_len) {
+	struct HarbolString *const restrict str = harbol_cfg_get_str(cfg, key);
+	if( str==NULL ) {
+		union {
+			uintmax_t const  u;
+			floatmax_t const f;
+		} const c = { -1ULL };
+		return c.f;
+	}
+	return harbol_math_parse_expr(str->cstr, var_func==NULL? _harbol_cfg_math_var_func : var_func, data, data_len);
 }

@@ -68,16 +68,16 @@ HARBOL_EXPORT NEVER_NULL(1,3) bool harbol_msg_span_add_note(struct HarbolMsgSpan
 
 
 HARBOL_EXPORT NEVER_NULL(1,3,7,10) void harbol_msg_span_emit_to_stream(
-	struct HarbolMsgSpan       *msgspan,
-	size_t                     *msg_cnt,
-	FILE                       *output,
-	char const                  filename[],
-	char const                  msgtype[],
-	char const                  code_num[],
-	char const                  msgtype_color[],
-	uint32_t const             *line,
-	uint32_t const             *col,
-	char const                  msg_fmt[],
+	struct HarbolMsgSpan       *msgspan,         /// 1
+	size_t                     *msg_cnt,         /// 2
+	FILE                       *output,          /// 3
+	char const                  filename[],      /// 4
+	char const                  msgtype[],       /// 5
+	char const                  code_num[],      /// 6
+	char const                  msgtype_color[], /// 7
+	uint32_t const             *line,            /// 8
+	uint32_t const             *col,             /// 9
+	char const                  msg_fmt[],       /// 10
 	...
 );
 

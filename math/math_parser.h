@@ -11,8 +11,6 @@ extern "C" {
 
 
 typedef floatmax_t HarbolMathFunc(floatmax_t value);
-
-/// return true if returning a function. 'value' will be ignored if returning function.
 typedef void HarbolMathVarFunc(char const var_name[], size_t var_len, floatmax_t *value, HarbolMathFunc **math_func, void *data, size_t data_len, bool *is_func);
 
 /**

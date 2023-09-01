@@ -174,11 +174,28 @@ void test_harbol_string(FILE *const debug_stream) {
 	harbol_string_clear(&i);
 	harbol_string_clear(p);
 	
-	fputs("\nstring :: test removing spaces.", debug_stream);
+	fputs("\nstring :: test removing spaces.\n", debug_stream);
 	i = harbol_string_make("   hello world  !  \n", &( bool ){false});
 	fprintf(debug_stream, "before :: i == '%s' | %zu\n", i.cstr, i.len);
-	harbol_string_rm_all_space(&i);
+	harbol_string_trim_spaces(&i);
 	fprintf(debug_stream, "after  :: i == '%s' | %zu\n", i.cstr, i.len);
+	harbol_string_clear(&i);
+	
+	
+	fputs("\nstring :: test range replacement.\n", debug_stream);
+	i = harbol_string_make("this is keks", &( bool ){false});
+	fprintf(debug_stream, "i's string BEFORE '%s'\n", i.cstr);
+	harbol_string_replace_range(&i, 3, 5, "topkeks");
+	fprintf(debug_stream, "i's string AFTER '%s'\n", i.cstr);
+	harbol_string_clear(&i);
+	
+	i = harbol_string_make("this is quite a long string, I hope this works out well!", &( bool ){false});
+	fprintf(debug_stream, "i's string BEFORE '%s'\n", i.cstr);
+	clock_t const start = clock();
+	harbol_string_replace_range(&i, 0, SIZE_MAX, "");
+	clock_t const end = clock();
+	fprintf(debug_stream, "i's string AFTER '%s'\n", i.cstr);
+	printf("str replacing time: %f\n", (end-start)/( double )(CLOCKS_PER_SEC));
 	
 	/// free data
 	fputs("\nstring :: test destruction.", debug_stream);

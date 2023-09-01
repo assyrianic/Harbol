@@ -39,8 +39,7 @@ struct HarbolMathLexer {
 
 
 static NO_NULL bool _harbol_math_lex_decimal(struct HarbolMathLexer *const restrict ls, char const expression[const restrict static 1]) {
-	int lit_flags = 0;
-	enum{ LEXFLAG_DOT=1 };
+	bool has_dot = false;
 	while( expression[ls->idx] != 0 && (isalnum(expression[ls->idx]) || expression[ls->idx]=='.') ) {
 		switch( expression[ls->idx] ) {
 			case '0': case '1': case '2': case '3': case '4':
@@ -51,14 +50,14 @@ static NO_NULL bool _harbol_math_lex_decimal(struct HarbolMathLexer *const restr
 				break;
 			}
 			case '.': {
-				if( lit_flags & LEXFLAG_DOT ) {
+				if( has_dot ) {
 					//LogError("ConfigMap-Math :: extra dot in decimal literal");
 					return false;
 				}
 				ls->tok.lexeme[ls->tok.size] = expression[ls->idx];
 				ls->tok.size++;
 				ls->idx++;
-				lit_flags |= LEXFLAG_DOT;
+				has_dot = true;
 				break;
 			}
 			default: {
