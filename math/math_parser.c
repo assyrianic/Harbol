@@ -253,7 +253,7 @@ floatmax_t harbol_math_parse_unary_expr(struct HarbolMathLexer *const restrict l
 }
 
 
-/// Factor  = number | ident | func PowExpr | '(' Expr ')' | '[' Expr ']' .
+/// Factor = number | ident | func ( '(' | '[' )? UnaryExpr , PowExpr | '(' Expr ')' | '[' Expr ']' .
 floatmax_t harbol_math_parse_factor(struct HarbolMathLexer *const restrict ls, char const expression[const restrict static 1]) {
 	union {
 		uintmax_t  u;
@@ -277,7 +277,7 @@ floatmax_t harbol_math_parse_factor(struct HarbolMathLexer *const restrict ls, c
 				bool is_func = false;
 				(*ls->var_func)(lexeme, len, &value.f, &math_fn, ls->data, ls->data_len, &is_func);
 				if( is_func && math_fn != NULL ) {
-					return (*math_fn)( harbol_math_parse_pow_expr(ls, expression) );
+					return (*math_fn)( (ls->tok.tag==TokenLParen || ls->tok.tag==TokenLBrack)? harbol_math_parse_unary_expr(ls, expression) : harbol_math_parse_pow_expr(ls, expression) );
 				}
 			}
 			return value.f;

@@ -28,7 +28,7 @@ AddExpr   = MulExpr *( ('+' | '-') MulExpr ) .
 MulExpr   = PowExpr *( ('*' | '/') PowExpr ) .
 PowExpr   = UnaryExpr *( '^' UnaryExpr ) .
 UnaryExpr = *( '-' | '+' ) Factor .
-Factor    = number | ident | func PowExpr | '(' Expr ')' | '[' Expr ']' .
+Factor    = number | ident | func ( '(' | '[' )? UnaryExpr , PowExpr | '(' Expr ')' | '[' Expr ']' .
 ```
  */
 
@@ -52,12 +52,12 @@ static inline floatmax_t math_parse_radians(floatmax_t const x)  { return x * (m
 static inline floatmax_t math_parse_degrees(floatmax_t const x)  { return x * (180.0 / math_parse_arccos(-1.0)); }
 
 static inline HarbolMathFunc *harbol_math_check_default_funcs(char const var_name[]) {
-	char const *default_func_names[] = {
+	char const *const default_func_names[] = {
 		"sin", "cos", "tan",   "arcsin", "arccos", "arctan",
 		"ln",  "log", "floor", "ceil",   "round",  "fraction",
 		"radians",    "degrees"
 	};
-	HarbolMathFunc *default_funcs[] = {
+	HarbolMathFunc *const default_funcs[] = {
 		math_parse_sin,    math_parse_cos,      math_parse_tan,
 		math_parse_arcsin, math_parse_arccos,   math_parse_arctan,
 		math_parse_ln,     math_parse_log,      math_parse_floor,   math_parse_ceil,
@@ -72,7 +72,7 @@ static inline HarbolMathFunc *harbol_math_check_default_funcs(char const var_nam
 }
 
 static inline bool harbol_math_check_default_vars(char const var_name[], floatmax_t *const restrict value) {
-	char const *default_var_names[] = {
+	char const *const default_var_names[] = {
 		"e", "pi"
 	};
 	floatmax_t const default_var_values[] = {
