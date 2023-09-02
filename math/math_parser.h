@@ -20,7 +20,7 @@ AddExpr   = MulExpr *( ('+' | '-') MulExpr ) .
 MulExpr   = PowExpr *( ('*' | '/') PowExpr ) .
 PowExpr   = UnaryExpr *( '^' UnaryExpr ) .
 UnaryExpr = *( '-' | '+' ) Factor .
-Factor    = number | ident | func UnaryExpr | '(' Expr ')' | '[' Expr ']' .
+Factor    = number | ident | func MulExpr | '(' Expr ')' | '[' Expr ']' .
 ```
  */
 
