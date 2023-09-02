@@ -53,7 +53,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		'age': 0x18 , \
 		'money': 35.42e4 \
 		'myself': <FILE> \
-		'test math': 'ln(e^9) equals => <math ln(e^9)>' \
+		'test math': 'iota + [ln 2+65^2+75] == <math iota + [ ln 2+65^2+75 ]>' \
 		'address': { \
 			'streetAddress': '21 2nd Street', \
 			'city': 'New York', \

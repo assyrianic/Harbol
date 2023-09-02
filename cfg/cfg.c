@@ -80,21 +80,6 @@ static NO_NULL bool harbol_cfg_parse_section(struct HarbolMap *cfg, char const *
 static NO_NULL bool harbol_cfg_parse_number(struct HarbolMap *cfg, struct HarbolString const *key, char const **code_ref, HarbolCfgState *parse_state);
 
 
-static inline floatmax_t cfg_sin(floatmax_t const x)      { return sin(x); }
-static inline floatmax_t cfg_cos(floatmax_t const x)      { return cos(x); }
-static inline floatmax_t cfg_tan(floatmax_t const x)      { return tan(x); }
-static inline floatmax_t cfg_arcsin(floatmax_t const x)   { return asin(x); }
-static inline floatmax_t cfg_arccos(floatmax_t const x)   { return acos(x); }
-static inline floatmax_t cfg_arctan(floatmax_t const x)   { return atan(x); }
-static inline floatmax_t cfg_ln(floatmax_t const x)       { return log(x); }
-static inline floatmax_t cfg_log(floatmax_t const x)      { return log10(x); }
-static inline floatmax_t cfg_floor(floatmax_t const x)    { return floor(x); }
-static inline floatmax_t cfg_ceil(floatmax_t const x)     { return ceil(x); }
-static inline floatmax_t cfg_round(floatmax_t const x)    { return round(x); }
-static inline floatmax_t cfg_fraction(floatmax_t const x) { return x - floor(x); }
-static inline floatmax_t cfg_radians(floatmax_t const x)  { return x * (cfg_arccos(-1.0) / 180.0); }
-static inline floatmax_t cfg_degrees(floatmax_t const x)  { return x * (180.0 / cfg_arccos(-1.0)); }
-
 static void _harbol_cfg_math_var_func(
 	char   const                    var_name[const restrict static 1],
 	size_t const                    var_len,
@@ -107,61 +92,22 @@ static void _harbol_cfg_math_var_func(
 	(void)(var_len);
 	(void)(data_len);
 	HarbolCfgState const *const restrict parse_state = data;
-	if( !strcmp(var_name, "IOTA") ) {
+	bool const is_parse_state = parse_state != NULL && data_len==sizeof *parse_state;
+	if( !strcmp(var_name, "IOTA") && is_parse_state ) {
 		*value = ( floatmax_t )(parse_state->global_iota);
-	} else if( !strcmp(var_name, "iota") ) {
+		return;
+	} else if( !strcmp(var_name, "iota") && is_parse_state ) {
 		*value = ( floatmax_t )(*parse_state->local_iota);
-	} else if( !strcmp(var_name, "ENUM") ) {
+		return;
+	} else if( !strcmp(var_name, "ENUM") && is_parse_state ) {
 		*value = ( floatmax_t )(parse_state->global_enum);
-	} else if( !strcmp(var_name, "enum") ) {
+		return;
+	} else if( !strcmp(var_name, "enum") && is_parse_state ) {
 		*value = ( floatmax_t )(*parse_state->local_enum);
-	} else if( !strcmp(var_name, "e") ) {
-		*value = exp(( floatmax_t )(1.0));
-	} else if( !strcmp(var_name, "pi") ) {
-		*value = acos(( floatmax_t )(-1.0));
-	} else if( !strcmp(var_name, "sin") ) {
-		*math_func = cfg_sin;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "cos") ) {
-		*math_func = cfg_cos;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "tan") ) {
-		*math_func = cfg_tan;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "arcsin") ) {
-		*math_func = cfg_arcsin;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "arccos") ) {
-		*math_func = cfg_arccos;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "arctan") ) {
-		*math_func = cfg_arctan;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "ln") ) {
-		*math_func = cfg_ln;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "log") ) {
-		*math_func = cfg_log;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "floor") ) {
-		*math_func = cfg_floor;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "ceil") ) {
-		*math_func = cfg_ceil;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "round") ) {
-		*math_func = cfg_round;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "fraction") ) {
-		*math_func = cfg_fraction;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "radians") ) {
-		*math_func = cfg_radians;
-		*is_func   = true;
-	} else if( !strcmp(var_name, "degrees") ) {
-		*math_func = cfg_degrees;
-		*is_func   = true;
+		return;
 	}
+	
+	harbol_math_default_var_func(var_name, var_len, value, math_func, data, data_len, is_func);
 }
 
 static NO_NULL floatmax_t _harbol_cfg_parse_inline_math(struct HarbolString *const str, HarbolCfgState *const parse_state, bool const replace_str_with_res) {
@@ -953,5 +899,5 @@ HARBOL_EXPORT floatmax_t harbol_cfg_calc_math(struct HarbolMap const *const rest
 		} const c = { -1ULL };
 		return c.f;
 	}
-	return harbol_math_parse_expr(str->cstr, var_func==NULL? _harbol_cfg_math_var_func : var_func, data, data_len);
+	return harbol_math_parse_expr(str->cstr, var_func==NULL? harbol_math_default_var_func : var_func, data, data_len);
 }
