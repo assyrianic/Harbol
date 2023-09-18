@@ -1006,7 +1006,7 @@ static inline NO_NULL void *harbol_bilink_get_b(void const *const p) {
 	struct HarbolBiLink const *const link = p;
 	return link->b;
 }
-static inline NO_NULL void **harbol_link_get_b_ref(void *const p) {
+static inline NO_NULL void **harbol_bilink_get_b_ref(void *const p) {
 	struct HarbolBiLink *const link = p;
 	return ( void** )(&link->b);
 }
