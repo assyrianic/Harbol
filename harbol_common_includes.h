@@ -900,5 +900,162 @@ static inline size_t base_N_num_chars_int(
 }
 
 
+/**
+ * Basic, Intrusive Linked List Headers.
+ * Their usage is by embedding as the first member of a struct:
+```c
+struct item {
+    struct HarbolLink links;
+    int value;
+};
+
+int main(void) {
+	{
+		struct item *a1 = &(struct item){.value = 1};
+		
+		harbol_link_add_to_head(&a1, &(struct item){.value = 2}, NULL);
+		harbol_link_add_to_head(&a1, &(struct item){.value = 3}, NULL);
+		harbol_link_add_to_head(&a1, &(struct item){.value = 4}, NULL);
+		harbol_link_add_to_head(&a1, &(struct item){.value = 5}, NULL);
+		
+		int i = 1;
+		for( struct item *n = a1; n != NULL; n = harbol_link_get_a(n) ) {
+		    printf("Item #%i | count: %i\n", n->value, i++);
+		}
+	}
+	{
+		struct item *a1 = &(struct item){.value = 1};
+		
+		harbol_bilink_add_to_head(&a1, &(struct item){.value = 2}, NULL);
+		harbol_bilink_add_to_head(&a1, &(struct item){.value = 4}, NULL);
+		harbol_bilink_add_to_head(&a1, &(struct item){.value = 3}, NULL);
+		harbol_bilink_add_to_head(&a1, &(struct item){.value = 5}, NULL);
+		
+		int i = 1;
+		struct item *last = NULL;
+		for( struct item *n = a1; n != NULL; n = harbol_link_get_a(n) ) {
+		    printf("Item #%i | count: %i\n", n->value, i++);
+		    last = n;
+		}
+		puts("");
+		i = 1;
+		for( struct item *n = last; n != NULL; n = harbol_bilink_get_b(n) ) {
+		    printf("Item #%i | count: %i\n", n->value, i++);
+		}
+	}
+}
+```
+ */
+struct HarbolLink {
+	struct HarbolLink *a; /// next/left in a linked list/tree.
+};
+static inline NO_NULL void *harbol_link_get_a(void const *const p) {
+	struct HarbolLink const *const link = p;
+	return link->a;
+}
+static inline NO_NULL void **harbol_link_get_a_ref(void *const p) {
+	struct HarbolLink *const link = p;
+	return ( void** )(&link->a);
+}
+static inline NEVER_NULL(1) void harbol_link_set_a(void *const p, void *const n) {
+	struct HarbolLink *const link = p;
+	link->a = n;
+}
+
+static inline NO_NULL void harbol_link_add_after(void *const n1, void *const n2) {
+	struct HarbolLink *const restrict node1 = n1;
+	struct HarbolLink *const node2 = n2;
+	node2->a = node1->a;
+	node1->a = node2;
+}
+
+/// sometimes a linked list impl doesn't have/need a tail
+/// but it at least always has a head/starting node.
+static inline NEVER_NULL(1,2) void harbol_link_add_to_head(void *const h, void *const n, void *const t) {
+	struct HarbolLink **const head = h;
+	struct HarbolLink **const tail = t;
+	struct HarbolLink  *const node = n;
+	node->a = *head;
+	*head = node;
+	if( tail != NULL && *tail==NULL ) {
+		*tail = node;
+	}
+}
+
+/// for this, you absolutely need a tail.
+static inline NO_NULL void harbol_link_add_to_tail(void *const h, void *const n, void *const t) {
+	struct HarbolLink **const head = h;
+	struct HarbolLink **const tail = t;
+	struct HarbolLink  *const node = n;
+	if( *head != NULL ) {
+		node->a = NULL;
+		(*tail)->a = node;
+		*tail = node;
+	} else {
+		*head = node;
+		*tail = node;
+	}
+}
+
+
+/// use `harbol_link_` for 'a' member.
+struct HarbolBiLink {
+	struct HarbolBiLink *a, *b;
+};
+static inline NO_NULL void *harbol_bilink_get_b(void const *const p) {
+	struct HarbolBiLink const *const link = p;
+	return link->b;
+}
+static inline NO_NULL void **harbol_link_get_b_ref(void *const p) {
+	struct HarbolBiLink *const link = p;
+	return ( void** )(&link->b);
+}
+static inline NEVER_NULL(1) void harbol_bilink_set_b(void *const p, void *const n) {
+	struct HarbolBiLink *const link = p;
+	link->b = n;
+}
+
+static inline NO_NULL void harbol_bilink_add_after(void *const n1, void *const n2) {
+	struct HarbolBiLink *const node1 = n1;
+	struct HarbolBiLink *const node2 = n2;
+	node2->b = node1;
+	if( node1->a != NULL ) {
+		node1->a->b = node2;
+	}
+	node2->a = node1->a;
+	node1->a = node2;
+}
+static inline NEVER_NULL(1,2) void harbol_bilink_add_to_head(void *const h, void *const n, void *const t) {
+	struct HarbolBiLink **const head = h;
+	struct HarbolBiLink **const tail = t;
+	struct HarbolBiLink  *const node = n;
+	if( *head==NULL ) {
+		*head = node;
+		if( tail != NULL ) {
+			*tail = node;
+		}
+		node->a = node->b = NULL;
+	} else {
+		node->a = *head;
+		node->b = NULL;
+		(*head)->b = node;
+		*head = node;
+	}
+}
+static inline NO_NULL void harbol_bilink_add_to_tail(void *const h, void *const n, void *const t) {
+	struct HarbolBiLink **const head = h;
+	struct HarbolBiLink **const tail = t;
+	struct HarbolBiLink  *const node = n;
+	if( *tail==NULL ) {
+		*head = node;
+		*tail = node;
+		node->a = node->b = NULL;
+	} else {
+		node->b = *tail;
+		node->a = NULL;
+		(*tail)->a = node;
+		*tail = node;
+	}
+}
 
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */

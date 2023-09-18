@@ -25,6 +25,7 @@
 * Integer Logarithm Generator.
 * Mersenne Twister (header-only).
 * Math Parser.
+* Intrusive Linking Structures.
 
 ### Future
 
@@ -44,6 +45,7 @@ int main(int const argc, char *argv[]) {
 		printf("str failed to initialize\n");
 		return 1;
 	}
+	
 	harbol_string_add_cstr(&str, "and another string concatenated!");
 	harbol_string_clear(&str);
 	
@@ -52,10 +54,11 @@ int main(int const argc, char *argv[]) {
 		printf("vec failed to initialize\n");
 		return 1;
 	}
+	
 	harbol_array_insert(&vec, &( float32_t ){2.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){3.f}, sizeof(float32_t));
 	harbol_array_insert(&vec, &( float32_t ){4.f}, sizeof(float32_t));
-	float32_t const f = *( float32_t const* )harbol_vector_get(&vec, 1);
+	float32_t const f = *( float32_t const* )(harbol_vector_get(&vec, 1));
 	harbol_array_clear(&vec);
 	
 	struct HarbolMap *ptrmap = harbol_map_new(8);
