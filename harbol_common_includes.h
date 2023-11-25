@@ -601,9 +601,7 @@ static inline bool array_shift_up(void *const restrict buf, size_t *const restri
 	uint8_t *const restrict b = buf;
 	if( i < *len ) {
 		*len -= amount;
-		printf("array_shift_up :: i (%zu) | j (%zu) | '%zu'\n", i, j, amount);
 		memmove(&b[j * datasize], &b[i * datasize], (*len - j) * datasize);
-		printf("array_shift_up :: b '%s'\n", &b[j * datasize]);
 		memset(&b[*len * datasize], 0, amount * datasize);
 	} else {
 		/// if i goes out of range, zero everything after and lower the count.
