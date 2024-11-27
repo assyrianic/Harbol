@@ -1111,4 +1111,9 @@ static inline NEVER_NULL(1) void harbol_trilink_set_c(void *const p, void *const
 	link->c = n;
 }
 
+
+static inline size_t bytes_bitmask(size_t const bytes) {
+	return (1 << (bytes * CHAR_BIT)) - 1;
+}
+
 #endif /** HARBOL_COMMON_INCLUDES_INCLUDED */
