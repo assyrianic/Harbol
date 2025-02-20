@@ -6,18 +6,18 @@
 
 HARBOL_EXPORT struct HarbolTree *harbol_tree_new(void const *const val, size_t const datasize) {
 	struct HarbolTree *restrict tree = calloc(1, sizeof *tree);
-	if( tree==NULL || !harbol_tree_init(tree, val, datasize) ) {
-		free(tree); tree = NULL;
+	if( tree==nullptr || !harbol_tree_init(tree, val, datasize) ) {
+		free(tree); tree = nullptr;
 	}
 	return tree;
 }
 
 HARBOL_EXPORT bool harbol_tree_init(struct HarbolTree *const restrict tree, void const *const val, size_t const datasize) {
 	tree->data = dup_data(val, datasize);
-	if( tree->data==NULL ) {
+	if( tree->data==nullptr ) {
 		return false;
 	} else if( !harbol_array_init(&tree->kids, sizeof tree, 4) ) {
-		free(tree->data); tree->data = NULL;
+		free(tree->data); tree->data = nullptr;
 		return false;
 	}
 	tree->len = datasize;
@@ -25,7 +25,7 @@ HARBOL_EXPORT bool harbol_tree_init(struct HarbolTree *const restrict tree, void
 }
 
 HARBOL_EXPORT void harbol_tree_clear(struct HarbolTree *const tree) {
-	free(tree->data); tree->data = NULL;
+	free(tree->data); tree->data = nullptr;
 	tree->len = 0;
 	union {
 		uint8_t            *b;
@@ -39,11 +39,11 @@ HARBOL_EXPORT void harbol_tree_clear(struct HarbolTree *const tree) {
 }
 
 HARBOL_EXPORT void harbol_tree_free(struct HarbolTree **const tree_ref) {
-	if( *tree_ref==NULL ) {
+	if( *tree_ref==nullptr ) {
 		return;
 	}
 	harbol_tree_clear(*tree_ref);
-	free(*tree_ref); *tree_ref = NULL;
+	free(*tree_ref); *tree_ref = nullptr;
 }
 
 HARBOL_EXPORT void *harbol_tree_get(struct HarbolTree const *const tree) {
@@ -59,9 +59,9 @@ HARBOL_EXPORT bool harbol_tree_set(struct HarbolTree *const restrict tree, void 
 		return false;
 	}
 	
-	if( tree->data==NULL ) {
+	if( tree->data==nullptr ) {
 		tree->data = calloc(datasize, sizeof *tree->data);
-		if( tree->data==NULL ) {
+		if( tree->data==nullptr ) {
 			return false;
 		}
 	}
@@ -75,11 +75,11 @@ HARBOL_EXPORT bool harbol_tree_insert_val(struct HarbolTree *const restrict tree
 		return false;
 	}
 	struct HarbolTree *node = harbol_tree_new(val, datasize);
-	return( node==NULL || node->data==NULL )? false : harbol_array_insert(&tree->kids, &node, sizeof node);
+	return( node==nullptr || node->data==nullptr )? false : harbol_array_insert(&tree->kids, &node, sizeof node);
 }
 
 HARBOL_EXPORT bool harbol_tree_insert_node(struct HarbolTree *const tree, struct HarbolTree **const child_ref) {
-	return( (*child_ref)->data==NULL || (harbol_array_full(&tree->kids) && !harbol_array_grow(&tree->kids, sizeof tree)) )? false : harbol_array_insert(&tree->kids, child_ref, sizeof *child_ref);
+	return( (*child_ref)->data==nullptr || (harbol_array_full(&tree->kids) && !harbol_array_grow(&tree->kids, sizeof tree)) )? false : harbol_array_insert(&tree->kids, child_ref, sizeof *child_ref);
 }
 
 HARBOL_EXPORT bool harbol_tree_rm_node(struct HarbolTree *const tree, struct HarbolTree **const child_ref) {
@@ -93,7 +93,7 @@ HARBOL_EXPORT bool harbol_tree_rm_node(struct HarbolTree *const tree, struct Har
 
 HARBOL_EXPORT bool harbol_tree_rm_index(struct HarbolTree *const tree, size_t const index) {
 	struct HarbolTree **const child_ref = harbol_array_get(&tree->kids, index, sizeof *child_ref);
-	if( child_ref==NULL || *child_ref==NULL ) {
+	if( child_ref==nullptr || *child_ref==nullptr ) {
 		return false;
 	}
 	harbol_tree_free(child_ref);
@@ -116,12 +116,12 @@ HARBOL_EXPORT bool harbol_tree_rm_val(struct HarbolTree *const restrict tree, vo
 
 HARBOL_EXPORT struct HarbolTree *harbol_tree_get_node_by_index(struct HarbolTree const *const tree, size_t const index) {
 	struct HarbolTree **const child_ref = harbol_array_get(&tree->kids, index, sizeof *child_ref);
-	return( child_ref==NULL || *child_ref==NULL )? NULL : *child_ref;
+	return( child_ref==nullptr || *child_ref==nullptr )? nullptr : *child_ref;
 }
 
 HARBOL_EXPORT struct HarbolTree *harbol_tree_get_node_by_val(struct HarbolTree const *const tree, void const *const val, size_t const datasize) {
 	if( datasize==0 ) {
-		return NULL;
+		return nullptr;
 	}
 	for( size_t i=0; i < tree->kids.len; i++ ) {
 		struct HarbolTree **const child_ref = harbol_array_get(&tree->kids, i, sizeof *child_ref);
@@ -129,5 +129,5 @@ HARBOL_EXPORT struct HarbolTree *harbol_tree_get_node_by_val(struct HarbolTree c
 			return *child_ref;
 		}
 	}
-	return NULL;
+	return nullptr;
 }

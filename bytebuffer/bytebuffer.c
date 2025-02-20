@@ -15,16 +15,16 @@ HARBOL_EXPORT struct HarbolByteBuf harbol_bytebuffer_make(void) {
 }
 
 HARBOL_EXPORT void harbol_bytebuffer_clear(struct HarbolByteBuf *const buf) {
-	free(buf->table); buf->table = NULL;
+	harbol_cleanup(&buf->table);
 	*buf = (struct HarbolByteBuf){0};
 }
 
 HARBOL_EXPORT void harbol_bytebuffer_free(struct HarbolByteBuf **const buf_ref) {
-	if( *buf_ref==NULL ) {
+	if( *buf_ref==nullptr ) {
 		return;
 	}
 	harbol_bytebuffer_clear(*buf_ref);
-	free(*buf_ref); *buf_ref = NULL;
+	harbol_cleanup(buf_ref);
 }
 
 HARBOL_EXPORT size_t harbol_bytebuffer_cap(struct HarbolByteBuf const *const buf) {
@@ -41,7 +41,7 @@ HARBOL_EXPORT uint8_t *harbol_bytebuffer_get_buffer(struct HarbolByteBuf const *
 
 static NO_NULL bool _harbol_buffer_resize(struct HarbolByteBuf *const restrict buf, size_t const new_size) {
 	uint8_t *const new_table = harbol_recalloc(buf->table, new_size, sizeof *buf->table, buf->cap);
-	if( new_table==NULL ) {
+	if( new_table==nullptr ) {
 		return false;
 	}
 	buf->table = new_table;
@@ -121,11 +121,11 @@ HARBOL_EXPORT bool harbol_bytebuffer_insert_zeros(struct HarbolByteBuf *const bu
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_del(struct HarbolByteBuf *const buf, size_t const index, size_t const range) {
-	return array_shift_up(buf->table, &buf->len, index, sizeof *buf->table, range);
+	return harbol_buffer_shift_up(buf->table, &buf->len, index, sizeof *buf->table, range);
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_to_file(struct HarbolByteBuf const *const buf, FILE *const file) {
-	if( buf->table==NULL ) {
+	if( buf->table==nullptr ) {
 		return false;
 	}
 	size_t const bytes_written = fwrite(buf->table, sizeof *buf->table, buf->len, file);
@@ -134,7 +134,7 @@ HARBOL_EXPORT bool harbol_bytebuffer_to_file(struct HarbolByteBuf const *const b
 
 HARBOL_EXPORT bool harbol_bytebuffer_insert_from_filename(struct HarbolByteBuf *const restrict buf, char const filename[static 1]) {
 	FILE *restrict file = fopen(filename, "r");
-	if( file==NULL ) {
+	if( file==nullptr ) {
 		return false;
 	}
 	
@@ -160,7 +160,7 @@ HARBOL_EXPORT bool harbol_bytebuffer_insert_from_file(struct HarbolByteBuf *cons
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_append(struct HarbolByteBuf *const bufA, struct HarbolByteBuf const *const bufB) {
-	if( bufB->table==NULL || (bufA->len + bufB->len >= bufA->cap && !_harbol_buffer_resize(bufA, bufA->len + bufB->len)) ) {
+	if( bufB->table==nullptr || (bufA->len + bufB->len >= bufA->cap && !_harbol_buffer_resize(bufA, bufA->len + bufB->len)) ) {
 		return false;
 	}
 	memcpy(&bufA->table[bufA->len], bufB->table, bufB->len);
@@ -169,7 +169,7 @@ HARBOL_EXPORT bool harbol_bytebuffer_append(struct HarbolByteBuf *const bufA, st
 }
 
 HARBOL_EXPORT bool harbol_bytebuffer_copy(struct HarbolByteBuf *const bufA, struct HarbolByteBuf const *const bufB) {
-	if( bufB->table==NULL || (bufB->len != bufA->len && !_harbol_buffer_resize(bufA, bufB->len)) ) {
+	if( bufB->table==nullptr || (bufB->len != bufA->len && !_harbol_buffer_resize(bufA, bufB->len)) ) {
 		return false;
 	}
 	memcpy(&bufA->table[0], &bufB->table[0], bufB->len);

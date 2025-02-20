@@ -10,9 +10,14 @@ extern "C" {
 
 
 /// Double-Ended Stack Allocator
+enum {
+	BISTK_BACK = 0,
+	BISTK_FRONT,
+};
 struct HarbolBiStack {
-    uint8_t *mem;
-    size_t   front, back, size;
+	uint8_t *mem;
+	size_t   offsets[2]; /// front, back.
+	size_t   size;
 };
 
 
@@ -28,7 +33,7 @@ HARBOL_EXPORT NO_NULL void harbol_bistack_reset_front(struct HarbolBiStack *bist
 HARBOL_EXPORT NO_NULL void harbol_bistack_reset_back(struct HarbolBiStack *bistack);
 HARBOL_EXPORT NO_NULL void harbol_bistack_reset_all(struct HarbolBiStack *bistack);
 
-HARBOL_EXPORT size_t harbol_bistack_get_margins(struct HarbolBiStack bistack);
+HARBOL_EXPORT size_t harbol_bistack_get_margins(struct HarbolBiStack const *bistack);
 
 /// Warning: Resizing WILL reset the memory margins.
 /// So don't resize unless you're absolutely done using the data before resizing.

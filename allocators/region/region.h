@@ -14,8 +14,7 @@ struct HarbolRegion {
 	size_t   offs, size;
 };
 
-HARBOL_EXPORT struct HarbolRegion harbol_region_make(size_t bytes);
-HARBOL_EXPORT NO_NULL struct HarbolRegion harbol_region_make_from_buffer(void *buf, size_t bytes);
+HARBOL_EXPORT struct HarbolRegion harbol_region_make(void *buffer, size_t bytes, bool *res);
 HARBOL_EXPORT NO_NULL void harbol_region_clear(struct HarbolRegion *cache);
 
 HARBOL_EXPORT NO_NULL void *harbol_region_alloc(struct HarbolRegion *cache, size_t bytes);

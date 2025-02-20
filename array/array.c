@@ -12,7 +12,7 @@ static NO_NULL bool harbol_array_resizer(struct HarbolArray *const restrict vec,
 	}
 	
 	uint8_t *const new_table = harbol_recalloc(vec->table, new_size, element_size, vec->cap);
-	if( new_table==NULL ) {
+	if( new_table==nullptr ) {
 		return false;
 	}
 	vec->table = new_table;
@@ -23,7 +23,7 @@ static NO_NULL bool harbol_array_resizer(struct HarbolArray *const restrict vec,
 
 HARBOL_EXPORT bool harbol_array_init(struct HarbolArray *const vec, size_t const datasize, size_t const init_size) {
 	harbol_array_resizer(vec, (init_size < ARRAY_DEFAULT_SIZE? ARRAY_DEFAULT_SIZE : init_size), datasize);
-	return vec->table != NULL;
+	return vec->table != nullptr;
 }
 
 HARBOL_EXPORT struct HarbolArray harbol_array_make(size_t const datasize, size_t const init_size, bool *const res) {
@@ -39,15 +39,15 @@ HARBOL_EXPORT struct HarbolArray harbol_array_make_from_array(void *const buf, s
 /// creator funcs.
 HARBOL_EXPORT struct HarbolArray *harbol_array_new(size_t const datasize, size_t const init_size) {
 	struct HarbolArray *vec = calloc(1, sizeof *vec);
-	if( vec==NULL || !harbol_array_init(vec, datasize, init_size) ) {
-		free(vec); vec = NULL;
+	if( vec==nullptr || !harbol_array_init(vec, datasize, init_size) ) {
+		harbol_cleanup(&vec);
 	}
 	return vec;
 }
 
 HARBOL_EXPORT struct HarbolArray *harbol_array_new_from_array(void *const buf, size_t const cap, size_t const len) {
 	struct HarbolArray *const restrict vec = calloc(1, sizeof *vec);
-	if( vec != NULL ) {
+	if( vec != nullptr ) {
 		*vec = harbol_array_make_from_array(buf, cap, len);
 	}
 	return vec;
@@ -56,14 +56,14 @@ HARBOL_EXPORT struct HarbolArray *harbol_array_new_from_array(void *const buf, s
 
 /// clean up funcs.
 HARBOL_EXPORT void harbol_array_clear(struct HarbolArray *const vec) {
-	free(vec->table); vec->table = NULL;
+	harbol_cleanup(&vec->table);
 	vec->cap = vec->len = 0;
 }
 HARBOL_EXPORT void harbol_array_free(struct HarbolArray **const vecref) {
-	free(*vecref); *vecref = NULL;
+	harbol_cleanup(vecref);
 }
 HARBOL_EXPORT void harbol_array_cleanup(struct HarbolArray **const vecref) {
-	if( *vecref != NULL ) {
+	if( *vecref != nullptr ) {
 		harbol_array_clear(*vecref);
 	}
 	harbol_array_free(vecref);
@@ -104,7 +104,7 @@ HARBOL_EXPORT bool harbol_array_shrink(struct HarbolArray *const vec, size_t con
 }
 
 HARBOL_EXPORT void harbol_array_wipe(struct HarbolArray *const vec, size_t const datasize) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return;
 	}
 	vec->len = 0;
@@ -112,7 +112,7 @@ HARBOL_EXPORT void harbol_array_wipe(struct HarbolArray *const vec, size_t const
 }
 
 HARBOL_EXPORT bool harbol_array_empty(struct HarbolArray const *const vec) {
-	return( vec->table==NULL || vec->cap==0 || vec->len==0 );
+	return( vec->table==nullptr || vec->cap==0 || vec->len==0 );
 }
 HARBOL_EXPORT bool harbol_array_full(struct HarbolArray const *const vec) {
 	return( vec->len >= vec->cap );
@@ -121,7 +121,7 @@ HARBOL_EXPORT bool harbol_array_full(struct HarbolArray const *const vec) {
 
 /// array to array ops.
 HARBOL_EXPORT bool harbol_array_add(struct HarbolArray *const vecA, struct HarbolArray const *const vecB, size_t const datasize) {
-	if( vecA->table==NULL || vecB->table==NULL || (vecA->len + vecB->len) >= vecA->cap ) {
+	if( vecA->table==nullptr || vecB->table==nullptr || (vecA->len + vecB->len) >= vecA->cap ) {
 		return false;
 	}
 	memcpy(&vecA->table[vecA->len * datasize], vecB->table, vecB->len * datasize);
@@ -131,7 +131,7 @@ HARBOL_EXPORT bool harbol_array_add(struct HarbolArray *const vecA, struct Harbo
 HARBOL_EXPORT bool harbol_array_copy(struct HarbolArray *const vecA, struct HarbolArray const *const vecB, size_t const datasize) {
 	if( vecA==vecB ) {
 		return true;
-	} else if( vecB->table==NULL || vecA->table==NULL ) {
+	} else if( vecB->table==nullptr || vecA->table==nullptr ) {
 		return false;
 	}
 	harbol_array_wipe(vecA, datasize);
@@ -149,14 +149,14 @@ HARBOL_EXPORT size_t harbol_array_cap_diff(struct HarbolArray const *const vecA,
 
 /// array data ops.
 HARBOL_EXPORT bool harbol_array_insert(struct HarbolArray *const vec, void const *const val, size_t const datasize) {
-	if( vec->table==NULL || vec->len >= vec->cap ) {
+	if( vec->table==nullptr || vec->len >= vec->cap ) {
 		return false;
 	}
 	memcpy(&vec->table[vec->len++ * datasize], val, datasize);
 	return true;
 }
 HARBOL_EXPORT size_t harbol_array_append(struct HarbolArray *const vec, void const *const val, size_t const datasize) {
-	if( vec->table==NULL || vec->len >= vec->cap ) {
+	if( vec->table==nullptr || vec->len >= vec->cap ) {
 		return SIZE_MAX;
 	}
 	
@@ -166,7 +166,7 @@ HARBOL_EXPORT size_t harbol_array_append(struct HarbolArray *const vec, void con
 	return index;
 }
 HARBOL_EXPORT bool harbol_array_fill(struct HarbolArray *const vec, void const *const val, size_t const datasize) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return false;
 	}
 	for( size_t i=0; i < vec->cap; i++ ) {
@@ -177,10 +177,10 @@ HARBOL_EXPORT bool harbol_array_fill(struct HarbolArray *const vec, void const *
 }
 
 HARBOL_EXPORT void *harbol_array_pop(struct HarbolArray *const vec, size_t const datasize) {
-	return( vec->table==NULL || vec->len==0 )? NULL : &vec->table[--vec->len * datasize];
+	return( vec->table==nullptr || vec->len==0 )? nullptr : &vec->table[--vec->len * datasize];
 }
 HARBOL_EXPORT bool harbol_array_pop_ex(struct HarbolArray *const vec, void *const val, size_t const datasize) {
-	if( vec->table==NULL || vec->len==0 ) {
+	if( vec->table==nullptr || vec->len==0 ) {
 		return false;
 	}
 	memcpy(val, &vec->table[--vec->len * datasize], datasize);
@@ -188,11 +188,11 @@ HARBOL_EXPORT bool harbol_array_pop_ex(struct HarbolArray *const vec, void *cons
 }
 
 HARBOL_EXPORT void *harbol_array_peek(struct HarbolArray const *const vec, size_t const datasize) {
-	return( vec->table==NULL || vec->len==0 )? NULL : &vec->table[(vec->len - 1) * datasize];
+	return( vec->table==nullptr || vec->len==0 )? nullptr : &vec->table[(vec->len - 1) * datasize];
 }
 
 HARBOL_EXPORT bool harbol_array_peek_ex(struct HarbolArray const *const vec, void *const val, size_t const datasize) {
-	if( vec->table==NULL || vec->len==0 ) {
+	if( vec->table==nullptr || vec->len==0 ) {
 		return false;
 	}
 	memcpy(val, &vec->table[(vec->len - 1) * datasize], datasize);
@@ -200,11 +200,11 @@ HARBOL_EXPORT bool harbol_array_peek_ex(struct HarbolArray const *const vec, voi
 }
 
 HARBOL_EXPORT void *harbol_array_get(struct HarbolArray const *const vec, size_t const index, size_t const datasize) {
-	return( vec->table==NULL || index >= vec->len )? NULL : &vec->table[index * datasize];
+	return( vec->table==nullptr || index >= vec->len )? nullptr : &vec->table[index * datasize];
 }
 
 HARBOL_EXPORT bool harbol_array_get_ex(struct HarbolArray const *const vec, size_t const index, void *const val, size_t const datasize) {
-	if( vec->table==NULL || index >= vec->len ) {
+	if( vec->table==nullptr || index >= vec->len ) {
 		return false;
 	}
 	memcpy(val, &vec->table[index * datasize], datasize);
@@ -212,7 +212,7 @@ HARBOL_EXPORT bool harbol_array_get_ex(struct HarbolArray const *const vec, size
 }
 
 HARBOL_EXPORT bool harbol_array_set(struct HarbolArray *const vec, size_t const index, void const *const val, size_t const datasize) {
-	if( vec->table==NULL || index >= vec->len ) {
+	if( vec->table==nullptr || index >= vec->len ) {
 		return false;
 	}
 	memcpy(&vec->table[index * datasize], val, datasize);
@@ -220,7 +220,7 @@ HARBOL_EXPORT bool harbol_array_set(struct HarbolArray *const vec, size_t const 
 }
 
 HARBOL_EXPORT bool harbol_array_swap(struct HarbolArray *const vec, size_t const datasize) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return false;
 	}
 	for( size_t i=0, n = vec->len-1; i < (vec->len/2); i++, n-- ) {
@@ -236,14 +236,14 @@ HARBOL_EXPORT bool harbol_array_swap(struct HarbolArray *const vec, size_t const
 }
 
 HARBOL_EXPORT bool harbol_array_shift_up(struct HarbolArray *const vec, size_t const index, size_t const datasize, size_t const amount) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return false;
 	}
-	return array_shift_up(vec->table, &vec->len, index, datasize, amount);
+	return harbol_buffer_shift_up(vec->table, &vec->len, index, datasize, amount);
 }
 
 HARBOL_EXPORT size_t harbol_array_item_count(struct HarbolArray const *const vec, void const *const val, size_t const datasize) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return 0;
 	}
 	size_t count = 0;
@@ -253,7 +253,7 @@ HARBOL_EXPORT size_t harbol_array_item_count(struct HarbolArray const *const vec
 	return count;
 }
 HARBOL_EXPORT size_t harbol_array_index_of(struct HarbolArray const *const vec, void const *const val, size_t const datasize, size_t const starting_index) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return SIZE_MAX;
 	}
 	
@@ -268,7 +268,7 @@ HARBOL_EXPORT size_t harbol_array_index_of(struct HarbolArray const *const vec, 
 
 /// deletion funcs.
 HARBOL_EXPORT bool harbol_array_del_by_index(struct HarbolArray *const vec, size_t const index, size_t const datasize) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return false;
 	} else if( index==vec->len-1 ) {
 		memset(&vec->table[--vec->len * datasize], 0, datasize);
@@ -277,7 +277,7 @@ HARBOL_EXPORT bool harbol_array_del_by_index(struct HarbolArray *const vec, size
 	return harbol_array_shift_up(vec, index, datasize, 1);
 }
 HARBOL_EXPORT bool harbol_array_del_by_range(struct HarbolArray *const vec, size_t const index, size_t const datasize, size_t const range) {
-	if( vec->table==NULL ) {
+	if( vec->table==nullptr ) {
 		return false;
 	} else if( index==0 && (index + range >= vec->len) ) {
 		harbol_array_wipe(vec, datasize);

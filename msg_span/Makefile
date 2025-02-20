@@ -20,7 +20,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_msg_span_test
-	$(RM) harbol_msg_span_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_msg_span_test

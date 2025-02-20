@@ -1,3 +1,3 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./harbol_cfg_test
+valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./harbol_cfg_test |& tee cfg_valgrind_output.txt

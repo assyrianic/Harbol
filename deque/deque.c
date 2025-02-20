@@ -4,23 +4,30 @@
 #	define HARBOL_LIB
 #endif
 
+
+static bool _harbol_deque_resize_buffers(struct HarbolDeque *const deque, size_t const new_size) {
+	return harbol_multi_recalloc(
+				new_size, deque->cap, 0,
+				&deque->nexts, sizeof *deque->nexts,
+				&deque->prevs, sizeof *deque->prevs,
+				&deque->datum, sizeof *deque->datum,
+				nullptr
+			);
+}
+
 HARBOL_EXPORT struct HarbolDeque *harbol_deque_new(size_t const init_size) {
 	struct HarbolDeque *deque = calloc(1, sizeof *deque);
-	if( deque==NULL || !harbol_deque_init(deque, init_size) ) {
+	if( deque==nullptr || !harbol_deque_init(deque, init_size) ) {
 		free(deque);
-		return NULL;
+		return nullptr;
 	}
 	return deque;
 }
 
 HARBOL_EXPORT bool harbol_deque_init(struct HarbolDeque *const deque, size_t const init_size) {
-	if( !harbol_multi_recalloc(init_size, deque->cap, 3,
-						&deque->nexts, sizeof *deque->nexts,
-						&deque->prevs, sizeof *deque->prevs,
-						&deque->datum, sizeof *deque->datum) ) {
+	if( !_harbol_deque_resize_buffers(deque, init_size) ) {
 		return false;
 	}
-	
 	
 	deque->cap = init_size;
 	for( size_t i=0; i < init_size; i++ ) {
@@ -40,7 +47,7 @@ HARBOL_EXPORT struct HarbolDeque harbol_deque_make(size_t const init_size, bool 
 
 HARBOL_EXPORT void harbol_deque_reset(struct HarbolDeque *const deque) {
 	for( size_t i=0; i < deque->cap; i++ ) {
-		free(deque->datum[i]); deque->datum[i] = NULL;
+		harbol_cleanup(&deque->datum[i]);
 		deque->prevs[i] = i - 1;
 		deque->nexts[i] = i + 1;
 	}
@@ -50,17 +57,17 @@ HARBOL_EXPORT void harbol_deque_reset(struct HarbolDeque *const deque) {
 
 HARBOL_EXPORT void harbol_deque_clear(struct HarbolDeque *const deque) {
 	for( size_t i=0; i < deque->cap; i++ ) {
-		free(deque->datum[i]); deque->datum[i] = NULL;
+		harbol_cleanup(&deque->datum[i]);
 	}
-	harbol_multi_cleanup(3, &deque->nexts, &deque->prevs, &deque->datum);
+	harbol_multi_cleanup(0, &deque->nexts, &deque->prevs, &deque->datum, nullptr);
 	*deque = ( struct HarbolDeque ){0};
 }
 HARBOL_EXPORT void harbol_deque_free(struct HarbolDeque **const dequeref) {
-	if( *dequeref==NULL ) {
+	if( *dequeref==nullptr ) {
 		return;
 	}
 	harbol_deque_clear(*dequeref);
-	free(*dequeref); *dequeref = NULL;
+	harbol_cleanup(dequeref);
 }
 
 static size_t _harbol_deque_alloc_node(struct HarbolDeque *const deque) {
@@ -90,10 +97,7 @@ static void _harbol_deque_free_node(struct HarbolDeque *const deque, size_t cons
 }
 
 static bool _harbol_deque_resize(struct HarbolDeque *const deque, size_t const new_size) {
-	if( !harbol_multi_recalloc(new_size, deque->cap, 3,
-						&deque->nexts, sizeof *deque->nexts,
-						&deque->prevs, sizeof *deque->prevs,
-						&deque->datum, sizeof *deque->datum) ) {
+	if( !_harbol_deque_resize_buffers(deque, new_size) ) {
 		return false;
 	}
 	
@@ -112,7 +116,7 @@ HARBOL_EXPORT size_t harbol_deque_count(struct HarbolDeque const *const deque) {
 	return deque->len;
 }
 HARBOL_EXPORT bool harbol_deque_empty(struct HarbolDeque const *const deque) {
-	return( deque->datum==NULL || deque->head==SIZE_MAX || deque->len==0 );
+	return( deque->datum==nullptr || deque->head==SIZE_MAX || deque->len==0 );
 }
 
 HARBOL_EXPORT size_t harbol_deque_head(struct HarbolDeque const *const deque) {
@@ -129,7 +133,7 @@ HARBOL_EXPORT size_t harbol_deque_prev(struct HarbolDeque const *const deque, si
 }
 
 HARBOL_EXPORT void *harbol_deque_get_data(struct HarbolDeque const *const deque, size_t const node) {
-	return( node >= deque->cap )? NULL : deque->datum[node];
+	return( node >= deque->cap )? nullptr : deque->datum[node];
 }
 
 HARBOL_EXPORT size_t harbol_deque_prepend(struct HarbolDeque *const restrict deque, void const *const val, size_t const datasize) {
@@ -189,7 +193,7 @@ HARBOL_EXPORT bool harbol_deque_pop_front(struct HarbolDeque *const restrict deq
 	deque->nexts[n] = deque->prevs[n] = SIZE_MAX;
 	
 	memcpy(val, deque->datum[n], datasize);
-	free(deque->datum[n]); deque->datum[n] = NULL;
+	harbol_cleanup(&deque->datum[n]);
 	
 	_harbol_deque_free_node(deque, n);
 	if( deque->head != SIZE_MAX ) {
@@ -211,7 +215,7 @@ HARBOL_EXPORT bool harbol_deque_pop_back(struct HarbolDeque *const restrict dequ
 	deque->nexts[n] = deque->prevs[n] = SIZE_MAX;
 	
 	memcpy(val, deque->datum[n], datasize);
-	free(deque->datum[n]); deque->datum[n] = NULL;
+	harbol_cleanup(&deque->datum[n]);
 	
 	_harbol_deque_free_node(deque, n);
 	if( deque->tail != SIZE_MAX ) {
@@ -224,8 +228,8 @@ HARBOL_EXPORT bool harbol_deque_pop_back(struct HarbolDeque *const restrict dequ
 }
 
 HARBOL_EXPORT void *harbol_deque_get_front(struct HarbolDeque const *const deque) {
-	return( deque->head==SIZE_MAX )? NULL : deque->datum[deque->head];
+	return( deque->head==SIZE_MAX )? nullptr : deque->datum[deque->head];
 }
 HARBOL_EXPORT void *harbol_deque_get_back(struct HarbolDeque const *const deque) {
-	return( deque->tail==SIZE_MAX )? NULL : deque->datum[deque->tail];
+	return( deque->tail==SIZE_MAX )? nullptr : deque->datum[deque->tail];
 }

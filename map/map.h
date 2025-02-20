@@ -31,6 +31,7 @@ HARBOL_EXPORT NO_NULL bool harbol_map_insert(struct HarbolMap *map, void const *
 
 HARBOL_EXPORT NO_NULL size_t harbol_map_get_entry_index(struct HarbolMap const *map, void const *key, size_t keylen);
 
+/// key/index of value.
 HARBOL_EXPORT NO_NULL void *harbol_map_key_val(struct HarbolMap const *map, void const *val, size_t datasize, size_t *keylen);
 HARBOL_EXPORT NO_NULL size_t harbol_map_idx_val(struct HarbolMap const *map, void const *val, size_t datasize);
 

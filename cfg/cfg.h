@@ -13,7 +13,7 @@ extern "C" {
 #include "../lex/lex.h"
 #include "../math/math_parser.h"
 
-
+/// TODO: Add types like Ziggy.
 /** CFG Parser in EBNF grammar:
  * keyval  = string [':'] ( value | section ) [','] .
  * section = '{' *keyval '}' .

@@ -17,7 +17,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_deque_test
-	$(RM) harbol_deque_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_deque_test

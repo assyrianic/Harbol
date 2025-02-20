@@ -18,7 +18,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_map_test
-	$(RM) harbol_map_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_map_test

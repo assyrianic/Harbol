@@ -17,7 +17,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_string_test
-	$(RM) harbol_string_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_string_test

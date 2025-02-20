@@ -1,3 +1,3 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./harbol_objpool_test
+valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./harbol_objpool_test |& tee objpool_valgrind_output.txt

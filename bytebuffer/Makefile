@@ -18,7 +18,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_bytebuffer_test
-	$(RM) harbol_bytebuffer_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_bytebuffer_test

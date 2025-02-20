@@ -9,11 +9,11 @@ extern "C" {
 #include "../harbol_common_includes.h"
 
 
-enum { ARRAY_DEFAULT_SIZE = 4 };
+enum { ARRAY_DEFAULT_SIZE = 8 };
 
 struct HarbolArray {
+	size_t   len, cap;
 	uint8_t *table;
-	size_t   cap, len;
 };
 
 

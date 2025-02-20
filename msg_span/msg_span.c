@@ -18,54 +18,50 @@ HARBOL_EXPORT struct HarbolTokenSpan harbol_token_span_merge(
 }
 
 
-HARBOL_EXPORT struct HarbolMsgSpan harbol_msg_span_make(char const cstr[const restrict static 1], bool const is_filename, bool const free_src_str, bool *const restrict res) {
+HARBOL_EXPORT struct HarbolMsgSpan harbol_msg_span_make(char const cstr[const restrict static 1], bool const is_filename, bool *const restrict res) {
 	struct HarbolMsgSpan msgspan = {0};
-	*res = harbol_msg_span_init(&msgspan, cstr, is_filename, free_src_str);
+	*res = harbol_msg_span_init(&msgspan, cstr, is_filename);
 	return msgspan;
 }
 
-HARBOL_EXPORT bool harbol_msg_span_init(struct HarbolMsgSpan *const restrict msgspan, char const cstr[const restrict static 1], bool const is_filename, bool const free_src_str) {
+HARBOL_EXPORT bool harbol_msg_span_init(struct HarbolMsgSpan *const restrict msgspan, char const cstr[const restrict static 1], bool const is_filename) {
 	(( is_filename )? harbol_string_read_file : harbol_string_copy_cstr)(&msgspan->src.code, cstr);
 	if( is_filename ) {
 		harbol_string_copy_cstr(&msgspan->src.filename, cstr);
 	}
 	lex_fix_newlines(&msgspan->src.code, true);
 	
-	size_t newlines = harbol_string_count_cstr(&msgspan->src.code, "\n");
-	if( newlines==0 ) {
-		newlines = 1;
-	}
-	
-	size_t *newline_offs = calloc(newlines, sizeof *newline_offs);
-	if( newline_offs==NULL ) {
+	size_t const newlines = harbol_string_count_cstr(&msgspan->src.code, "\n");
+	size_t const total_lines = newlines + 1;
+	if( !harbol_multi_calloc(total_lines, 0,
+	                             &msgspan->src.line_starts, sizeof *msgspan->src.line_starts,
+	                             &msgspan->src.line_ends, sizeof *msgspan->src.line_ends,
+	                             nullptr) ) {
 		harbol_string_clear(&msgspan->src.code);
 		return false;
 	}
 	
-	harbol_string_cstr_offsets(&msgspan->src.code, "\n", newline_offs, newlines);
-	for( size_t i=0; i < newlines; i++ ) {
-		size_t const offs = newline_offs[i];
-		msgspan->src.code.cstr[offs] = 0;
+	if( newlines > 0 ) {
+		size_t *newline_offs = calloc(newlines, sizeof *newline_offs);
+		if( newline_offs==nullptr ) {
+			harbol_string_clear(&msgspan->src.code);
+			harbol_multi_cleanup(0,
+				&msgspan->src.line_starts,
+				&msgspan->src.line_ends,
+				nullptr);
+			return false;
+		}
+		
+		harbol_string_cstr_offsets(&msgspan->src.code, "\n", newline_offs, newlines);
+		for( size_t i=0; i < newlines; i++ ) {
+			size_t const offs = newline_offs[i];
+			msgspan->src.line_ends[i] = ( uint32_t )(offs);
+			msgspan->src.line_starts[i+1] = ( uint32_t )(offs + 1);
+		}
+		free(newline_offs); newline_offs = nullptr;
 	}
-	
-	msgspan->src.lines = calloc(newlines + 1, sizeof *msgspan->src.lines);
-	if( msgspan->src.lines==NULL ) {
-		harbol_string_clear(&msgspan->src.code);
-		free(newline_offs); newline_offs = NULL;
-		return false;
-	}
-	
-	msgspan->src.len = newlines + 1;
-	harbol_string_copy_cstr(&msgspan->src.lines[0], msgspan->src.code.cstr);
-	for( size_t i=1; i < newlines; i++ ) {
-		size_t const offs = newline_offs[i-1] + 1;
-		harbol_string_copy_cstr(&msgspan->src.lines[i], &msgspan->src.code.cstr[offs]);
-	}
-	harbol_string_copy_cstr(&msgspan->src.lines[newlines], &msgspan->src.code.cstr[newline_offs[newlines-1] + 1]);
-	if( free_src_str ) {
-		harbol_string_clear(&msgspan->src.code);
-	}
-	free(newline_offs); newline_offs = NULL;
+	msgspan->src.line_ends[total_lines - 1] = msgspan->src.code.len; 
+	msgspan->src.len = total_lines;
 	return true;
 }
 
@@ -97,16 +93,33 @@ static void _harbol_msg_span_purge_labels(struct HarbolMsgSpan *const msgspan, b
 HARBOL_EXPORT void harbol_msg_span_clear(struct HarbolMsgSpan *const msgspan) {
 	harbol_string_clear(&msgspan->src.filename);
 	harbol_string_clear(&msgspan->src.code);
-	for( size_t i=0; i < msgspan->src.len; i++ ) {
-		harbol_string_clear(&msgspan->src.lines[i]);
-	}
-	free(msgspan->src.lines); msgspan->src.lines = NULL;
+	harbol_multi_cleanup(0,
+		&msgspan->src.line_starts,
+		&msgspan->src.line_ends,
+		nullptr);
 	_harbol_msg_span_purge_labels(msgspan, true);
 	_harbol_msg_span_purge_notes(msgspan, true);
 }
 
-HARBOL_EXPORT struct HarbolString const *harbol_msg_span_get_line(struct HarbolMsgSpan const *const msgspan, size_t const line) {
-	return( msgspan->src.lines==NULL || line >= msgspan->src.len )? NULL : msgspan->src.lines + line;
+
+HARBOL_EXPORT uint32_t harbol_msg_span_line_start_offs(struct HarbolMsgSpan const *const msgspan, size_t const line) {
+	return (line < msgspan->src.len)? msgspan->src.line_starts[line] : -1U;
+}
+
+HARBOL_EXPORT uint32_t harbol_msg_span_line_end_offs(struct HarbolMsgSpan const *const msgspan, size_t const line) {
+	return (line < msgspan->src.len)? msgspan->src.line_ends[line] : -1U;
+}
+
+HARBOL_EXPORT NO_NULL char const *harbol_msg_span_line_start_cstr(struct HarbolMsgSpan const *const msgspan, size_t const line) {
+	return (line < msgspan->src.len)? &msgspan->src.code.cstr[msgspan->src.line_starts[line]] : nullptr;
+}
+
+HARBOL_EXPORT NO_NULL char const *harbol_msg_span_line_end_cstr(struct HarbolMsgSpan const *const msgspan, size_t const line) {
+	return (line < msgspan->src.len)? &msgspan->src.code.cstr[msgspan->src.line_ends[line]] : nullptr;
+}
+
+HARBOL_EXPORT size_t harbol_msg_span_get_line_len(struct HarbolMsgSpan const *const msgspan, size_t const line) {
+	return (line < msgspan->src.len)? ( size_t )(msgspan->src.line_ends[line] - msgspan->src.line_starts[line]) : 0;
 }
 
 
@@ -131,11 +144,11 @@ HARBOL_EXPORT bool harbol_msg_span_add_label(struct HarbolMsgSpan *const restric
 	}
 	
 	va_list ap; va_start(ap, msg);
-	if( msg_color != NULL ) {
+	if( msg_color != nullptr ) {
 		harbol_string_add_cstr(&label.msg, msg_color);
 	}
 	int const format_res = harbol_string_format_va(&label.msg, false, msg, ap);
-	if( msg_color != NULL ) {
+	if( msg_color != nullptr ) {
 		harbol_string_add_cstr(&label.msg, COLOR_RESET);
 	}
 	
@@ -153,11 +166,11 @@ HARBOL_EXPORT bool harbol_msg_span_add_note(struct HarbolMsgSpan *const restrict
 	}
 	
 	va_list ap; va_start(ap, msg);
-	if( msg_color != NULL ) {
+	if( msg_color != nullptr ) {
 		harbol_string_add_cstr(&note, msg_color);
 	}
 	int const format_res = harbol_string_format_va(&note, false, msg, ap);
-	if( msg_color != NULL ) {
+	if( msg_color != nullptr ) {
 		harbol_string_add_cstr(&note, COLOR_RESET);
 	}
 	
@@ -170,30 +183,30 @@ HARBOL_EXPORT bool harbol_msg_span_add_note(struct HarbolMsgSpan *const restrict
 
 
 static NEVER_NULL(1) void _print_file_margins(FILE *const restrict stream, char const filename[const restrict static 1], uint32_t const *const restrict line, uint32_t const *const restrict col) {
-	if( filename != NULL ) {
+	if( filename != nullptr ) {
 		fprintf(stream, "\n--> %s", filename);
-		if( line != NULL ) {
+		if( line != nullptr ) {
 			fprintf(stream, ":%u", *line);
 		}
-		if( col != NULL ) {
+		if( col != nullptr ) {
 			fprintf(stream, ":%u", *col);
 		}
 	}
 }
 
 
-static NO_NULL void _output_span(struct HarbolMsgSpan const *const msgspan, struct HarbolTokenSpan const span, size_t const len, FILE *const stream) {
+static NO_NULL void _output_span(struct HarbolMsgSpan const *const restrict msgspan, struct HarbolTokenSpan const span, size_t const len, FILE *const restrict stream) {
+	char const *const restrict code_cstr = msgspan->src.code.cstr;
 	for( uint32_t line = span.line_start; line <= span.line_end; line++ ) {
 		struct HarbolString line_num_pad = {0};
 		harbol_string_add_char_rep(&line_num_pad, ' ', len - base_10_digits(line));
-		struct HarbolString const *code_line = harbol_msg_span_get_line(msgspan, line-1);
-		fprintf(stream, "%u%s|%s\n", line, line_num_pad.cstr, code_line->cstr);
+		uint32_t const line_len = msgspan->src.line_ends[line-1] - msgspan->src.line_starts[line-1];
+		fprintf(stream, "%u%s|%.*s\n", line, line_num_pad.cstr, ( int )(line_len), &code_cstr[msgspan->src.line_starts[line-1]]);
 		harbol_string_clear(&line_num_pad);
 	}
 }
 
 /// TODO: add option for line color when emitting notes.
-/// TODO: add option for msg color when emitting the main message.
 HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 	struct HarbolMsgSpan *const restrict       msgspan,
 	size_t *const restrict                     msg_cnt,
@@ -204,21 +217,26 @@ HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 	char const                                 msgtype_color[const restrict static 1],
 	uint32_t const *const restrict             file_line,
 	uint32_t const *const restrict             file_col,
+	char const                                 msg_color[const restrict],
 	char const                                 msg_fmt[const restrict static 1],
 	...
 ) {
-	if( msgtype != NULL ) {
+	if( msgtype != nullptr ) {
 		fprintf(stream, "%s%s", msgtype_color, msgtype);
-		if( code_num != NULL ) {
+		if( code_num != nullptr ) {
 			fprintf(stream, "[%s]", code_num);
 		}
 		fprintf(stream, "%s: ", COLOR_RESET);
 	}
 	va_list args; va_start(args, msg_fmt);
+	if( msg_color != nullptr ) {
+		fprintf(stream, "%s", msg_color);
+	}
 	vfprintf(stream, msg_fmt, args);
+	fprintf(stream, "%s", COLOR_RESET);
 	_print_file_margins(stream, filename, file_line, file_col);
 	
-	if( msg_cnt != NULL ) {
+	if( msg_cnt != nullptr ) {
 		++*msg_cnt;
 	}
 	
@@ -251,7 +269,7 @@ HARBOL_EXPORT void harbol_msg_span_emit_to_stream(
 			}
 			
 			char const *const restrict sym_color = labels[i].sym_color;
-			fprintf(stream, "%s|%s%s%s%s %s\n", span_pad.cstr, colm_pad.cstr, sym_color==NULL? "" : sym_color, hilighter.cstr, COLOR_RESET, labels[i].msg.cstr);
+			fprintf(stream, "%s|%s%s%s%s %s\n", span_pad.cstr, colm_pad.cstr, sym_color==nullptr? "" : sym_color, hilighter.cstr, COLOR_RESET, labels[i].msg.cstr);
 			harbol_string_clear(&colm_pad);
 			harbol_string_clear(&hilighter);
 		}

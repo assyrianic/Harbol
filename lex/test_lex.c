@@ -15,18 +15,18 @@ union Value {
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_lex_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	test_harbol_lex(debug_stream);
 	
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
@@ -49,8 +49,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"0x1.f", /// bad
 	};
 	for( char const **i=&c_hexs[0]; i<1[&c_hexs]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_c_style_hex(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -75,8 +75,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"0_xBadFace", /// bad
 	};
 	for( char const **i=&go_hex[0]; i<1[&go_hex]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_go_style_hex(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -105,8 +105,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"34e1ULL", /// bad
 	};
 	for( char const **i=&c_dec[0]; i<1[&c_dec]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_c_style_decimal(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -133,8 +133,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"1.5e1_" /// bad
 	};
 	for( char const **i=&go_dec[0]; i<1[&go_dec]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_go_style_decimal(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -152,8 +152,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"\"\\u65e5本\\U00008a9e\""
 	};
 	for( char const **i=&go_strs[0]; i<1[&go_strs]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		int const res = lex_go_style_str(*i, &end, &lexeme);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | err: %s\n", res==0? "yes" : "no", lexeme.cstr, lex_get_err(res));
 		harbol_string_clear(&lexeme);
@@ -171,8 +171,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"078", /// bad
 	};
 	for( char const **i=&c_oct[0]; i<1[&c_oct]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_c_style_octal(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -191,8 +191,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"0553", /// bad
 	};
 	for( char const **i=&go_oct[0]; i<1[&go_oct]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		int const res = lex_go_style_octal(*i, &end, &lexeme);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | err: %s\n", res==0? "yes" : "no", lexeme.cstr, lex_get_err(res));
 		harbol_string_clear(&lexeme);
@@ -210,8 +210,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"011101010", /// bad
 	};
 	for( char const **i=&c_binary[0]; i<1[&c_binary]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		int const res = lex_c_style_binary(*i, &end, &lexeme);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | err: %s\n", res==0? "yes" : "no", lexeme.cstr, lex_get_err(res));
 		harbol_string_clear(&lexeme);
@@ -226,8 +226,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"011101010", /// bad
 	};
 	for( char const **i=&go_binary[0]; i<1[&go_binary]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		int const res = lex_go_style_binary(*i, &end, &lexeme);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | err: %s\n", res==0? "yes" : "no", lexeme.cstr, lex_get_err(res));
 		harbol_string_clear(&lexeme);
@@ -262,8 +262,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 		"2.289e1+", /// good
 	};
 	for( char const **i=&c_nums[0]; i<1[&c_nums]; i++ ) {
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		bool is_float = false;
 		int const res = lex_c_style_number(*i, &end, &lexeme, &is_float);
 		fprintf(debug_stream, "result: %s :: lexeme: '%s' | is float? %s | err: %s\n", res==0? "yes" : "no", lexeme.cstr, is_float? "yes" : "no", lex_get_err(res));
@@ -272,8 +272,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 	
 	fputs("\nlex tools :: test single-line comment lexing.\n", debug_stream);
 	{
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		uint32_t lines = 0;
 		bool const res = lex_single_line_comment("/// kektus \\      \n foobar  \\ \n bazbard", &end, &lexeme, &lines);
 		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%u'\n", res==0? "yes" : "no", lexeme.cstr, lines);
@@ -282,8 +282,8 @@ void test_harbol_lex(FILE *const debug_stream) {
 	
 	fputs("\nlex tools :: test multi-line comment lexing.\n", debug_stream);
 	{
-		struct HarbolString lexeme = harbol_string_make(NULL, &( bool ){false});
-		char const *end = NULL;
+		struct HarbolString lexeme = harbol_string_make(nullptr, &( bool ){false});
+		char const *end = nullptr;
 		uint32_t lines = 0;
 		bool const res = lex_multi_line_comment("/** kektus \n foobar  \n bazbard */", &end, "*/", sizeof "*/"-1, &lexeme, &lines);
 		fprintf(debug_stream, "result: %s :: comment: '%s' - lines: '%u'\n", res==0? "yes" : "no", lexeme.cstr, lines);
@@ -292,7 +292,7 @@ void test_harbol_lex(FILE *const debug_stream) {
 	fputs("\nlex tools :: test converting utf8 to runes.\n", debug_stream);
 	{
 		size_t len = 0;
-		struct HarbolString utf8 = { "ܩܙܛas日本語dsads", sizeof "ܩܙܛas日本語dsads" - 1 };
+		struct HarbolString utf8 = { sizeof "ܩܙܛas日本語dsads" - 1, "ܩܙܛas日本語dsads" };
 		int32_t *runes = utf8_str_to_rune(&utf8, &len);
 		fprintf(debug_stream, "lex tools :: utf8 -> '%s' | '%zu'\nlex tools :: iterating runes (count: %zu).\n", utf8.cstr, utf8.len, len);
 		for( size_t i=0; runes[i] != 0; i++ ) {
@@ -301,15 +301,15 @@ void test_harbol_lex(FILE *const debug_stream) {
 		fputs("\nlex tools :: test converting runes to utf8.\n", debug_stream);
 		/// 'utf8'-s buffer is allocated here!
 		utf8 = rune_to_utf8_str(runes);
-		free(runes); runes = NULL;
+		free(runes); runes = nullptr;
 		fprintf(debug_stream, "lex tools :: utf8 -> '%s' | '%zu'\n", utf8.cstr, utf8.len);
 		harbol_string_clear(&utf8);
 	}
 	fputs("\nlex tools :: test `lex_multiquote_string`.\n", debug_stream);
 	{
-		size_t line = 1;
+		uint32_t line = 1;
 		struct HarbolString buf = {0};
-		char const *end = NULL;
+		char const *end = nullptr;
 		bool const res = lex_multiquote_string("`` lol you are a fish head. ``", &end, "``", sizeof "``"-1, &buf, &line);
 		fprintf(debug_stream, "lex tools :: success? '%s' | buffer: '%s'\n", res? "yes" : "no", buf.cstr);
 		harbol_string_clear(&buf);
@@ -337,5 +337,21 @@ void test_harbol_lex(FILE *const debug_stream) {
 				break;
 			}
 		}
+	}
+	fputs("\nlex tools :: test reading runes from stream.\n", debug_stream);
+	{
+		FILE *stream = fopen("rune_read_tester.txt", "r");
+		fprintf(debug_stream, "lex tools :: stream: '%p'\n\n", (void *)(stream));
+		for( int32_t rune = read_rune_from_stream(stream); rune > 0; rune = read_rune_from_stream(stream) ) {
+			//fprintf(debug_stream, "lex tools :: rune from stream: '%#.4x'\n", rune);
+			char rune_str[5] = {0};
+			write_utf8_cstr(rune_str, sizeof rune_str - 1, rune);
+			fprintf(debug_stream, "lex tools :: rune from stream str: '%s'\n", rune_str);
+			if( rune <= 0 ) {
+				fprintf(debug_stream, "lex tools :: hit bad rune.\n");
+				break;
+			}
+		}
+		fclose(stream); stream = nullptr;
 	}
 }

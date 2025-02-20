@@ -25,7 +25,7 @@ clean:
 	$(RM) *.o
 	$(RM) harbol_cfg_test
 	$(RM) *.ini
-	$(RM) harbol_cfg_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_cfg_test

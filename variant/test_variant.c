@@ -15,18 +15,18 @@ union Value {
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_variant_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	test_harbol_variant(debug_stream);
 	
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
@@ -66,10 +66,10 @@ void test_harbol_variant(FILE *const debug_stream) {
 	/// free data
 	fputs("\nvariant :: test destruction.\n", debug_stream);
 	harbol_variant_clear(&i);
-	fprintf(debug_stream, "i's data are null? '%s'\n", i.data != NULL? "no" : "yes");
+	fprintf(debug_stream, "i's data are null? '%s'\n", i.data != nullptr? "no" : "yes");
 	
 	harbol_variant_clear(p);
-	fprintf(debug_stream, "p's data are null? '%s'\n", p->data != NULL? "no" : "yes");
+	fprintf(debug_stream, "p's data are null? '%s'\n", p->data != nullptr? "no" : "yes");
 	harbol_variant_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != nullptr? "no" : "yes");
 }

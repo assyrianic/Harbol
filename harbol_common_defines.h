@@ -80,6 +80,12 @@
 #	ifndef PLATFORM_x64
 #		define PLATFORM_x64
 #	endif
+#	ifndef PLATFORM_x8664
+#		define PLATFORM_x8664
+#	endif
+#	ifndef PLATFORM_x86_64
+#		define PLATFORM_x86_64
+#	endif
 #elif defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__IA32__) || defined(_M_IX86) || defined(__X86__) || defined(_X86_) || defined(__I86__) || defined(__386)
 #	ifndef PLATFORM_IA32
 #		define PLATFORM_IA32
@@ -146,6 +152,11 @@
 #				define C18
 #			endif
 #		endif
+#		if (__STDC_VERSION__ >= 202311L)
+#			ifndef C23
+#				define C23
+#			endif
+#		endif
 #	endif
 #endif
 
@@ -173,6 +184,16 @@
 #	if( __cplusplus >= 202002L )
 #		ifndef CPP20
 #			define CPP20
+#		endif
+#	endif
+#	if( __cplusplus >= 202302L )
+#		ifndef CPP23
+#			define CPP23
+#		endif
+#	endif
+#	if( __cplusplus > 202302L )
+#		ifndef CPP26
+#			define CPP26
 #		endif
 #	endif
 #endif
@@ -274,8 +295,10 @@
 #ifndef UNUSED
 #	if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
 #		define UNUSED __attribute__ ((unused))
+#		define HARBOL_UNUSED(a)    ((void)(a))
 #	else
 #		define UNUSED
+#		define HARBOL_UNUSED(a)    ((void)(a))
 #	endif
 #endif
 
@@ -349,42 +372,201 @@
 
 #ifdef C11
 #	ifndef IS_VAR_OF_TYPE
-#		define IS_VAR_OF_TYPE(n, T)    _Generic((n), T:true, default:false)
+#		define IS_VAR_OF_TYPE(n, T)     _Generic((n), T:true, default:false)
 #	endif
 
 #	ifndef IS_SIGNED_INT_TYPE
-#		define IS_SIGNED_INT_TYPE(n)    _Generic((n), _Bool: true, char: true, short: true, int:true, long: true, long long: true, default:false)
+#		define IS_SIGNED_INT_TYPE(n)    _Generic((n),                 \
+                                            _Bool:              true, \
+                                            char:               true, \
+                                            signed char:        true, \
+                                            int8_t:             true, \
+                                            short:              true, \
+                                            signed short:       true, \
+                                            int16_t:            true, \
+                                            int:                true, \
+                                            signed int:         true, \
+                                            signed:             true, \
+                                            int32_t:            true, \
+                                            long:               true, \
+                                            signed long:        true, \
+                                            long long:          true, \
+                                            signed long long:   true, \
+                                            ptrdiff_t:          true, \
+                                            int64_t:            true, \
+                                            intmax_t:           true, \
+                                            default:            false \
+                                        )
 #	endif
 
 #	ifndef IS_UNSIGNED_INT_TYPE
-#		define IS_UNSIGNED_INT_TYPE(n)    _Generic((n), _Bool: true, unsigned char: true, unsigned short: true, unsigned int:true, unsigned long: true, unsigned long long: true, default:false)
+#		define IS_UNSIGNED_INT_TYPE(n)  _Generic((n),                 \
+                                            _Bool:              true, \
+                                            unsigned char:      true, \
+                                            uint8_t:            true, \
+                                            unsigned short:     true, \
+                                            uint16_t:           true, \
+                                            unsigned int:       true, \
+                                            unsigned:           true, \
+                                            uint32_t:           true, \
+                                            unsigned long:      true, \
+                                            size_t:             true, \
+                                            unsigned long long: true, \
+                                            uint64_t:           true, \
+                                            uintmax_t:          true, \
+                                            default:            false \
+                                        )
 #	endif
 
 #	ifndef IS_FLOAT_TYPE
-#		define IS_FLOAT_TYPE(n)    _Generic((n), float: true, double: true, long double: true, default:false)
+#		define IS_FLOAT_TYPE(n)         _Generic((n), float: true, double: true, long double: true, default:false)
 #	endif
 
 #	ifndef IS_NUMERIC_TYPE
-#		define IS_NUMERIC_TYPE(n)   IS_FLOAT_TYPE(n) || IS_UNSIGNED_INT_TYPE(n) || IS_SIGNED_INT_TYPE(n)
+#		define IS_NUMERIC_TYPE(n)       (IS_FLOAT_TYPE(n) || IS_UNSIGNED_INT_TYPE(n) || IS_SIGNED_INT_TYPE(n))
 #	endif
 
 #	ifndef IS_SIGNED_TYPE
-#		define IS_SIGNED_TYPE(n)    IS_FLOAT_TYPE(n) || IS_SIGNED_INT_TYPE(n)
+#		define IS_SIGNED_TYPE(n)        (IS_FLOAT_TYPE(n) || IS_SIGNED_INT_TYPE(n))
 #	endif
-#endif
 
-
-#ifndef SIGN_EXTEND
-#	ifdef __cplusplus
-		template< typename T > static inline T _sign_extend(T val) {
-			size_t const sign_bit = 1 << ((sizeof val * CHAR_BIT) - 1);
-			return (val ^ sign_bit) - sign_bit;
-		}
-#		define SIGN_EXTEND    _sign_extend
-#	else
-#		define SIGN_EXTEND(val) (( (val) ^ (1u << ((sizeof val * CHAR_BIT) - 1u)) ) - (1u << ((sizeof val * CHAR_BIT) - 1u)))
+#	ifndef TYPE_TO_CSTR
+#		define TYPE_TO_CSTR(n)          _Generic((n),                                 \
+                                            _Bool:              "bool",               \
+                                            char:               "char",               \
+                                            signed char:        "signed char",        \
+                                            unsigned char:      "unsigned char",      \
+                                            int8_t:             "int8_t",             \
+                                            uint8_t:            "uint8_t",            \
+                                            short:              "short",              \
+                                            signed short:       "signed short",       \
+                                            unsigned short:     "unsigned short",     \
+                                            int16_t:            "int16_t",            \
+                                            uint16_t:           "uint16_t",           \
+                                            int:                "int",                \
+                                            signed int:         "signed int",         \
+                                            unsigned int:       "unsigned int",       \
+                                            int32_t:            "int32_t",            \
+                                            uint32_t:           "uint32_t",           \
+                                            long:               "long",               \
+                                            signed long:        "signed long",        \
+                                            unsigned long:      "unsigned long",      \
+                                            size_t:             "size_t",             \
+                                            ssize_t:            "ssize_t",            \
+                                            long long:          "long long",          \
+                                            signed long long:   "signed long long",   \
+                                            unsigned long long: "unsigned long long", \
+                                            ptrdiff_t:          "ptrdiff_t",          \
+                                            int64_t:            "int64_t",            \
+                                            uint64_t:           "uint64_t",           \
+                                            intmax_t:           "intmax_t",           \
+                                            uintmax_t:          "uintmax_t",          \
+                                            intptr_t:           "intptr_t",           \
+                                            uintptr_t:          "uintptr_t",          \
+                                            default:            "unknown"             \
+                                        )
 #	endif
-#endif
+
+#	ifndef TYPE_TO_CSTR
+#		define TYPE_TO_CSTR(n)          _Generic((n),                                 \
+                                            _Bool:              "bool",               \
+                                            char:               "char",               \
+                                            signed char:        "signed char",        \
+                                            unsigned char:      "unsigned char",      \
+                                            int8_t:             "int8_t",             \
+                                            uint8_t:            "uint8_t",            \
+                                            short:              "short",              \
+                                            signed short:       "signed short",       \
+                                            unsigned short:     "unsigned short",     \
+                                            int16_t:            "int16_t",            \
+                                            uint16_t:           "uint16_t",           \
+                                            int:                "int",                \
+                                            signed int:         "signed int",         \
+                                            unsigned int:       "unsigned int",       \
+                                            int32_t:            "int32_t",            \
+                                            uint32_t:           "uint32_t",           \
+                                            long:               "long",               \
+                                            signed long:        "signed long",        \
+                                            unsigned long:      "unsigned long",      \
+                                            size_t:             "size_t",             \
+                                            ssize_t:            "ssize_t",            \
+                                            long long:          "long long",          \
+                                            signed long long:   "signed long long",   \
+                                            unsigned long long: "unsigned long long", \
+                                            ptrdiff_t:          "ptrdiff_t",          \
+                                            int64_t:            "int64_t",            \
+                                            uint64_t:           "uint64_t",           \
+                                            intmax_t:           "intmax_t",           \
+                                            uintmax_t:          "uintmax_t",          \
+                                            intptr_t:           "intptr_t",           \
+                                            uintptr_t:          "uintptr_t",          \
+                                            float:              "float",              \
+                                            double:             "double",             \
+                                            long double:        "long double",        \
+                                            float32_t:          "float32_t",          \
+                                            float64_t:          "float64_t",          \
+                                            floatptr_t:         "floatptr_t",         \
+                                            floatmax_t:         "floatmax_t",         \
+                                            default:            "unknown"             \
+                                        )
+#	endif
+
+#	ifndef TYPE_FMT_SPEC
+#		define TYPE_FMT_SPEC(n)         _Generic((n),                           \
+                                            _Bool:              "%u",           \
+                                            char:               "%c",           \
+                                            signed char:        "%hhi",         \
+                                            unsigned char:      "%hhu",         \
+                                            int8_t:             "%" PRIi8 "",   \
+                                            uint8_t:            "%" PRIu8 "",   \
+                                            short:              "%hi",          \
+                                            signed short:       "%hi",          \
+                                            unsigned short:     "%hu",          \
+                                            int16_t:            "%" PRIi16 "",  \
+                                            uint16_t:           "%" PRIu16 "",  \
+                                            int:                "%i",           \
+                                            signed int:         "%i",           \
+                                            unsigned int:       "%u",           \
+                                            int32_t:            "%" PRIi32 "",  \
+                                            uint32_t:           "%" PRIu32 "",  \
+                                            long:               "%li",          \
+                                            signed long:        "%li",          \
+                                            unsigned long:      "%lu",          \
+                                            size_t:             "%zu",          \
+                                            ssize_t:            "%zi",          \
+                                            long long:          "%lli",         \
+                                            signed long long:   "%lli",         \
+                                            unsigned long long: "%llu",         \
+                                            ptrdiff_t:          "%ti",          \
+                                            int64_t:            "%" PRIi64 "",  \
+                                            uint64_t:           "%" PRIu64 "",  \
+                                            intmax_t:           "%" PRIiMAX "", \
+                                            uintmax_t:          "%" PRIuMAX "", \
+                                            intptr_t:           "%" PRIiPTR "", \
+                                            uintptr_t:          "%" PRIuPTR "", \
+                                            float:              "%f",           \
+                                            double:             "%f",           \
+                                            long double:        "%Lf",          \
+                                            float32_t:          "%" PRIf32 "",  \
+                                            float64_t:          "%" PRIf64 "",  \
+                                            floatptr_t:         "%" PRIfPTR "", \
+                                            floatmax_t:         "%" PRIfMAX "", \
+                                            default:            "%%"            \
+                                        )
+#	endif
+
+#	ifndef PRINT_TYPE
+#		define PRINT_TYPE(stream, n)        fprintf((stream), TYPE_TO_CSTR(n) "\n")
+#	endif
+
+#	ifndef PRINT_VAL
+#		define PRINT_VAL(stream, n)         fprintf((stream), TYPE_FMT_SPEC(n) "\n", (n))
+#	endif
+
+#	ifndef PRINT_TYPE_VAL
+#		define PRINT_TYPE_VAL(stream, n)    fprintf((stream), TYPE_TO_CSTR(n) ": " TYPE_FMT_SPEC(n) "\n", (n))
+#	endif
+#endif /** ifdef C11 */
 
 
 #ifndef TAIL_CALL
@@ -403,8 +585,104 @@
 #	endif
 #endif
 
-#ifndef HEADER_IMPL
-#	define HEADER_IMPL    static inline
+#ifndef LVAL_PTR
+#	define LVAL_PTR(T, expr)    (&(T){ expr })
+#endif
+
+#ifndef TYPEOF
+#	if defined(COMPILER_CLANG) || defined(COMPILER_GCC) || defined(COMPILER_MSVC)
+#		define TYPEOF(a)    __typeof__ (a)
+#	else
+#		define TYPEOF(a)
+#	endif
+#endif
+
+#ifndef AUTO_TYPE
+#	if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
+#		define AUTO_TYPE    __auto_type
+#	else
+#		define AUTO_TYPE
+#	endif
+#endif
+
+
+#ifndef ARRAY_LEN
+#	define ARRAY_LEN(array)    (sizeof((array)) / sizeof((array)[0]))
+#endif
+/**
+ * Dark C Magic to corrupt the youth:
+ * 
+ * T array[...] = ...;
+ * for( size_t i=0; i < (1[&array] - array); i++ )
+ */
+
+
+/**
+ * Keyword Reducers.
+ */
+
+#ifndef HELPER_FUNC
+#	define HELPER_FUNC          static inline
+#endif
+
+/// Keyword Helpers for C and C++ compatibility.
+#ifdef __cplusplus
+#	ifndef ARRAY_PARAM_CONST
+#		define ARRAY_PARAM_CONST(name)     *const name
+#	endif
+	
+#	ifndef ARRAY_PARAM_REF
+#		define ARRAY_PARAM_REF(name)       *const restrict name
+#	endif
+	
+#	ifndef ARRAY_PARAM_LIM
+#		define ARRAY_PARAM_LIM(name, len)  ARRAY_PARAM_CONST(name)
+#	endif
+	
+#	ifndef ARRAY_PARAM_FULL
+#		define ARRAY_PARAM_FULL(name, len) ARRAY_PARAM_REF(name)
+#	endif
+	
+#	ifndef C_PTR_CAST
+#		define C_PTR_CAST(a, expr)         reinterpret_cast< decltype(a) >( (expr) );
+#	endif
+	
+/// This part for compiling C.
+#else
+#	ifndef ARRAY_PARAM_CONST
+#		define ARRAY_PARAM_CONST(name)     name[const]
+#	endif
+
+#	ifndef ARRAY_PARAM_REF
+#		define ARRAY_PARAM_REF(name)       name[const restrict]
+#	endif
+
+#	ifndef ARRAY_PARAM_LIM
+#		define ARRAY_PARAM_LIM(name, len)  name[const static (len)]
+#	endif
+
+#	ifndef ARRAY_PARAM_FULL
+#		define ARRAY_PARAM_FULL(name, len) name[const restrict static (len)]
+#	endif
+	
+#	ifndef C_PTR_CAST
+#		define C_PTR_CAST(a, expr)        ( void* )( (expr) );
+#	endif
+
+#endif
+
+#ifdef HARBOL_DEBUG_PRINTING
+#	ifndef HARBOL_DBG_PRINT
+#		define HARBOL_DBG_PRINT(str_lit, ...)    printf("%s :: " str_lit "\n" , __func__, __VA_ARGS__)
+#	endif
+#else
+#	ifndef HARBOL_DBG_PRINT
+#		define HARBOL_DBG_PRINT(str_lit, ...)
+#	endif
+#endif
+
+#ifndef HARBOL_SUBCSTR_FMT
+#	define HARBOL_SUBCSTR_FMT    "%.*s"
 #endif
 
 #endif /** HARBOL_COMMON_DEFINES_INCLUDED */

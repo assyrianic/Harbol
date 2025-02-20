@@ -6,10 +6,25 @@
 #endif
 
 
+/// easier to resize all buffers in one place.
+/// easier to maintain.
+static bool _harbol_map_resize_buffers(struct HarbolMap *const map, size_t const new_size) {
+	return harbol_multi_recalloc(
+				new_size, map->cap, 0,
+				&map->keys,     sizeof *map->keys,
+				&map->keylens,  sizeof *map->keylens,
+				&map->datum,    sizeof *map->datum,
+				&map->datalens, sizeof *map->datalens,
+				&map->hashes,   sizeof *map->hashes,
+				&map->buckets,  sizeof *map->buckets,
+				nullptr
+			);
+}
+
 HARBOL_EXPORT struct HarbolMap *harbol_map_new(size_t const init_size) {
 	struct HarbolMap *map = calloc(1, sizeof *map);
-	if( map==NULL || !harbol_map_init(map, init_size) ) {
-		free(map); map = NULL;
+	if( map==nullptr || !harbol_map_init(map, init_size) ) {
+		free(map); map = nullptr;
 	}
 	return map;
 }
@@ -21,14 +36,7 @@ HARBOL_EXPORT struct HarbolMap harbol_map_make(size_t const init_size, bool *con
 }
 
 HARBOL_EXPORT bool harbol_map_init(struct HarbolMap *const map, size_t const init_size) {
-	if( !harbol_multi_calloc(init_size, 6,
-						&map->keys,     sizeof *map->keys,
-						&map->keylens,  sizeof *map->keylens,
-						&map->datum,    sizeof *map->datum,
-						&map->datalens, sizeof *map->datalens,
-						&map->hashes,   sizeof *map->hashes,
-						&map->buckets,  sizeof *map->buckets)
-	) {
+	if( !_harbol_map_resize_buffers(map, init_size) ) {
 		return false;
 	}
 	
@@ -39,26 +47,26 @@ HARBOL_EXPORT bool harbol_map_init(struct HarbolMap *const map, size_t const ini
 		map->buckets[i] = SIZE_MAX;
 	}
 	
-	srand(time(NULL));
+	srand(time(nullptr));
 	map->seed = ( size_t )(rand());
 	return true;
 }
 
 HARBOL_EXPORT void harbol_map_clear(struct HarbolMap *const map) {
 	for( size_t i=0; i < map->len; i++ ) {
-		free(map->keys[i]);  map->keys[i] = NULL;
-		free(map->datum[i]); map->datum[i] = NULL;
+		free(map->keys[i]);  map->keys[i] = nullptr;
+		free(map->datum[i]); map->datum[i] = nullptr;
 	}
-	harbol_multi_cleanup(6, &map->keys, &map->keylens, &map->datum, &map->hashes, &map->buckets, &map->datalens);
+	harbol_multi_cleanup(0, &map->keys, &map->keylens, &map->datum, &map->hashes, &map->buckets, &map->datalens, nullptr);
 	map->len = map->cap = 0;
 }
 
 HARBOL_EXPORT void harbol_map_free(struct HarbolMap **const map_ref) {
-	if( *map_ref==NULL ) {
+	if( *map_ref==nullptr ) {
 		return;
 	}
 	harbol_map_clear(*map_ref);
-	free(*map_ref); *map_ref = NULL;
+	free(*map_ref); *map_ref = nullptr;
 }
 
 
@@ -112,13 +120,7 @@ static bool _harbol_map_insert_entry(struct HarbolMap *const map, size_t const n
 }
 
 HARBOL_EXPORT bool harbol_map_rehash(struct HarbolMap *const map, size_t const new_size) {
-	if( !harbol_multi_recalloc(new_size, map->cap, 6,
-						&map->keys,     sizeof *map->keys,
-						&map->keylens,  sizeof *map->keylens,
-						&map->datum,    sizeof *map->datum,
-						&map->datalens, sizeof *map->datalens,
-						&map->hashes,   sizeof *map->hashes,
-						&map->buckets,  sizeof *map->buckets) ) {
+	if( !_harbol_map_resize_buffers(map, new_size) ) {
 		return false;
 	}
 	
@@ -141,20 +143,20 @@ HARBOL_EXPORT bool harbol_map_insert(struct HarbolMap *const restrict map, void 
 	
 	size_t const val_idx = map->len;
 	map->keys[val_idx] = dup_data(key, keylen);
-	if( map->keys[val_idx]==NULL ) {
+	if( map->keys[val_idx]==nullptr ) {
 		return false;
 	}
 	
 	map->datum[val_idx] = dup_data(val, datasize);
-	if( map->datum[val_idx]==NULL ) {
-		free(map->keys[val_idx]); map->keys[val_idx] = NULL;
+	if( map->datum[val_idx]==nullptr ) {
+		free(map->keys[val_idx]); map->keys[val_idx] = nullptr;
 		return false;
 	}
 	
 	map->hashes[val_idx] = array_hash(key, keylen, map->seed);
 	if( !_harbol_map_insert_entry(map, val_idx) ) {
-		free(map->keys[val_idx]); map->keys[val_idx] = NULL;
-		free(map->datum[val_idx]); map->datum[val_idx] = NULL;
+		free(map->keys[val_idx]); map->keys[val_idx] = nullptr;
+		free(map->datum[val_idx]); map->datum[val_idx] = nullptr;
 		map->hashes[val_idx] = 0;
 		return false;
 	}
@@ -168,7 +170,7 @@ HARBOL_EXPORT bool harbol_map_insert(struct HarbolMap *const restrict map, void 
 HARBOL_EXPORT void *harbol_map_key_val(struct HarbolMap const *const map, void const *const val, size_t const datasize, size_t *const restrict keylen) {
 	size_t const i = harbol_map_idx_val(map, val, datasize);
 	if( i==SIZE_MAX ) {
-		return NULL;
+		return nullptr;
 	} else {
 		*keylen = map->keylens[i];
 		return map->keys[i];
@@ -195,7 +197,7 @@ HARBOL_EXPORT void *harbol_map_key_get(struct HarbolMap const *const map, void c
 }
 
 HARBOL_EXPORT void *harbol_map_idx_get(struct HarbolMap const *const map, size_t const index) {
-	return( index >= map->len )? NULL : map->datum[index];
+	return( index >= map->len )? nullptr : map->datum[index];
 }
 
 
@@ -214,7 +216,7 @@ HARBOL_EXPORT bool harbol_map_idx_set(struct HarbolMap *const restrict map, size
 	}
 	
 	uint8_t *const data = dup_data(val, datasize);
-	if( data==NULL ) {
+	if( data==nullptr ) {
 		return false;
 	}
 	free(map->datum[index]);
@@ -239,16 +241,18 @@ HARBOL_EXPORT bool harbol_map_idx_rm(struct HarbolMap *const map, size_t const n
 		return false;
 	}
 	
-	free(map->keys[n]);  map->keys[n]  = NULL;
-	free(map->datum[n]); map->datum[n] = NULL;
+	free(map->keys[n]);  map->keys[n]  = nullptr;
+	free(map->datum[n]); map->datum[n] = nullptr;
 	map->hashes[n] = map->keylens[n] = map->datalens[n] = 0;
 	map->buckets[bkt_idx] = SIZE_MAX;
 	
-	return multi_array_shift_up(&map->len, n, 1, 5,
+	return harbol_multi_buffer_shift_up(
+			&map->len, n, 1, 0,
 			map->keys,     sizeof *map->keys,
 			map->datum,    sizeof *map->datum,
 			map->hashes,   sizeof *map->hashes,
 			map->keylens,  sizeof *map->keylens,
-			map->datalens, sizeof *map->datalens
+			map->datalens, sizeof *map->datalens,
+			nullptr
 	);
 }

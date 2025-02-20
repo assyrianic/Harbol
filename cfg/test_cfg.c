@@ -15,18 +15,18 @@ union Value {
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_cfg_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	test_harbol_cfg(debug_stream);
 	
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
@@ -35,9 +35,9 @@ void test_harbol_cfg(FILE *const debug_stream) {
 	/// Test allocation and initializations
 	fputs("cfg :: test allocation/initialization.\n", debug_stream);
 	struct HarbolMap *cfg = harbol_cfg_parse_cstr("'section': { 'lel': null }");
-	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL? "yes" : "no");
+	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != nullptr? "yes" : "no");
 	
-	if( cfg != NULL ) {
+	if( cfg != nullptr ) {
 		fputs("\ncfg :: testing config to string conversion.\n", debug_stream);
 		struct HarbolString stringcfg = harbol_cfg_to_str(cfg);
 		fprintf(debug_stream, "\ncfg :: \n%s\n", stringcfg.cstr);
@@ -53,7 +53,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		'age': 0x18 , \
 		'money': 35.42e4 \
 		'myself': <FILE> \
-		'test math': 'iota + [ln 2+65^2+75] == <math iota + [ ln 2+65^2+75 ]>' \
+		'test math': 'e == <math e>' \
 		'address': { \
 			'streetAddress': '21 2nd Street', \
 			'city': 'New York', \
@@ -108,8 +108,8 @@ void test_harbol_cfg(FILE *const debug_stream) {
 	clock_t const end = clock();
 	printf("cfg parsing time: %f\n", (end-start)/(double)CLOCKS_PER_SEC);
 	
-	fprintf(debug_stream, "larger_cfg ptr valid?: '%s'\n", larger_cfg != NULL? "yes" : "no");
-	if( larger_cfg != NULL ) {
+	fprintf(debug_stream, "larger_cfg ptr valid?: '%s'\n", larger_cfg != nullptr? "yes" : "no");
+	if( larger_cfg != nullptr ) {
 		fputs("\ncfg :: iterating realistic config.\n", debug_stream);
 		struct HarbolString stringcfg = harbol_cfg_to_str(larger_cfg);
 		fprintf(debug_stream, "\ncfg :: test config to string conversion:\n%s\n", stringcfg.cstr);
@@ -117,7 +117,7 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		
 		fputs("\ncfg :: test retrieving sub section of realistic config.\n", debug_stream);
 		struct HarbolMap *phone_numbers1 = harbol_cfg_get_section(larger_cfg, "root.phoneNumbers\\..1");
-		printf("larger_cfg (%p) :: phone_numbers1 (%p) -> root.phoneNumbers\\\\..1\n", larger_cfg, phone_numbers1);
+		printf("larger_cfg (%p) :: phone_numbers1 (%p) -> root.phoneNumbers\\\\..1\n", ( void* )(larger_cfg), ( void* )(phone_numbers1));
 		if( phone_numbers1 ) {
 			stringcfg = harbol_cfg_to_str(phone_numbers1);
 			fprintf(debug_stream, "\nphone_numbers to string conversion: \n%s\n", stringcfg.cstr);
@@ -190,8 +190,8 @@ void test_harbol_cfg(FILE *const debug_stream) {
 		harbol_cfg_free(&larger_cfg);
 		fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg? "yes" : "no");
 	}
-	cfg = NULL;
+	cfg = nullptr;
 	fputs("\ncfg :: test destruction.\n", debug_stream);
 	harbol_cfg_free(&cfg);
-	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != NULL? "yes" : "no");
+	fprintf(debug_stream, "cfg ptr valid?: '%s'\n", cfg != nullptr? "yes" : "no");
 }

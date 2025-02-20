@@ -41,23 +41,29 @@ struct HarbolMsgLabel {
 };
 
 struct HarbolSrcSpan {
-	struct HarbolString filename, code, *lines;
+	struct HarbolString filename,     code;
+	uint32_t           *line_starts, *line_ends;
 	size_t              len;
 };
 
 struct HarbolMsgSpan {
-	//struct HarbolMap     files; /// map[string]HarbolSrcSpan
 	struct HarbolSrcSpan src;
 	struct HarbolArray   labels, notes;
 };
 
 
-HARBOL_EXPORT NO_NULL struct HarbolMsgSpan harbol_msg_span_make(char const cstr[], bool is_filename, bool free_src_str, bool *res);
-HARBOL_EXPORT NO_NULL bool harbol_msg_span_init(struct HarbolMsgSpan *msgspan, char const cstr[], bool is_filename, bool free_src_str);
+HARBOL_EXPORT NO_NULL struct HarbolMsgSpan harbol_msg_span_make(char const cstr[], bool is_filename, bool *res);
+HARBOL_EXPORT NO_NULL bool harbol_msg_span_init(struct HarbolMsgSpan *msgspan, char const cstr[], bool is_filename);
 HARBOL_EXPORT NO_NULL void harbol_msg_span_clear(struct HarbolMsgSpan *msgspan);
 
 
-HARBOL_EXPORT NO_NULL struct HarbolString const *harbol_msg_span_get_line(struct HarbolMsgSpan const *msgspan, size_t line);
+HARBOL_EXPORT NO_NULL uint32_t harbol_msg_span_line_start_offs(struct HarbolMsgSpan const *msgspan, size_t line);
+HARBOL_EXPORT NO_NULL uint32_t harbol_msg_span_line_end_offs(struct HarbolMsgSpan const *msgspan, size_t line);
+
+HARBOL_EXPORT NO_NULL char const *harbol_msg_span_line_start_cstr(struct HarbolMsgSpan const *msgspan, size_t line);
+HARBOL_EXPORT NO_NULL char const *harbol_msg_span_line_end_cstr(struct HarbolMsgSpan const *msgspan, size_t line);
+
+HARBOL_EXPORT NO_NULL size_t harbol_msg_span_get_line_len(struct HarbolMsgSpan const *msgspan, size_t line);
 
 HARBOL_EXPORT NO_NULL struct HarbolString const *harbol_msg_span_get_code(struct HarbolMsgSpan const *msgspan);
 HARBOL_EXPORT NO_NULL size_t harbol_msg_span_get_num_lines(struct HarbolMsgSpan const *msgspan);
@@ -67,17 +73,18 @@ HARBOL_EXPORT NEVER_NULL(1,6) bool harbol_msg_span_add_label(struct HarbolMsgSpa
 HARBOL_EXPORT NEVER_NULL(1,3) bool harbol_msg_span_add_note(struct HarbolMsgSpan *msgspan, char const msg_color[], char const msg[], ...);
 
 
-HARBOL_EXPORT NEVER_NULL(1,3,7,10) void harbol_msg_span_emit_to_stream(
-	struct HarbolMsgSpan       *msgspan,         /// 1
-	size_t                     *msg_cnt,         /// 2
-	FILE                       *output,          /// 3
-	char const                  filename[],      /// 4
-	char const                  msgtype[],       /// 5
-	char const                  code_num[],      /// 6
-	char const                  msgtype_color[], /// 7
-	uint32_t const             *line,            /// 8
-	uint32_t const             *col,             /// 9
-	char const                  msg_fmt[],       /// 10
+HARBOL_EXPORT NEVER_NULL(1,3,7,11) void harbol_msg_span_emit_to_stream(
+	struct HarbolMsgSpan *msgspan,         /// 1
+	size_t               *msg_cnt,         /// 2
+	FILE                 *output,          /// 3
+	char const            filename[],      /// 4
+	char const            msgtype[],       /// 5
+	char const            code_num[],      /// 6
+	char const            msgtype_color[], /// 7
+	uint32_t const       *line,            /// 8
+	uint32_t const       *col,             /// 9
+	char const            msg_color[],     /// 10
+	char const            msg_fmt[],       /// 11
 	...
 );
 

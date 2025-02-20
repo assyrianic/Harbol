@@ -17,7 +17,7 @@ test:
 clean:
 	$(RM) *.o
 	$(RM) harbol_objpool_test
-	$(RM) harbol_objpool_output.txt
+	$(RM) *.txt
 
 run_test:
 	./harbol_objpool_test

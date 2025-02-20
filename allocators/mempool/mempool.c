@@ -5,303 +5,138 @@
 #endif
 
 
-HARBOL_EXPORT struct HarbolMemNode *harbol_memnode_split(struct HarbolMemNode *const node, size_t const bytes) {
-	uintptr_t const n = ( uintptr_t )(node);
-	struct HarbolMemNode *const r = ( struct HarbolMemNode* )(n + (node->size - bytes));
-	node->size -= bytes;
-	r->size = bytes;
-	return r;
+static void _setup_sizes(struct HarbolMemPool *const mempool, size_t const bytes, size_t const block_size) {
+	mempool->mem_len = bytes;
+	size_t const size_width = harbol_size_bits(sizeof size_width);
+	mempool->blk_size = block_size;
+	mempool->bm_len = harbol_align_size(bytes / block_size, size_width) / size_width;
 }
 
-
-HARBOL_EXPORT void harbol_memnode_replace(struct HarbolMemNode *const old, struct HarbolMemNode *const replace) {
-	/// replace this node.
-	replace->prev = old->prev;
-	replace->next = old->next;
-	if( replace->prev != NULL )
-		replace->prev->next = replace;
-	if( replace->next != NULL )
-		replace->next->prev = replace;
-}
-
-
-/// makes a current node into the next node.
-HARBOL_EXPORT void harbol_freelist_insert_before(struct HarbolFreeList *const list, struct HarbolMemNode *const curr, struct HarbolMemNode *const insert) {
-	insert->next = curr;
-	if( curr->prev==NULL ) {
-		list->head = insert;
-	} else {
-		insert->prev = curr->prev;
-		curr->prev->next = insert;
-	}
-    curr->prev = insert;
-}
-
-static void _harbol_freelist_transfer_node(struct HarbolMemPool *const mempool, struct HarbolMemNode *const node) {
-	size_t const slot = (node->size >> HARBOL_BUCKET_BITS) - 1;
-	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE)? &mempool->buckets[slot] : &mempool->large;
-	harbol_freelist_insert(mempool, l, node, (slot < HARBOL_BUCKET_SIZE));
-}
-
-
-HARBOL_EXPORT void harbol_freelist_insert(struct HarbolMemPool *const mempool, struct HarbolFreeList *const list, struct HarbolMemNode *const node, bool const is_bucket) {
-	if( list->head==NULL ) {
-		list->head = node;
-		list->len++;
-		return;
-	}
-	
-	for( struct HarbolMemNode *iter = list->head; iter != NULL; iter = iter->next ) {
-		if( ( uintptr_t )(iter)==mempool->stack.offs ) {
-			mempool->stack.offs += iter->size;
-			harbol_freelist_remove(list, iter);
-			iter = list->head;
-			if( iter==NULL ) {
-				list->head = node;    
-				return;
-            }
-			continue;
-		}
-		uintptr_t const inode = ( uintptr_t )(node);
-		uintptr_t const iiter = ( uintptr_t )(iter);
-		uintptr_t const iter_end = iiter + iter->size;
-		uintptr_t const node_end = inode + node->size;
-		
-		if( iter==node ) {
-			return;
-		} else if( iter < node ) {
-			if( iter_end > inode ) {
-				/// node was coalesced prior.
-				return;
-			} else if( iter_end==inode ) {
-				/// if we can coalesce, do so.
-				iter->size += node->size;
-				return;
-			} else if (iter->next == NULL) {
-				// we reached the end of the free list -> append the node
-				iter->next = node;
-				node->prev = iter;
-				list->len++;
-				return;    
-            }
-		} else if( iter > node ) {
-			/// Address sort, lowest to highest aka ascending order.
-			if( iter==list->head ) {
-				if( iter_end==inode ) {
-					iter->size += node->size;
-					if( is_bucket ) {
-						_harbol_freelist_transfer_node(mempool, harbol_freelist_remove(list, iter));
-					}
-				} else if( node_end==iiter ) {
-					node->size += list->head->size;
-					node->next = list->head->next;
-					node->prev = NULL;
-					list->head = node;
-					if( is_bucket ) {
-						_harbol_freelist_transfer_node(mempool, harbol_freelist_remove(list, list->head));
-					}
-				} else {
-					node->next = iter;
-					node->prev = NULL;
-					iter->prev = node;
-					list->head = node;
-					list->len++;
-				}
-				return;
-			} else if( iter_end==inode ) {
-				iter->size += node->size;
-				if( is_bucket ) {
-					_harbol_freelist_transfer_node(mempool, harbol_freelist_remove(list, iter));
-				}
-				return;
-			} else {
-				harbol_freelist_insert_before(list, node, iter);
-				list->len++;
-				return;
-			}
-		}
-	}
-}
-
-HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_remove(struct HarbolFreeList *const list, struct HarbolMemNode *const node) {
-	if( node->prev != NULL ) {
-		node->prev->next = node->next;
-	} else {
-		list->head = node->next;
-		if( list->head != NULL )
-			list->head->prev = NULL;
-		else list->tail = NULL;
-	}
-	
-	if( node->next != NULL ) {
-		node->next->prev = node->prev;
-	} else {
-		list->tail = node->prev;
-		if( list->tail != NULL )
-			list->tail->next = NULL;
-		else list->head = NULL;
-	}
-	list->len--;
-	return node;
-}
-
-HARBOL_EXPORT struct HarbolMemNode *harbol_freelist_find(struct HarbolFreeList *const list, size_t const bytes) {
-	for( struct HarbolMemNode *node = list->head; node != NULL; node = node->next ) {
-		if( node->size < bytes ) {
-			continue;
-		} else if( node->size <= bytes + MEM_SPLIT_THRESHOLD ) {
-			/// close in size - reduce fragmentation by not splitting.
-			return harbol_freelist_remove(list, node);
-		} else {
-			return harbol_memnode_split(node, bytes);
-		}
-	}
-	return NULL;
-}
-
-
-HARBOL_EXPORT bool harbol_mempool_init(struct HarbolMemPool *const mempool, size_t const size) {
-	if( size==0 )
+HARBOL_EXPORT bool harbol_mempool_init(struct HarbolMemPool *const mempool, size_t const bytes, size_t const block_size) {
+	size_t const aligned_bytes = harbol_align_size(bytes, block_size);
+	_setup_sizes(mempool, aligned_bytes, block_size);
+	mempool->mem = calloc(aligned_bytes, sizeof *mempool->mem);
+	mempool->bitmap = calloc(mempool->bm_len, sizeof *mempool->bitmap);
+	if( mempool->mem==nullptr || mempool->bitmap==nullptr ) {
+		harbol_multi_cleanup(0, &mempool->mem, &mempool->bitmap, nullptr);
 		return false;
-	
-	mempool->stack = harbol_region_make(size);
+	}
 	return true;
 }
 
-HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make(size_t const size, bool *const res) {
+HARBOL_EXPORT bool harbol_mempool_init_buffer(struct HarbolMemPool *const restrict mempool, void *const buffer, size_t const bytes, size_t const block_size) {
+	if( !is_size_aligned(bytes, block_size) ) {
+		return false;
+	}
+	_setup_sizes(mempool, bytes, block_size);
+	mempool->mem = buffer;
+	mempool->bitmap = calloc(mempool->bm_len, sizeof *mempool->bitmap);
+	if( mempool->bitmap==nullptr ) {
+		return false;
+	}
+	return true;
+}
+
+HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make(size_t const bytes, size_t const block_size, bool *const restrict res) {
 	struct HarbolMemPool mempool = {0};
-	*res = harbol_mempool_init(&mempool, size);
+	*res = harbol_mempool_init(&mempool, bytes, block_size);
 	return mempool;
 }
 
-HARBOL_EXPORT bool harbol_mempool_init_from_buffer(struct HarbolMemPool *const mempool, void *const restrict buf, size_t const size) {
-	if( size==0 || size<=sizeof(struct HarbolMemNode) )
-		return false;
-	
-	mempool->stack = harbol_region_make_from_buffer(buf, size);
-	return true;
-}
-
-HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make_from_buffer(void *const restrict buf, size_t const size, bool *const restrict res) {
-	struct HarbolMemPool mempool = { 0 };
-	*res = harbol_mempool_init_from_buffer(&mempool, buf, size);
+HARBOL_EXPORT struct HarbolMemPool harbol_mempool_make_buffer(void *const buffer, size_t const bytes, size_t const block_size, bool *const restrict res) {
+	struct HarbolMemPool mempool = {0};
+	*res = harbol_mempool_init_buffer(&mempool, buffer, bytes, block_size);
 	return mempool;
 }
 
-HARBOL_EXPORT void harbol_mempool_clear(struct HarbolMemPool *const mempool) {
-	harbol_region_clear(&mempool->stack);
+HARBOL_EXPORT void harbol_mempool_clear(struct HarbolMemPool *const mempool, bool const mem_is_buffer) {
+	if( !mem_is_buffer ) {
+		harbol_cleanup(&mempool->mem);
+	}
+	harbol_cleanup(&mempool->bitmap);
 	*mempool = ( struct HarbolMemPool ){0};
 }
 
-static NO_NULL void *_get_freenode(struct HarbolMemPool *const mempool, size_t const bytes) {
-	/// check if we have a good sized node from the buckets.
-	size_t const slot = (bytes >> HARBOL_BUCKET_BITS) - 1;
-	struct HarbolFreeList *const l = (slot < HARBOL_BUCKET_SIZE)? &mempool->buckets[slot] : &mempool->large;
-	struct HarbolMemNode *new_mem = harbol_freelist_find(l, bytes);
-	if( new_mem==NULL ) {
-		return NULL;
-	} else {
-		new_mem->next = new_mem->prev = NULL;
-		uint8_t *const final_mem = ( uint8_t* )(new_mem) + sizeof *new_mem;
-		return memset(final_mem, 0, new_mem->size - sizeof *new_mem);
-	}
-}
-
-static NO_NULL void *_get_stknode(struct HarbolMemPool *const mempool, size_t const alloc_bytes) {
-	struct HarbolMemNode *new_mem = harbol_region_alloc(&mempool->stack, alloc_bytes);
-	if( new_mem==NULL ) {
-		return NULL;
-	} else {
-		new_mem->size = alloc_bytes;
-		new_mem->next = new_mem->prev = NULL;
-		uint8_t *const final_mem = ( uint8_t* )(new_mem) + sizeof *new_mem;
-		return memset(final_mem, 0, new_mem->size - sizeof *new_mem);
-	}
-}
-
-HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, size_t const size) {
-	if( size==0 || size > mempool->stack.size ) {
-		return NULL;
-	} else {
-		/// visual of the allocation block.
-		/// --------------
-		/// |  mem size  | lowest addr of block
-		/// |  next node | 12 bytes - 32 bit
-		/// |  prev node | 24 bytes - 64 bit
-		/// |------------|
-		/// |   alloc'd  |
-		/// |   memory   |
-		/// |   space    | highest addr of block
-		/// --------------
-		size_t const alloc_bytes = harbol_align_size(size + sizeof(struct HarbolMemNode), sizeof(intptr_t));
-		void *restrict new_mem = _get_freenode(mempool, alloc_bytes);
-		return ( new_mem==NULL )? _get_stknode(mempool, alloc_bytes) : new_mem;
-	}
-}
-
-HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict mempool, void *const ptr, size_t const size) {
-	if( size > mempool->stack.size ) {
-		return NULL;
-	} else if( ptr==NULL ) {
-		/// NULL ptr should make this work like regular alloc.
-		return harbol_mempool_alloc(mempool, size);
-	} else if( ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < ( uintptr_t )(mempool->stack.mem) ) {
-		return NULL;
+HARBOL_EXPORT void *harbol_mempool_alloc(struct HarbolMemPool *const mempool, size_t const bytes) {
+	if( bytes==0 || bytes > mempool->mem_len ) {
+		return nullptr;
 	}
 	
-	struct HarbolMemNode *node = ( struct HarbolMemNode* )(( uint8_t* )(ptr) - sizeof *node);
-	uint8_t *resized_block = harbol_mempool_alloc(mempool, size);
-	if( resized_block==NULL ) {
-		return NULL;
+	size_t const aligned_bytes = harbol_align_size(bytes, mempool->blk_size); /// i.e. 128
+	size_t const req_num_blks = aligned_bytes / mempool->blk_size; /// 128 / 64 == 2
+	size_t const mask = harbol_bit_mask(req_num_blks); /// (1 << 2) - 1 = 4 - 1 = 3
+	size_t const total_blks = mempool->mem_len / mempool->blk_size;
+	HARBOL_DBG_PRINT("aligned_bytes: %zu | requested bytes: %zu | blksize: %zu | req_num_blks: %zu | mask: %#zx", aligned_bytes, bytes, mempool->blk_size, req_num_blks, mask);
+	for( size_t i=0; i < mempool->bm_len; i++ ) {
+		for( size_t n=0; n <= (harbol_size_bits(sizeof n) - req_num_blks); n++ ) {
+			size_t const shifted_mask = mask << n;
+			if( (mempool->bitmap[i] & shifted_mask)==0 ) {
+				mempool->bitmap[i] |= shifted_mask;
+				size_t const blk_idx = (i * harbol_size_bits(sizeof n)) + n;
+				if( blk_idx + req_num_blks > total_blks ) {
+					continue;
+				}
+				uint8_t *const allocation = &mempool->mem[blk_idx * mempool->blk_size];
+				HARBOL_DBG_PRINT("mempool->bitmap[%zu]: %zu | mask(%#zx) << n(%zu) = %zu | blk_idx: %zu | offset: %zu", i, mempool->bitmap[i], mask, n, shifted_mask, blk_idx, blk_idx * mempool->blk_size);
+				return memset(allocation, 0, aligned_bytes);
+			}
+		}
 	}
-	struct HarbolMemNode *resized = ( struct HarbolMemNode* )(resized_block - sizeof *resized);
-	memmove(resized_block, ptr, ((node->size > resized->size)? (resized->size) : (node->size)) - sizeof *node);
-	harbol_mempool_free(mempool, ptr);
-	return resized_block;
+	return nullptr;
 }
 
-HARBOL_EXPORT bool harbol_mempool_free(struct HarbolMemPool *const restrict mempool, void *const ptr) {
-	if( ptr==NULL || ( uintptr_t )(ptr) - sizeof(struct HarbolMemNode) < ( uintptr_t )(mempool->stack.mem) ) {
+HARBOL_EXPORT void *harbol_mempool_realloc(struct HarbolMemPool *const restrict mempool, void *const old_ptr_ref, size_t const old_size, size_t const new_size) {
+	void **p_ref = old_ptr_ref;
+	if( new_size > mempool->mem_len ) {
+		return nullptr;
+	} else if( new_size==old_size ) {
+		return *p_ref;
+	}
+	
+	void *const new_ptr = harbol_mempool_alloc(mempool, new_size);
+	harbol_mempool_free(mempool, p_ref, old_size);
+	return new_ptr;
+}
+
+HARBOL_EXPORT bool harbol_mempool_free(struct HarbolMemPool *const restrict mempool, void *const ptr_ref, size_t const bytes) {
+	void **p_ref = ptr_ref;
+	if( p_ref==nullptr || bytes==0 || *p_ref==nullptr ) {
 		return false;
 	}
-	/// behind the actual pointer data is the allocation info.
-	struct HarbolMemNode *mem_node = ( struct HarbolMemNode* )(( uint8_t* )(ptr) - sizeof *mem_node);
-	size_t const slot = (mem_node->size >> HARBOL_BUCKET_BITS) - 1;
 	
-	/// make sure the pointer data is valid.
-	if( !is_uintptr_in_bounds(( uintptr_t )(mem_node), ( uintptr_t )(mempool->stack.mem + mempool->stack.size), ( uintptr_t )(mempool->stack.offs))
-			|| !is_uint_in_bounds(mem_node->size, mempool->stack.size, sizeof(struct HarbolMemNode)) )
+	size_t const offs = get_byte_diff(*p_ref, mempool->mem);
+	HARBOL_DBG_PRINT("offs: %zu", offs);
+	if( !is_size_aligned(offs, mempool->blk_size) || offs >= mempool->mem_len ) {
 		return false;
-	
-	/// if the mem_node is right at the stack base ptr, then add it to the stack.
-	if( ( uintptr_t )(mem_node)==mempool->stack.offs ) {
-		mempool->stack.offs += mem_node->size;
-	} else {
-		/// try to place it into bucket or large freelist.
-		struct HarbolFreeList *const list = ( slot < HARBOL_BUCKET_SIZE )? &mempool->buckets[slot] : &mempool->large;
-		harbol_freelist_insert(mempool, list, mem_node, ( slot < HARBOL_BUCKET_SIZE ));
 	}
+	
+	size_t const start_blk = offs / mempool->blk_size;
+	size_t const req_num_blks = harbol_align_size(bytes, mempool->blk_size) / mempool->blk_size;
+	size_t const size_width = harbol_size_bits(sizeof size_width);
+	HARBOL_DBG_PRINT("start_blk: %zu | req_num_blks: %zu | size_width: %zu", start_blk, req_num_blks, size_width);
+	for( size_t i=0; i < req_num_blks; i++ ) {
+		size_t const target_blk = start_blk + i;
+		size_t const bm_idx = target_blk / size_width;
+		size_t const bm_bit = target_blk % size_width;
+		size_t const bm_bit_idx = harbol_bit_index(bm_bit);
+		HARBOL_DBG_PRINT("target_blk: %zu | bm_bit: %zu | bm_bit_idx: %zu | ~bm_bit_idx: %#zx | mempool->bitmap[bm_idx(%zu)]: %#zx", target_blk, bm_bit, bm_bit_idx, ~bm_bit_idx, bm_idx, mempool->bitmap[bm_idx]);
+		mempool->bitmap[bm_idx] &= ~bm_bit_idx;
+	}
+	*p_ref = nullptr;
 	return true;
 }
 
-HARBOL_EXPORT bool harbol_mempool_cleanup(struct HarbolMemPool *const restrict mempool, void **const restrict ptrref) {
-	if( *ptrref==NULL ) {
-		return false;
+HARBOL_EXPORT size_t harbol_mempool_remaining(struct HarbolMemPool const *const mempool, bool const mem_left) {
+	size_t total = 0;
+	for( size_t i=0; i < mempool->bm_len; i++ ) {
+		size_t const bits = mem_left? ~mempool->bitmap[i] : mempool->bitmap[i];
+		total += harbol_popcount(bits);
 	}
-	bool const free_result = harbol_mempool_free(mempool, *ptrref);
-	*ptrref = NULL;
-	return free_result;
+	return total * mempool->blk_size;
 }
 
-HARBOL_EXPORT size_t harbol_mempool_mem_remaining(struct HarbolMemPool const *mempool) {
-	size_t total_remaining = mempool->stack.mem - (mempool->stack.mem + mempool->stack.offs);
-	for( struct HarbolMemNode *n = mempool->large.head; n != NULL; n = n->next ) {
-		total_remaining += n->size;
+HARBOL_EXPORT void harbol_mempool_reset(struct HarbolMemPool *const mempool) {
+	for( size_t i=0; i < mempool->bm_len; i++ ) {
+		mempool->bitmap[i] = 0UL;
 	}
-	for( size_t i=0; i < HARBOL_BUCKET_SIZE; i++ ) {
-		for( struct HarbolMemNode *n=mempool->buckets[i].head; n != NULL; n = n->next ) {
-			total_remaining += n->size;
-		}
-	}
-	return total_remaining;
 }

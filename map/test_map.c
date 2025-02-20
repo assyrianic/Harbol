@@ -15,18 +15,18 @@ union Value {
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_map_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	test_harbol_map(debug_stream);
 	
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
@@ -40,7 +40,7 @@ void test_harbol_map(FILE *const debug_stream) {
 	
 	/// test insertion
 	fputs("\nmap :: test insertion.\n", debug_stream);
-	/*srand(time(NULL));
+	/*srand(time(nullptr));
 	*/
 	/*
 	for( size_t l=0; l < 8; l++ ) {
@@ -97,10 +97,10 @@ void test_harbol_map(FILE *const debug_stream) {
 	fprintf(debug_stream, "stk[\"2\"] == %" PRIi64 "\n", (( union Value const* )harbol_map_key_get(&i, "2", sizeof "2"))->int64);
 	
 	fputs("\nmap :: retrieving key by value.\n", debug_stream);
-	fprintf(debug_stream, "stk[\"%s\"] == 2\n", harbol_map_key_val(&i, &( union Value ){.int64=2}, sizeof(union Value), &(size_t){0}));
-	fprintf(debug_stream, "stk[\"%s\"] == 3\n", harbol_map_key_val(&i, &( union Value ){.int64=3}, sizeof(union Value), &(size_t){0}));
-	fprintf(debug_stream, "ptr[\"%s\"] == 2\n", harbol_map_key_val(p, &( union Value ){.int64=2}, sizeof(union Value), &(size_t){0}));
-	fprintf(debug_stream, "ptr[\"%s\"] == 3\n", harbol_map_key_val(p, &( union Value ){.int64=3}, sizeof(union Value), &(size_t){0}));
+	fprintf(debug_stream, "stk[\"%s\"] == 2\n", (char const*) harbol_map_key_val(&i, &( union Value ){.int64=2}, sizeof(union Value), &(size_t){0}));
+	fprintf(debug_stream, "stk[\"%s\"] == 3\n", (char const*) harbol_map_key_val(&i, &( union Value ){.int64=3}, sizeof(union Value), &(size_t){0}));
+	fprintf(debug_stream, "ptr[\"%s\"] == 2\n", (char const*) harbol_map_key_val(p, &( union Value ){.int64=2}, sizeof(union Value), &(size_t){0}));
+	fprintf(debug_stream, "ptr[\"%s\"] == 3\n", (char const*) harbol_map_key_val(p, &( union Value ){.int64=3}, sizeof(union Value), &(size_t){0}));
 	
 	fputs("\nmap :: looping through all data.\n", debug_stream);
 	for( size_t n=0; n < i.len; n++ ) {
@@ -145,10 +145,10 @@ void test_harbol_map(FILE *const debug_stream) {
 	/// free data
 	fputs("\nmap :: test destruction.\n", debug_stream);
 	harbol_map_clear(&i);
-	fprintf(debug_stream, "i's buckets are null? '%s'\n", i.buckets != NULL? "no" : "yes");
+	fprintf(debug_stream, "i's buckets are null? '%s'\n", i.buckets != nullptr? "no" : "yes");
 	
 	harbol_map_clear(p);
-	fprintf(debug_stream, "p's buckets are null? '%s'\n", p->buckets != NULL? "no" : "yes");
+	fprintf(debug_stream, "p's buckets are null? '%s'\n", p->buckets != nullptr? "no" : "yes");
 	harbol_map_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != nullptr? "no" : "yes");
 }

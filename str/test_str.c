@@ -11,23 +11,23 @@ struct HarbolMemPool *g_pool;
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_string_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	
 	test_harbol_string(debug_stream);
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
 void test_harbol_string(FILE *const debug_stream) {
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return;
 	
 	/// Test allocation and initializations
@@ -170,7 +170,7 @@ void test_harbol_string(FILE *const debug_stream) {
 	for( size_t i=0; i < newlines; i++ ) {
 		fprintf(debug_stream, "newlines[%zu] == '%zu' - p[newlines[%zu]] == '%c' :\n", i, newline_offsets[i], i, p->cstr[newline_offsets[i]]);
 	}
-	free(newline_offsets); newline_offsets = NULL;
+	free(newline_offsets); newline_offsets = nullptr;
 	harbol_string_clear(&i);
 	harbol_string_clear(p);
 	
@@ -201,10 +201,10 @@ void test_harbol_string(FILE *const debug_stream) {
 	fputs("\nstring :: test destruction.", debug_stream);
 	fputs("\n", debug_stream);
 	harbol_string_clear(&i);
-	fprintf(debug_stream, "i's string is null? '%s'\n", i.cstr != NULL? "no" : "yes");
+	fprintf(debug_stream, "i's string is null? '%s'\n", i.cstr != nullptr? "no" : "yes");
 	
 	harbol_string_clear(p);
-	fprintf(debug_stream, "p's string is null? '%s'\n", p->cstr != NULL? "no" : "yes");
+	fprintf(debug_stream, "p's string is null? '%s'\n", p->cstr != nullptr? "no" : "yes");
 	harbol_string_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n", p != NULL? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n", p != nullptr? "no" : "yes");
 }

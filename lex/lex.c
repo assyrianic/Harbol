@@ -50,7 +50,7 @@ HARBOL_EXPORT bool check_is_rune(int32_t const str[static 1], size_t const len, 
 
 HARBOL_EXPORT size_t get_utf8_len(char const c) {
 	for( size_t i=7; i < 8; i-- ) {
-		if( !(c & (1 << i)) ) {
+		if( !(c & harbol_bit_index(i)) ) {
 			return (7 - i)==0? 1 : 7 - i;
 		}
 	}
@@ -81,8 +81,24 @@ HARBOL_EXPORT bool has_rune_in_runes(int32_t const runes[static 1], int32_t cons
 }
 
 
-HARBOL_EXPORT char const *skip_chars(char const str[static 1], bool checker(int32_t c), uint32_t *const restrict lines) {
-	while( *str != 0 && checker(*str) ) {
+HARBOL_EXPORT NO_NULL size_t count_chars(char const cstr[const static 1], int32_t const c) {
+	size_t n = 0;
+	for( size_t i=0; cstr[i] != 0; ) {
+		int32_t const rune = utf8_to_rune_iter_no_len(cstr, &i);
+		if( rune==c ) {
+			++n;
+		}
+	}
+	return n;
+	
+}
+
+HARBOL_EXPORT size_t count_newlines(char const cstr[const static 1]) {
+	return count_chars(cstr, '\n');
+}
+
+HARBOL_EXPORT char const *skip_chars(char const str[static 1], bool checker(int32_t c, void *data), void *const restrict data, uint32_t *const restrict lines) {
+	while( *str != 0 && checker(*str, data) ) {
 		if( *str=='\n' ) {
 			++*lines;
 		}
@@ -91,17 +107,17 @@ HARBOL_EXPORT char const *skip_chars(char const str[static 1], bool checker(int3
 	return str;
 }
 
-HARBOL_EXPORT char const *skip_chars_until_newline(char const str[static 1], bool checker(int32_t c)) {
-	while( *str != 0 && *str != '\n' && checker(*str) ) {
+HARBOL_EXPORT char const *skip_chars_until_newline(char const str[static 1], bool checker(int32_t c, void *data), void *const restrict data) {
+	while( *str != 0 && *str != '\n' && checker(*str, data) ) {
 		str++;
 	}
 	return str;
 }
 
-HARBOL_EXPORT char const *skip_string_literal(char const str[static 1], char const esc) {
+HARBOL_EXPORT char const *skip_string_literal(char const str[static 1], int32_t const esc) {
 	int_fast8_t const quote = *str++;
 	while( *str != 0 && *str != quote ) {
-		int_fast8_t const c = *str;
+		int32_t const c = *str;
 		str += ( c==esc )? 2 : 1;
 	}
 	return str;
@@ -120,6 +136,7 @@ HARBOL_EXPORT char const *skip_single_line_comment(char const str[static 1], uin
 	}
 	return begin;
 }
+
 HARBOL_EXPORT char const *skip_multi_line_comment(char const str[static 1], char const end_token[static 1], size_t const end_len, uint32_t *const restrict lines) {
 	char const *begin = str + 1;
 	while( *begin != 0 && strncmp(end_token, begin, end_len) != 0 ) {
@@ -210,7 +227,7 @@ HARBOL_EXPORT bool lex_multi_line_comment(char const str[static 1], char const *
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT bool lex_multiquote_string(char const str[static 1], char const **const end, char const quote[const restrict static 1], size_t quote_len, struct HarbolString *const restrict buf, size_t *const restrict line) {
+HARBOL_EXPORT bool lex_multiquote_string(char const str[static 1], char const **const end, char const quote[const restrict static 1], size_t quote_len, struct HarbolString *const restrict buf, uint32_t *const restrict line) {
 	if( !strncmp(str, quote, quote_len) ) {
 		str += quote_len;
 	}
@@ -232,6 +249,7 @@ HARBOL_EXPORT bool lex_multiquote_string(char const str[static 1], char const **
 	*end = str;
 	return true;
 }
+
 
 HARBOL_EXPORT size_t rune_byte_len(int32_t const rune) {
 	if( rune < 0x80 ) {
@@ -341,30 +359,37 @@ HARBOL_EXPORT int32_t read_utf8_rune(char const cstr[], size_t cstrlen) {
 	return _prechecked_utf8_read(cstr, &rune) > 0? rune : -1;
 }
 
-HARBOL_EXPORT int32_t *utf8_cstr_to_rune(char const cstr[const restrict static 1], size_t const cstr_len, size_t *const restrict rune_len) {
-	size_t const rune_count = get_str_rune_len(cstr);
-	int32_t *restrict runes = calloc(rune_count + 1, sizeof *runes);
-	if( runes==NULL ) {
-		*rune_len = 0;
-		return NULL;
-	}
-	
+HARBOL_EXPORT void convert_utf8_cstr_to_rune(char const cstr[const restrict static 1], size_t cstr_len, int32_t *rune_buf, size_t rune_len) {
 	size_t
 		iter_len  = 0,
 		rune_iter = 0
 	;
-	while( cstr[iter_len] != 0 && rune_iter < rune_count ) {
+	while( cstr[iter_len] != 0 && rune_iter < rune_len ) {
 		int32_t rune = 0;
 		size_t const bytes_read = read_utf8(&cstr[iter_len], cstr_len - iter_len, &rune);
 		if( rune==0 ) {
 			break;
 		}
 		iter_len += bytes_read;
-		runes[rune_iter] = rune;
+		rune_buf[rune_iter] = rune;
 		rune_iter++;
 	}
+	rune_buf[rune_len] = 0;
+}
+
+HARBOL_EXPORT int32_t *utf8_cstr_to_rune(char const cstr[const restrict static 1], size_t cstr_len, size_t *const restrict rune_len) {
+	if( cstr_len==0 ) {
+		cstr_len = strlen(cstr);
+	}
+	size_t const rune_count = get_str_rune_len(cstr);
+	int32_t *restrict runes = calloc(rune_count + 1, sizeof *runes);
+	if( runes==nullptr ) {
+		*rune_len = 0;
+		return nullptr;
+	}
+	
+	convert_utf8_cstr_to_rune(cstr, cstr_len, runes, rune_count);
 	*rune_len = rune_count;
-	runes[rune_count] = 0;
 	return runes;
 }
 
@@ -397,6 +422,29 @@ HARBOL_EXPORT int32_t utf8_to_rune_iter(char const cstr[const restrict static 1]
 	size_t const bytes_read = read_utf8(&cstr[*idx], cstr_len, &rune);
 	if( bytes_read > 0 ) {
 		*idx += bytes_read;
+	}
+	return rune;
+}
+
+
+HARBOL_EXPORT int32_t utf8_to_rune_iter_no_len(char const cstr[const restrict static 1], size_t *const restrict idx) {
+	int32_t rune = -1;
+	if( cstr[*idx]==0 ) {
+		return rune;
+	}
+	
+	size_t const utf8len = get_utf8_len(cstr[*idx]);
+	bool ok_to_read = true;
+	size_t const upper = (*idx + utf8len);
+	for( size_t i = *idx; i < upper; i++ ) {
+		if( cstr[i]==0 ) {
+			ok_to_read = false;
+			*idx = i;
+			break;
+		}
+	}
+	if( ok_to_read ) {
+		*idx += _prechecked_utf8_read(&cstr[*idx], &rune);
 	}
 	return rune;
 }
@@ -1441,7 +1489,8 @@ static NO_NULL enum HarbolLexErrType _lex_str(char const str[static 1], char con
 					}
 					case 'u': case 'U': {
 						str++;
-						int32_t const h = lex_unicode_char(str, &str, esc=='u'? sizeof(int16_t) : sizeof(int32_t));
+						/// esc=='u'? sizeof(int16_t) : sizeof(int32_t)
+						int32_t const h = lex_unicode_char(str, &str, sizeof(int32_t) >> (esc=='u'));
 						if( h == -1 ) {
 							result = HarbolLexBadUnicodeChar;
 							goto lex_str_err;
@@ -1515,15 +1564,16 @@ HARBOL_EXPORT char const *lex_get_err(enum HarbolLexErrType const err_code) {
 	}
 }
 
-HARBOL_EXPORT bool lex_until_false(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
-	while( *str != 0 && checker(*str) ) {
+
+HARBOL_EXPORT bool lex_until_false(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c, void *data), void *const restrict data) {
+	while( *str != 0 && checker(*str, data) ) {
 		harbol_string_add_char(buf, *str++);
 	}
 	*end = str;
 	return buf->len > 0;
 }
 
-HARBOL_EXPORT bool lex_until_false_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c)) {
+HARBOL_EXPORT bool lex_until_false_utf8(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c, void *data), void *const restrict data) {
 	bool res = false;
 	char const *const ending = str + strlen(str);
 	while( *str != 0 ) {
@@ -1531,7 +1581,7 @@ HARBOL_EXPORT bool lex_until_false_utf8(char const str[static 1], char const **c
 		size_t const bytes = read_utf8(str, ending - str, &rune);
 		if( bytes==0 ) {
 			goto lex_id_u8_err;
-		} else if( !checker(rune) ) {
+		} else if( !checker(rune, data) ) {
 			break;
 		}
 		write_utf8_str(buf, rune);
@@ -1554,12 +1604,21 @@ HARBOL_EXPORT bool lex_c_style_identifier(char const str[static 1], char const *
 	return true;
 }
 
-HARBOL_EXPORT bool lex_until(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, int32_t const control) {
-	while( *str != 0 && *str != control ) {
+HARBOL_EXPORT bool lex_until(char const str[static 1], char const **const end, struct HarbolString *const restrict buf, bool checker(int32_t c, void *data), void *const restrict data) {
+	while( *str != 0 && checker(*str, data) ) {
 		harbol_string_add_char(buf, *str++);
 	}
 	*end = str;
 	return buf->len > 0;
+}
+
+HARBOL_EXPORT void loop_utf8_cstr(char const cstr[const restrict static 1], bool action(int32_t r, void *data), void *const restrict data) {
+	for( size_t i=0; cstr[i] != 0; ) {
+		int32_t const rune = utf8_to_rune_iter_no_len(cstr, &i);
+		if( !action(rune, data) ) {
+			return;
+		}
+	}
 }
 
 HARBOL_EXPORT intmax_t lex_c_string_to_int(struct HarbolString const *const str, char **const end) {
@@ -1607,7 +1666,7 @@ HARBOL_EXPORT bool lex_custom_number(char const str[static 1], char const **cons
 		if( bytes==0 ) {
 			goto lex_custom_lit_err;
 		} else {
-			/// TODO:
+			/// TODO: finish lexing custom number.
 		}
 		str += bytes;
 	}
@@ -1676,12 +1735,12 @@ HARBOL_EXPORT uintmax_t convert_runes_to_base_uint(
 HARBOL_EXPORT int32_t *runes_from_stream(FILE *const restrict stream, size_t *const restrict rune_len) {
 	size_t len = 0;
 	char *restrict text = ( char* )(make_buffer_from_file(stream, &len));
-	if( text==NULL ) {
+	if( text==nullptr ) {
 		*rune_len = 0;
-		return NULL;
+		return nullptr;
 	}
 	int32_t *runes = utf8_cstr_to_rune(text, len, rune_len);
-	free(text); text = NULL;
+	free(text); text = nullptr;
 	return runes;
 }
 
@@ -1695,7 +1754,7 @@ HARBOL_EXPORT intmax_t convert_cstr_to_base_int(char const cstr[const static 1],
 		}
 		
 		char const *const p = strchr(numerals, cstr[i]);
-		if( p != NULL ) {
+		if( p != nullptr ) {
 			value = value * base + (p - &numerals[0]);
 			continue;
 		}
@@ -1706,11 +1765,11 @@ HARBOL_EXPORT intmax_t convert_cstr_to_base_int(char const cstr[const static 1],
 	return value * sign;
 }
 
-HARBOL_EXPORT uintmax_t convert_cstr_to_base_uint(char const cstr[], uint_fast8_t const base, char const numerals[const static 1], bool *const restrict res) {
+HARBOL_EXPORT uintmax_t convert_cstr_to_base_uint(char const cstr[const static 1], uint_fast8_t const base, char const numerals[const static 1], bool *const restrict res) {
 	uintmax_t value = 0;
 	for( size_t i=0; cstr[i] != 0; i++ ) {
 		char const *const p = strchr(numerals, cstr[i]);
-		if( p != NULL ) {
+		if( p != nullptr ) {
 			value = value * base + (p - &numerals[0]);
 			continue;
 		}
@@ -1719,4 +1778,25 @@ HARBOL_EXPORT uintmax_t convert_cstr_to_base_uint(char const cstr[], uint_fast8_
 	}
 	*res = true;
 	return value;
+}
+
+HARBOL_EXPORT int32_t read_rune_from_stream(FILE *const restrict stream) {
+	int32_t rune = 0;
+	int const c = fgetc(stream);
+	if( c != EOF ) {
+		char utf8_cstr[] = { c,0,0,0,0 };
+		size_t const rune_len = get_utf8_len(c);
+		if( rune_len==0 || rune_len > sizeof utf8_cstr ) {
+			return -1;
+		}
+		for( size_t i=1; i < rune_len; i++ ) {
+			int const next_c = fgetc(stream);
+			if( next_c==EOF ) {
+				return -1;
+			}
+			utf8_cstr[i] = next_c;
+		}
+		_prechecked_utf8_read(utf8_cstr, &rune);
+	}
+	return rune;
 }

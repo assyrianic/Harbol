@@ -15,18 +15,18 @@ union Value {
 
 int main(void) {
 	FILE *debug_stream = fopen("harbol_deque_output.txt", "w");
-	if( debug_stream==NULL )
+	if( debug_stream==nullptr )
 		return -1;
 	
 #ifdef HARBOL_USE_MEMPOOL
-	struct HarbolMemPool m = harbol_mempool_create(1000000);
+	struct HarbolMemPool m = harbol_mempool_make(10000000, 32, LVAL_PTR(bool, false));
 	g_pool = &m;
 #endif
 	test_harbol_deque(debug_stream);
 	
-	fclose(debug_stream); debug_stream=NULL;
+	fclose(debug_stream); debug_stream=nullptr;
 #ifdef HARBOL_USE_MEMPOOL
-	harbol_mempool_clear(g_pool);
+	harbol_mempool_clear(g_pool, false);
 #endif
 }
 
@@ -101,10 +101,10 @@ void test_harbol_deque(FILE *const debug_stream) {
 	
 	/// free deque
 	harbol_deque_clear(&i);
-	fprintf(debug_stream, "i's item is null? '%s'\n", i.datum != NULL? "no" : "yes");
+	fprintf(debug_stream, "i's item is null? '%s'\n", i.datum != nullptr? "no" : "yes");
 	
 	harbol_deque_clear(p);
-	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != NULL? "no" : "yes");
+	fprintf(debug_stream, "p's item is null? '%s'\n", p->datum != nullptr? "no" : "yes");
 	harbol_deque_free(&p);
-	fprintf(debug_stream, "p is null? '%s'\n\n", p != NULL? "no" : "yes");
+	fprintf(debug_stream, "p is null? '%s'\n\n", p != nullptr? "no" : "yes");
 }
